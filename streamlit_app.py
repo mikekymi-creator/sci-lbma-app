@@ -175,7 +175,7 @@ if check_password():
             client = get_gsheet_client()
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
             grid = st.columns(3)
-            for idx, row in df_b.iterrows():
+for idx, row in df_b.iterrows():
                 # --- CORRECTION CALCULS AFFICHAGE ---
                 # On force la conversion en nombre pour éviter les erreurs de texte
                 try:

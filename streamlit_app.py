@@ -132,7 +132,7 @@ def obtenir_donnees_secteur(nom_ville):
             lien = st.text_input("🔗 Lien", value=st.session_state.get('lien_charge', ""))
                 
                 # RÉCUPÉRATION DES DONNÉES (Via ta fonction)
-                data_m = obtenir_donnees_secteur(secteur_choisi)
+            data_m = obtenir_donnees_secteur(secteur_choisi)
                 p_ref = data_m['p']
                 l_ref = data_m['l']
                 social_rate = data_m['s']

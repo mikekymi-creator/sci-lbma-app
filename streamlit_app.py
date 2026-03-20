@@ -352,13 +352,10 @@ if check_password():
                 with b_del:
                     if st.button("🗑️", key=f"del_{idx}"):
                         ws.delete_rows(idx + 2)
-                        st.cache_data.clear()  # <-- Cette ligne doit être alignée pile sous "ws"
-                        st.rerun()             # <-- Celle-ci aussi
-                
-                st.divider()
-        else:
-            st.info("💡 Aucun bien dans le comparateur. Enregistrez votre première analyse !")
                         st.cache_data.clear()
                         st.rerun()
                 
-                st.divider()
+                st.divider() # Fin de la ligne du bien
+        else:
+            # Ce bloc ne s'affiche que si le tableau est vide
+            st.info("💡 Aucun bien dans le comparateur. Enregistrez votre première analyse !")

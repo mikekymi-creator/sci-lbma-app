@@ -60,7 +60,7 @@ if check_password():
                                     help="Détails : 5-7% gestion agence + 2-3% assurance loyers impayés (GLI) + 1-2% provision pour vacance locative.")
         obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100, help="Gain net mensuel visé.")
 
-    st.markdown("### 🏠 Caractéristiques du Bien")
+        st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
             # On cherche dans session_state, sinon on met la valeur par défaut
@@ -82,6 +82,7 @@ if check_password():
         with c3:
             tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(st.session_state.get('tf_charge', surface*15)))
             charges = st.number_input("Charges Copro (€/an)", 0, 10000, int(st.session_state.get('charges_charge', 400)))
+
         st.divider()
         st.markdown("### 🧠 Intelligence de Marché")
         data = obtenir_donnees_secteur(cp)

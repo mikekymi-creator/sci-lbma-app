@@ -99,53 +99,42 @@ def obtenir_donnees_secteur(nom_ville):
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
 
-        st.write("Vérification du chargement...") # Si ça s'affiche, le début du tab1 fonctionne
-df_test = charger_onglet("Data_Marche")
-        st.write("Colonnes trouvées :", df_test.columns.tolist()) # Si ça ne s'affiche pas, le bug est ICI
+
 
         
         with c1:
-            nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Projet"))
+            # 1. INITIALISATION (Pour éviter la page blanche si le sheet plante)
+            p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+            cp = "60000" 
             
-            # 1. Saisie du Code Postal
+            nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Projet"))
             cp_saisi = st.text_input("📮 Code Postal", value=st.session_state.get('cp_charge', "60000"))
             
+            # 2. TENTATIVE DE CHARGEMENT
             try:
-                # 2. Chargement des données de référence
                 df_ref = charger_onglet("Data_Marche")
+                # On filtre
                 df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
 
                 if not df_filtre.empty:
                     liste_quartiers = df_filtre['Ville/Secteur'].unique().tolist()
-                    
-                    # On sélectionne le quartier
                     secteur_choisi = st.selectbox("🏘️ Quartier", options=liste_quartiers)
                     
-                    # On appelle la fonction pour récupérer les chiffres
+                    # On récupère les vraies données
                     data_m = obtenir_donnees_secteur(secteur_choisi)
-                    p_ref = data_m['p']
-                    l_ref = data_m['l']
-                    social_rate = data_m['s']
-                    note_sector = data_m['n']
+                    p_ref, l_ref = data_m['p'], data_m['l']
+                    social_rate, note_sector = data_m['s'], data_m['n']
                     cp = secteur_choisi
                 else:
-                    st.warning("📍 CP inconnu dans 'Data_Marche'")
-                    p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+                    st.info("ℹ️ CP non répertorié. Saisie manuelle possible.")
                     cp = cp_saisi
-
             except Exception as e:
                 st.error(f"Erreur technique : {e}")
-                p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
                 cp = cp_saisi
 
-            # 3. Reste des informations de localisation
-            adr = st.text_input("📍 Adresse exacte", 
-                                value=st.session_state.get('adr_charge', ""), 
-                                help="Précision pour vos futures visites.")
+            adr = st.text_input("📍 Adresse exacte", value=st.session_state.get('adr_charge', ""))
+            lien = st.text_input("🔗 Lien annonce", value=st.session_state.get('lien_charge', ""))
             
-            lien = st.text_input("🔗 Lien annonce", 
-                                 value=st.session_state.get('lien_charge', ""), 
-                                 help="URL vers l'annonce.")
         with c2:
             surface = st.number_input("Surface (m²)", 1, 500, 
                                       value=int(st.session_state.get('surface_charge', 50)), 

@@ -104,7 +104,7 @@ if check_password():
             d2.metric("Note Sécurité", f"{data['n']}/10", help="Basé sur les statistiques locales.")
             d3.metric("Source Data", data['label'])
 
-        # --- CALCULS ---
+# --- CALCULS ---
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
@@ -116,32 +116,32 @@ if check_password():
         cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
-        # 1. Points sur le Rendement (max 40)
-# Un rendement de 10% donne 40 points, un rendement de 5% donne 20 points.
-score_rendement = min(40, (rend * 4)) 
+        # --- NOUVELLE LOGIQUE DE SCORE SCI ---
+        # 1. Rendement (40 pts) : Un rendement de 10% donne 40 points (4 pts par %)
+        score_rendement = min(40, (rend * 4)) 
 
-# 2. Points sur le Cash-Flow (max 40)
-if cf_net > 0:
-    if cf_net >= obj_cf:
-        score_cf = 40  # Objectif atteint ou dépassé
-    else:
-        # Proportionnel entre 20 et 40 points si positif mais sous l'objectif
-        score_cf = 20 + (20 * (cf_net / obj_cf))
-else:
-    score_cf = 0  # Pénalité si négatif
+        # 2. Cash-Flow (40 pts) : 
+        if cf_net > 0:
+            if cf_net >= obj_cf:
+                score_cf = 40  # Objectif atteint
+            else:
+                # Si positif mais sous l'objectif, on donne entre 20 et 40 points
+                score_cf = 20 + (20 * (cf_net / obj_cf)) if obj_cf > 0 else 40
+        else:
+            score_cf = 0  # 0 point si le projet coûte de l'argent
 
-# 3. Points sur la Sécurité (max 20)
-# Ta note de 7/10 devient 14/20.
-score_secu = (data['n'] * 2)
+        # 3. Sécurité (20 pts) : Ta note sur 10 est doublée pour faire 20 points
+        score_secu = (data['n'] * 2)
 
-# Calcul final
-score = int(score_rendement + score_cf + score_secu)
+        # Total cumulé
+        score = int(score_rendement + score_cf + score_secu)
 
-# Malus Mixité (si logements sociaux > 40%)
-if data['s'] > 40:
-    score -= 15
+        # Malus Mixité Sociale (Si trop de social, on retire des points pour la revente)
+        if data['s'] > 40:
+            score -= 15
 
-score = max(0, min(100, score))
+        # On s'assure que le score reste entre 0 et 100
+        score = max(0, min(100, score))
 
         st.divider()
         st.markdown("### 🎯 Verdict SCI LBMA : Performance & Sécurité")

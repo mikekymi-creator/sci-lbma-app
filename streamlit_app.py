@@ -98,53 +98,41 @@ def obtenir_donnees_secteur(nom_ville):
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
-        with c1:
+with c1:
             nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Projet"))
             
-            # 1. On récupère le CP
+            # 1. Saisie du Code Postal
             cp_saisi = st.text_input("📮 Code Postal", value=st.session_state.get('cp_charge', "60000"))
             
             try:
-                # 2. On tente de charger les données
+                # 2. Chargement des données de référence
                 df_ref = charger_onglet("Data_Marche")
                 df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
 
                 if not df_filtre.empty:
                     liste_quartiers = df_filtre['Ville/Secteur'].unique().tolist()
+                    
+                    # On sélectionne le quartier
                     secteur_choisi = st.selectbox("🏘️ Quartier", options=liste_quartiers)
                     
-                    # On appelle la fonction
+                    # On appelle la fonction pour récupérer les chiffres
                     data_m = obtenir_donnees_secteur(secteur_choisi)
-                    p_ref, l_ref = data_m['p'], data_m['l']
-                    social_rate, note_sector = data_m['s'], data_m['n']
+                    p_ref = data_m['p']
+                    l_ref = data_m['l']
+                    social_rate = data_m['s']
+                    note_sector = data_m['n']
                     cp = secteur_choisi
                 else:
-                    st.warning("📍 CP inconnu. Valeurs par défaut appliquées.")
+                    st.warning("📍 CP inconnu dans 'Data_Marche'")
                     p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
                     cp = cp_saisi
+
             except Exception as e:
-                # SI CA PLANTE, ON FORCE DES VALEURS POUR QUE L'AFFICHAGE CONTINUE
-                st.error(f"Erreur de lecture Sheet : {e}")
+                st.error(f"Erreur technique : {e}")
                 p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
                 cp = cp_saisi
 
-            adr = st.text_input("📍 Adresse", value=st.session_state.get('adr_charge', ""))
-            lien = st.text_input("🔗 Lien", value=st.session_state.get('lien_charge', ""))
-                
-                # RÉCUPÉRATION DES DONNÉES (Via ta fonction)
-            data_m = obtenir_donnees_secteur(secteur_choisi)
-                p_ref = data_m['p']
-                l_ref = data_m['l']
-                social_rate = data_m['s']
-                note_sector = data_m['n']
-                
-                # La variable 'cp' devient le nom du secteur pour l'enregistrement
-                cp = secteur_choisi 
-            else:
-                st.warning("⚠️ CP absent de 'Data_Marche'")
-                p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
-                cp = cp_saisi
-
+            # 3. Reste des informations de localisation
             adr = st.text_input("📍 Adresse exacte", 
                                 value=st.session_state.get('adr_charge', ""), 
                                 help="Précision pour vos futures visites.")

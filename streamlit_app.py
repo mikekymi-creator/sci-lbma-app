@@ -53,21 +53,31 @@ if check_password():
 
     with tab1:
         st.sidebar.header("🏦 Financement")
+        
+        # Apport personnel
         apport = st.sidebar.number_input("Apport personnel (€)", 0, 
                                          value=int(st.session_state.get('apport_charge', 0)), 
                                          help="Somme injectée cash par la SCI.")
         
+        # Durée du prêt
         duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 
                                          value=int(st.session_state.get('duree_charge', 20)), 
                                          help="Durée du prêt immobilier.")
         
+        # Taux d'intérêt
         taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 
                                  float(st.session_state.get('taux_charge', 4.2)), 0.1, 
                                  help="Taux d'intérêt nominal hors assurance.")
         
+        # Frais de gestion et vacance
         frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 
                                     value=int(st.session_state.get('frais_g_charge', 8)), 
-                                    help="Détails : 5-7% gestion + 2-3% GLI + 1-2% vacance.")
+                                    help="Détails : 5-7% gestion agence + 2-3% assurance loyers impayés (GLI) + 1-2% provision pour vacance locative.")
+        
+        # --- L'OBJECTIF CASH-FLOW (L'élément manquant) ---
+        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, 
+                                         value=int(st.session_state.get('obj_cf_charge', 100)), 
+                                         help="Gain net mensuel visé. C'est ce seuil qui valide le score global.")
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)

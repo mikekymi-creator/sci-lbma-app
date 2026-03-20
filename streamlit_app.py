@@ -82,7 +82,8 @@ if check_password():
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence du quartier tiré de votre référentiel.")
-            prix_a = st.number_input("Prix achat net vendeur (€)", value=int(p_ref * surface), help="Votre prix d'achat négocié.")
+            # MODIFICATION ICI : Valeur fixe par défaut (100 000) au lieu de (p_ref * surface)
+            prix_a = st.number_input("Prix d'achat NET vendeur (€)", value=100000, step=1000, help="Votre prix d'achat négocié.")
             p_m2_reel = prix_a / surface
             diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100
             st.write(f"Prix au m² projet : **{round(p_m2_reel, 1)} €/m²**")
@@ -90,7 +91,8 @@ if check_password():
             else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus du marché")
         with col_m2:
             l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer HC de référence du secteur.")
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=int(l_ref * surface), help="Le loyer réel que vous prévoyez de demander.")
+            # MODIFICATION ICI : Valeur fixe par défaut (650) au lieu de (l_ref * surface)
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10, help="Le loyer réel que vous prévoyez de demander.")
             loyer_estime_total = l_ref * surface
             diff_l = ((loyer_s - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
             if abs(diff_l) < 10: st.info(f"📊 Loyer cohérent avec le marché ({int(loyer_estime_total)}€)")

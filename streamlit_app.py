@@ -37,21 +37,18 @@ if check_password():
             return pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
         except: return pd.DataFrame()
 
-    def obtenir_donnees_secteur(nom_ville):
+    # --- EN HAUT DU FICHIER (après les imports) ---
+
+def obtenir_donnees_secteur(nom_ville):
     """
-    Récupère les indicateurs de marché (Prix m2, Loyer, Note, Social) 
-    en cherchant le nom exact de la Ville/Secteur dans l'onglet de référence.
+    Récupère les indicateurs de marché en cherchant le nom du secteur.
     """
     try:
-        # 1. On charge l'onglet 'Data_Marche'
+        # Tout ce qui est sous le 'def' doit être décalé de 4 espaces
         df_ref = charger_onglet("Data_Marche") 
-        
-        # 2. On filtre pour trouver la ligne correspondant au quartier choisi
-        # Note : On s'assure que la colonne s'appelle bien 'Ville/Secteur'
         ligne = df_ref[df_ref['Ville/Secteur'] == nom_ville]
         
         if not ligne.empty:
-            # On extrait les données de la première ligne trouvée
             res = ligne.iloc[0]
             return {
                 'p': float(str(res.get('Prix_m2', 2000)).replace(',', '.')),
@@ -62,10 +59,11 @@ if check_password():
                 'label': nom_ville
             }
     except Exception as e:
-        st.error(f"Erreur lors de la lecture du secteur : {e}")
+        # Même le message d'erreur doit être aligné
+        print(f"Erreur secteur: {e}")
         
-    # Valeurs de secours si la ville n'est pas trouvée ou si le code plante
-    return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'cp': '00000', 'label': "Secteur Inconnu"}
+    # Valeurs de secours si la recherche échoue
+    return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'cp': '00000', 'label': "Inconnu"}
 
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])

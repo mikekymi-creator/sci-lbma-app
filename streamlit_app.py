@@ -99,30 +99,37 @@ def obtenir_donnees_secteur(nom_ville):
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
-            nom = st.text_input("Nom du projet", 
-                                value=st.session_state.get('nom_charge', "Appartement Test"), 
-                                help="Nom pour identifier le bien dans le comparateur.")
+            nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Projet"))
             
-            # --- ÉTAPE 1 : LE CODE POSTAL ---
-            cp_saisi = st.text_input("📮 Code Postal", 
-                                     value=st.session_state.get('cp_charge', "60000"), 
-                                     help="Entrez le CP pour filtrer les quartiers.")
+            # 1. On récupère le CP
+            cp_saisi = st.text_input("📮 Code Postal", value=st.session_state.get('cp_charge', "60000"))
             
-            # --- ÉTAPE 2 : FILTRAGE DYNAMIQUE DES QUARTIERS ---
-            df_ref = charger_onglet("Data_Marche")
-            # On filtre les lignes qui correspondent au CP saisi
-            df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
+            try:
+                # 2. On tente de charger les données
+                df_ref = charger_onglet("Data_Marche")
+                df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
 
-            if not df_filtre.empty:
-                liste_quartiers = df_filtre['Ville/Secteur'].unique().tolist()
-                
-                # Sélection du quartier/secteur
-                secteur_choisi = st.selectbox(
-                    "🏘️ Ville / Quartier", 
-                    options=liste_quartiers,
-                    index=liste_quartiers.index(st.session_state.get('cp_charge')) if st.session_state.get('cp_charge') in liste_quartiers else 0,
-                    help="Choisissez le secteur pour charger les prix du marché."
-                )
+                if not df_filtre.empty:
+                    liste_quartiers = df_filtre['Ville/Secteur'].unique().tolist()
+                    secteur_choisi = st.selectbox("🏘️ Quartier", options=liste_quartiers)
+                    
+                    # On appelle la fonction
+                    data_m = obtenir_donnees_secteur(secteur_choisi)
+                    p_ref, l_ref = data_m['p'], data_m['l']
+                    social_rate, note_sector = data_m['s'], data_m['n']
+                    cp = secteur_choisi
+                else:
+                    st.warning("📍 CP inconnu. Valeurs par défaut appliquées.")
+                    p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+                    cp = cp_saisi
+            except Exception as e:
+                # SI CA PLANTE, ON FORCE DES VALEURS POUR QUE L'AFFICHAGE CONTINUE
+                st.error(f"Erreur de lecture Sheet : {e}")
+                p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+                cp = cp_saisi
+
+            adr = st.text_input("📍 Adresse", value=st.session_state.get('adr_charge', ""))
+            lien = st.text_input("🔗 Lien", value=st.session_state.get('lien_charge', ""))
                 
                 # RÉCUPÉRATION DES DONNÉES (Via ta fonction)
                 data_m = obtenir_donnees_secteur(secteur_choisi)

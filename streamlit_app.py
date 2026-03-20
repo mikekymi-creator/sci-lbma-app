@@ -55,25 +55,24 @@ if check_password():
         st.sidebar.header("🏦 Financement")
         apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée cash par la SCI.")
         duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt immobilier.")
-        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1, help="Taux d'intérêt nominal hors assurance.")
-        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, 
-                                    help="Détails : 5-7% gestion agence + 2-3% assurance loyers impayés (GLI) + 1-2% provision pour vacance locative.")
+        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1, help="Taux d'intérêt nominal.")
+        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="5-7% gestion + 2-3% GLI + 1-2% vacance.")
         obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100, help="Gain net mensuel visé.")
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
-            nom = st.text_input("Nom du projet", "Appartement Test", help="Nom pour identifier le bien.")
-            cp = st.text_input("Code Postal", "60000", help="Charge les prix du marché via votre Google Sheet.")
-            adr = st.text_input("📍 Adresse exacte", "", help="Précision pour vos futures visites.")
-            lien = st.text_input("🔗 Lien annonce", "", help="URL vers l'annonce.")
+            nom = st.text_input("Nom du projet", "Appartement Test", help="Nom pour le comparateur.")
+            cp = st.text_input("Code Postal", "60000", help="Charge les prix du marché.")
+            adr = st.text_input("📍 Adresse exacte", "", help="Localisation précise.")
+            lien = st.text_input("🔗 Lien annonce", "", help="URL de l'annonce.")
         with c2:
-            surface = st.number_input("Surface (m²)", 1, 500, 50, help="Surface habitable Carrez du bien.")
-            dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4, help="F/G ajoute 500€/m² de travaux d'isolation.")
-            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 5000, help="Budget de rénovation estimé.")
+            surface = st.number_input("Surface (m²)", 1, 500, 50, help="Surface Carrez.")
+            dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4, help="F/G = +500€/m² travaux.")
+            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 5000, help="Rénovation estimée.")
         with c3:
-            tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(surface*15), help="Montant annuel de la taxe foncière.")
-            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 400, help="Charges annuelles de copropriété.")
+            tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(surface*15), help="Taxe foncière annuelle.")
+            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 400, help="Charges annuelles.")
 
         st.divider()
         st.markdown("### 🧠 Intelligence de Marché")
@@ -81,41 +80,35 @@ if check_password():
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence du quartier.")
-            # MODIF : Valeur déconnectée de la surface en temps réel
-            prix_a = st.number_input("Prix d'achat NET vendeur (€)", value=100000, step=1000, help="Saisissez votre prix d'achat final.")
+            p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix secteur.")
+            prix_a = st.number_input("Prix d'achat NET vendeur (€)", value=100000, step=1000, help="Prix négocié (indépendant de la surface).")
             p_m2_reel = prix_a / surface
             diff_p = ((p_m2_reel - p_ref) / p_ref) * 100
             st.write(f"Coût projet : **{round(p_m2_reel, 1)} €/m²**")
-            if diff_p <= 0: st.success(f"✅ {round(abs(diff_p),1)}% sous le marché ({p_ref}€/m²)")
-            else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus du marché ({p_ref}€/m²)")
+            if diff_p <= 0: st.success(f"✅ {round(abs(diff_p),1)}% sous le marché")
+            else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus")
         with col_m2:
-            l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer HC de référence du secteur.")
-            # MODIF : Valeur déconnectée de la surface en temps réel
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10, help="Le loyer que vous allez réellement percevoir.")
-            loyer_estime_total = l_ref * surface
-            st.info(f"Estimation marché pour {surface}m² : **{int(loyer_estime_total)}€**")
+            l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer secteur.")
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10, help="Loyer visé (indépendant de la surface).")
+            st.info(f"Marché pour {surface}m² : **{int(l_ref * surface)}€**")
 
         if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
-            d1, d2, d3 = st.columns(3)
+            d1, d2 = st.columns(2)
             d1.metric("Logements Sociaux", f"{data['s']}%")
             d2.metric("Note Sécurité", f"{data['n']}/10")
-            d3.metric("Source Data", data['label'])
 
-        # --- CALCULS ---
+        # Calculs
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
         tm = (taux/100)/12
         mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
-        frais_gestion_mensuels = (loyer_s * (frais_g/100))
-        ch_mensuelles = (tf + charges) / 12 + frais_gestion_mensuels
+        ch_mensuelles = (tf + charges) / 12 + (loyer_s * (frais_g/100))
         amort_an = ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)
         is_an = max(0, ((loyer_s*12) - (ch_mensuelles*12) - (emprunt*taux/100) - amort_an) * 0.15)
         cf_net = round(loyer_s - mensualite - ch_mensuelles - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
-        # --- VERDICT ---
         st.divider()
         st.markdown("### 🎯 Verdict SCI LBMA")
         score = 50 + (30 if cf_net >= obj_cf else 0) - (20 if data['s'] > 45 else 0) - (30 if cf_net < 0 else 0)
@@ -125,23 +118,19 @@ if check_password():
         with v1:
             color = "green" if score >= 70 else "orange" if score >= 40 else "red"
             st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
-        with v2:
-            st.metric("Cash-Flow Net", f"{cf_net} €/m")
-        with v3:
-            st.metric("Rendement Brut", f"{rend} %")
+        with v2: st.metric("Cash-Flow Net", f"{cf_net} €/m")
+        with v3: st.metric("Rendement Brut", f"{rend} %")
         with v4:
             if cf_net < 0: st.error("❌ RENTABILITÉ NÉGATIVE")
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ")
             else: st.info("📊 PROJET MOYEN")
 
-        # MODIF : Détail du calcul comptable
-        with st.expander("📊 Détail du calcul (Comptabilité mensuelle)"):
-            st.write(f"➕ **Loyer encaissé :** {loyer_s} €")
+        with st.expander("📊 Détail du calcul comptable"):
+            st.write(f"➕ **Loyer mensuel :** {loyer_s} €")
             st.write(f"➖ **Mensualité Crédit :** {round(mensualite, 2)} €")
-            st.write(f"➖ **Charges & Taxes (moyenne/mois) :** {round(ch_mensuelles, 2)} €")
-            st.write(f"➖ **Impôt (IS estimé/mois) :** {round(is_an/12, 2)} €")
-            st.write("---")
-            st.write(f"**= Cash-flow Net : {cf_net} €**")
+            st.write(f"➖ **Charges & Taxes :** {round(ch_mensuelles, 2)} €")
+            st.write(f"➖ **Impôt (IS) :** {round(is_an/12, 2)} €")
+            st.write(f"**= NET : {cf_net} €**")
 
         if st.button("💾 Ajouter au comparateur", use_container_width=True):
             client = get_gsheet_client()
@@ -153,7 +142,7 @@ if check_password():
             st.rerun()
 
     with tab2:
-        st.subheader("⚖️ Arbitrage de la SCI LBMA")
+        st.subheader("⚖️ Comparateur de Biens")
         df_b = charger_onglet("Biens")
         if not df_b.empty:
             client = get_gsheet_client()
@@ -162,17 +151,15 @@ if check_password():
             for idx, row in df_b.iterrows():
                 with grid[idx % 3]:
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
-                        <h4 style="margin:0;">{row['Nom']}</h4>
-                        <p style="color:gray; font-size:12px;">📍 {row['Secteur']} | {row['Adresse']}</p>
-                        <h2 style="color:orange; margin:5px 0;">{row['Score']}/100</h2>
-                        <p>💰 CF : <b>{row['CF']} €/m</b><br>📈 Rend : <b>{row['Rend']} %</b></p>
+                        <h4>{row.get('Nom', 'N/A')}</h4>
+                        <p style="color:gray; font-size:12px;">📍 {row.get('Secteur', 'N/A')}</p>
+                        <h2 style="color:orange; margin:5px 0;">{row.get('Score', 0)}/100</h2>
+                        <p>💰 CF : <b>{row.get('CF', 0)} €</b> | 📈 Rend : <b>{row.get('Rend', 0)} %</b></p>
                     </div>""", unsafe_allow_html=True)
                     c_del, c_link = st.columns(2)
                     with c_del:
                         if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
-                            ws.delete_rows(idx + 2)
-                            st.cache_data.clear()
-                            st.rerun()
+                            ws.delete_rows(idx + 2); st.cache_data.clear(); st.rerun()
                     with c_link:
-                        if 'Lien' in row and row['Lien']:
-                            st.link_button("🌐 Voir l'annonce", row['Lien'], use_container_width=True)
+                        l_url = row.get('Lien', '')
+                        if l_url: st.link_button("🌐 Voir", l_url, use_container_width=True)

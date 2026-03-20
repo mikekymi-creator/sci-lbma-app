@@ -162,38 +162,51 @@ if check_password():
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ\n\nConforme aux objectifs.")
             else: st.info("📊 PROJET MOYEN")
 
-            if st.button("💾 Enregistrer / Mettre à jour", use_container_width=True):
-            client = get_gsheet_client()
-            sh = client.open("SCI_LBMA_Database").worksheet("Biens")
-            
-            # On prépare TOUTES les données (18 colonnes au total)
-            nouvelle_ligne = [
-                nom, cp, score, cf_net, rend, adr, lien,
-                surface, dpe, travaux, tf, charges, apport, duree, taux, frais_g,
-                datetime.now().strftime("%d/%m/%Y"), str(time.time())
-            ]
-            
-            data_all = sh.get_all_records()
-            df_exist = pd.DataFrame(data_all)
-            
-            # Mise à jour si le nom existe déjà, sinon ajout
-            index_existant = -1
-            if not df_exist.empty and 'Nom' in df_exist.columns:
-                matches = df_exist.index[df_exist['Nom'] == nom].tolist()
-                if matches: index_existant = matches[0] + 2
-            
-            if index_existant != -1:
-                sh.update(f"A{index_existant}:R{index_existant}", [nouvelle_ligne])
-                st.success(f"🔄 Projet '{nom}' mis à jour !")
-            else:
-                sh.append_row(nouvelle_ligne)
-                st.balloons()
-                st.success(f"✅ Nouveau projet enregistré !")
-            
-            st.cache_data.clear()
-            time.sleep(1)
-            st.rerun()
-
+ 
+# --- ÉTAPE 1 : BOUTON ENREGISTRER / METTRE À JOUR ---
+        if st.button("💾 Enregistrer / Mettre à jour", use_container_width=True):
+            try:
+                client = get_gsheet_client()
+                sh = client.open("SCI_LBMA_Database").worksheet("Biens")
+                
+                # On prépare la ligne avec TOUS les critères pour pouvoir les recharger plus tard
+                # Ordre suggéré pour ton Sheet : 
+                # Nom, CP, Score, CF, Rend, Adresse, Lien, Surface, DPE, Travaux, TF, Charges, Apport, Durée, Taux, Frais_G, Date, ID
+                nouvelle_ligne = [
+                    nom, cp, score, cf_net, rend, adr, lien,
+                    surface, dpe, travaux, tf, charges, apport, duree, taux, frais_g,
+                    datetime.now().strftime("%d/%m/%Y"), str(time.time())
+                ]
+                
+                # Lecture de l'existant pour éviter les doublons
+                data_all = sh.get_all_records()
+                df_exist = pd.DataFrame(data_all)
+                
+                index_existant = -1
+                if not df_exist.empty and 'Nom' in df_exist.columns:
+                    # On cherche si le nom saisi existe déjà dans la colonne 'Nom'
+                    matches = df_exist.index[df_exist['Nom'] == nom].tolist()
+                    if matches:
+                        index_existant = matches[0] + 2 # +2 (1 pour l'entête, 1 car Sheet commence à 1)
+                
+                if index_existant != -1:
+                    # MISE À JOUR : On écrase la ligne existante (Plage A à R = 18 colonnes)
+                    range_label = f"A{index_existant}:R{index_existant}"
+                    sh.update(range_label, [nouvelle_ligne])
+                    st.success(f"🔄 Le projet '{nom}' a été mis à jour avec succès !")
+                else:
+                    # CRÉATION : On ajoute une nouvelle ligne
+                    sh.append_row(nouvelle_ligne)
+                    st.balloons()
+                    st.success(f"✅ Nouveau projet '{nom}' ajouté au comparateur !")
+                
+                # Nettoyage du cache pour forcer la lecture des nouvelles données dans l'onglet 2
+                st.cache_data.clear()
+                time.sleep(1)
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"Erreur lors de l'enregistrement : {e}")
     with tab2:
         st.subheader("⚖️ Arbitrage de la SCI LBMA")
         df_b = charger_onglet("Biens")

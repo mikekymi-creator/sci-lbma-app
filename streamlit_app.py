@@ -177,19 +177,26 @@ if check_password():
             grid = st.columns(3)
             
             for idx, row in df_b.iterrows():
-                # --- NETTOYAGE STRICT VIRGULE -> POINT ---
-                def corriger_format(valeur):
+                # --- STRATÉGIE DE DÉTECTION DÉCIMALE ---
+                def force_decimal(valeur):
                     try:
-                        # Force la transformation de "52,65" en "52.65"
-                        s_val = str(valeur).replace(',', '.').strip()
-                        return float(s_val)
-                    except (ValueError, TypeError):
+                        # 1. On nettoie les espaces et on force en texte
+                        txt = str(valeur).replace(',', '.').strip()
+                        num = float(txt)
+                        
+                        # 2. Si le chiffre est énorme (ex: 5265), c'est que la virgule a sauté
+                        # On part du principe qu'un CF ou un Rendement > 500 sur un seul lot 
+                        # est une erreur de virgule (5265 devient 52.65)
+                        if abs(num) > 500:
+                            return num / 100
+                        return num
+                    except:
                         return 0.0
 
-                # On applique la correction sur chaque donnée numérique
-                d_score = int(corriger_format(row['Score']))
-                d_cf = round(corriger_format(row['CF']), 2)
-                d_rend = round(corriger_format(row['Rend']), 2)
+                # On applique la détection
+                d_score = int(force_decimal(row['Score']))
+                d_cf = round(force_decimal(row['CF']), 2)
+                d_rend = round(force_decimal(row['Rend']), 2)
 
                 with grid[idx % 3]:
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">

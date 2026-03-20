@@ -82,7 +82,6 @@ if check_password():
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence du quartier tiré de votre référentiel.")
-            # MODIFICATION ICI : Valeur fixe par défaut (100 000) au lieu de (p_ref * surface)
             prix_a = st.number_input("Prix d'achat NET vendeur (€)", value=100000, step=1000, help="Votre prix d'achat négocié.")
             p_m2_reel = prix_a / surface
             diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100
@@ -91,7 +90,6 @@ if check_password():
             else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus du marché")
         with col_m2:
             l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer HC de référence du secteur.")
-            # MODIFICATION ICI : Valeur fixe par défaut (650) au lieu de (l_ref * surface)
             loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10, help="Le loyer réel que vous prévoyez de demander.")
             loyer_estime_total = l_ref * surface
             diff_l = ((loyer_s - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
@@ -105,7 +103,7 @@ if check_password():
             d2.metric("Note Sécurité", f"{data['n']}/10", help="Basé sur les statistiques locales du secteur.")
             d3.metric("Source Data", data['label'])
 
-        # Calculs
+        # --- CALCULS (Placés AVANT le Verdict pour que le score s'affiche) ---
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
@@ -117,10 +115,15 @@ if check_password():
         cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
+        # LOGIQUE DU SCORE (Revue pour éviter le 0 permanent)
+        score = 50 
+        if cf_net >= obj_cf: score += 30
+        if cf_net < 0: score -= 30
+        if data['s'] > 45: score -= 20
+        score = max(0, min(100, score))
+
         st.divider()
         st.markdown("### 🎯 Verdict SCI LBMA : Performance & Sécurité")
-        score = 50 + (30 if cf_net >= obj_cf else 0) - (20 if data['s'] > 45 else 0) - (30 if cf_net < 0 else 0)
-        score = max(0, min(100, score))
 
         v1, v2, v3, v4 = st.columns([1, 1, 1, 1.2])
         with v1:

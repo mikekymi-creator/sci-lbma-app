@@ -40,30 +40,20 @@ if check_password():
     # --- EN HAUT DU FICHIER (après les imports) ---
 
 def obtenir_donnees_secteur(nom_ville):
-    """
-    Récupère les indicateurs de marché en cherchant le nom du secteur.
-    """
     try:
-        # Tout ce qui est sous le 'def' doit être décalé de 4 espaces
         df_ref = charger_onglet("Data_Marche") 
         ligne = df_ref[df_ref['Ville/Secteur'] == nom_ville]
-        
         if not ligne.empty:
             res = ligne.iloc[0]
             return {
                 'p': float(str(res.get('Prix_m2', 2000)).replace(',', '.')),
                 'l': float(str(res.get('Loyer_m2', 12)).replace(',', '.')),
                 's': int(res.get('Social', 20)),
-                'n': int(res.get('Note', 5)),
-                'cp': str(res.get('CP', '00000')),
-                'label': nom_ville
+                'n': int(res.get('Note', 5))
             }
-    except Exception as e:
-        # Même le message d'erreur doit être aligné
-        print(f"Erreur secteur: {e}")
-        
-    # Valeurs de secours si la recherche échoue
-    return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'cp': '00000', 'label': "Inconnu"}
+    except:
+        pass
+    return {'p': 2000, 'l': 12, 's': 20, 'n': 5}
 
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
@@ -99,46 +89,39 @@ def obtenir_donnees_secteur(nom_ville):
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
 
-
-
-        
+        # --- COLONNE 1 : LOCALISATION ---
         with c1:
-            # 1. INITIALISATION (Pour éviter la page blanche si le sheet plante)
-            p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
-            cp = "60000" 
-            
             nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Projet"))
             cp_saisi = st.text_input("📮 Code Postal", value=st.session_state.get('cp_charge', "60000"))
             
-            # 2. TENTATIVE DE CHARGEMENT
+            # Initialisation par défaut pour éviter le crash
+            p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+            cp = cp_saisi
+
             try:
                 df_ref = charger_onglet("Data_Marche")
-                # On filtre
                 df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
 
                 if not df_filtre.empty:
                     liste_quartiers = df_filtre['Ville/Secteur'].unique().tolist()
                     secteur_choisi = st.selectbox("🏘️ Quartier", options=liste_quartiers)
                     
-                    # On récupère les vraies données
                     data_m = obtenir_donnees_secteur(secteur_choisi)
-                    p_ref, l_ref = data_m['p'], data_m['l']
-                    social_rate, note_sector = data_m['s'], data_m['n']
+                    p_ref, l_ref, social_rate, note_sector = data_m['p'], data_m['l'], data_m['s'], data_m['n']
                     cp = secteur_choisi
                 else:
-                    st.info("ℹ️ CP non répertorié. Saisie manuelle possible.")
-                    cp = cp_saisi
+                    st.info("ℹ️ CP inconnu. Valeurs par défaut utilisées.")
             except Exception as e:
-                st.error(f"Erreur technique : {e}")
-                cp = cp_saisi
+                st.error(f"Erreur technique Sheet: {e}")
 
             adr = st.text_input("📍 Adresse exacte", value=st.session_state.get('adr_charge', ""))
             lien = st.text_input("🔗 Lien annonce", value=st.session_state.get('lien_charge', ""))
-            
+
+        # --- COLONNE 2 : CARACTÉRISTIQUES ---
         with c2:
             surface = st.number_input("Surface (m²)", 1, 500, 
-                                      value=int(st.session_state.get('surface_charge', 50)), 
-                                      help="Surface habitable Carrez du bien.")
+                                     value=int(st.session_state.get('surface_charge', 50)), 
+                                     help="Surface habitable Carrez du bien.")
             
             dpe_list = ["A","B","C","D","E","F","G"]
             dpe_val = st.session_state.get('dpe_charge', "E")
@@ -147,16 +130,20 @@ def obtenir_donnees_secteur(nom_ville):
                                help="F/G ajoute automatiquement 500€/m² de travaux d'isolation.")
             
             travaux = st.number_input("Budget Travaux (€)", 0, 500000, 
-                                      value=int(st.session_state.get('travaux_charge', 5000)), 
-                                      help="Budget de rénovation estimé.")
+                                     value=int(st.session_state.get('travaux_charge', 5000)), 
+                                     help="Budget de rénovation estimé.")
+
+        # --- COLONNE 3 : CHARGES ---
         with c3:
             tf = st.number_input("Taxe Foncière (€)", 0, 5000, 
                                  value=int(st.session_state.get('tf_charge', surface*15)), 
                                  help="Montant annuel de la taxe foncière.")
             
             charges = st.number_input("Charges Copro (€/an)", 0, 10000, 
-                                      value=int(st.session_state.get('charges_charge', 400)), 
-                                      help="Charges annuelles de copropriété.")
+                                     value=int(st.session_state.get('charges_charge', 400)), 
+                                     help="Charges annuelles de copropriété.")
+            
+        
 
         
         st.divider()

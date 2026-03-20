@@ -141,7 +141,7 @@ def obtenir_donnees_secteur(nom_ville):
             lien = st.text_input("🔗 Lien annonce", 
                                  value=st.session_state.get('lien_charge', ""), 
                                  help="URL vers l'annonce.")
-            with c2:
+        with c2:
             surface = st.number_input("Surface (m²)", 1, 500, 
                                       value=int(st.session_state.get('surface_charge', 50)), 
                                       help="Surface habitable Carrez du bien.")

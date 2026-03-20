@@ -105,17 +105,48 @@ if check_password():
                                 value=st.session_state.get('nom_charge', "Appartement Test"), 
                                 help="Nom pour identifier le bien dans le comparateur.")
             
-            cp = st.text_input("Code Postal", 
-                               value=st.session_state.get('cp_charge', "60000"), 
-                               help="Charge les prix du marché via votre Google Sheet.")
+            # --- ÉTAPE 1 : LE CODE POSTAL ---
+            cp_saisi = st.text_input("📮 Code Postal", 
+                                     value=st.session_state.get('cp_charge', "60000"), 
+                                     help="Entrez le CP pour filtrer les quartiers.")
             
+            # --- ÉTAPE 2 : FILTRAGE DYNAMIQUE DES QUARTIERS ---
+            df_ref = charger_onglet("Data_Marche")
+            # On filtre les lignes qui correspondent au CP saisi
+            df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
+
+            if not df_filtre.empty:
+                liste_quartiers = df_filtre['Ville/Secteur'].unique().tolist()
+                
+                # Sélection du quartier/secteur
+                secteur_choisi = st.selectbox(
+                    "🏘️ Ville / Quartier", 
+                    options=liste_quartiers,
+                    index=liste_quartiers.index(st.session_state.get('cp_charge')) if st.session_state.get('cp_charge') in liste_quartiers else 0,
+                    help="Choisissez le secteur pour charger les prix du marché."
+                )
+                
+                # RÉCUPÉRATION DES DONNÉES (Via ta fonction)
+                data_m = obtenir_donnees_secteur(secteur_choisi)
+                p_ref = data_m['p']
+                l_ref = data_m['l']
+                social_rate = data_m['s']
+                note_sector = data_m['n']
+                
+                # La variable 'cp' devient le nom du secteur pour l'enregistrement
+                cp = secteur_choisi 
+            else:
+                st.warning("⚠️ CP absent de 'Data_Marche'")
+                p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+                cp = cp_saisi
+
             adr = st.text_input("📍 Adresse exacte", 
                                 value=st.session_state.get('adr_charge', ""), 
                                 help="Précision pour vos futures visites.")
             
             lien = st.text_input("🔗 Lien annonce", 
                                  value=st.session_state.get('lien_charge', ""), 
-                                 help="URL vers l'annonce (LeBonCoin, SeLoger, etc.).")
+                                 help="URL vers l'annonce.")
         with c2:
             surface = st.number_input("Surface (m²)", 1, 500, 
                                       value=int(st.session_state.get('surface_charge', 50)), 

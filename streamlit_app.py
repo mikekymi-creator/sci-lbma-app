@@ -268,14 +268,14 @@ if check_password():
             except Exception as e:
                 st.error(f"Erreur technique : {e}")
     with tab2:
-        st.subheader("⚖️ Arbitrage de la SCI LBMA")
+        st.subheader("⚖️ Tableau Comparatif SCI LBMA")
         df_b = charger_onglet("Biens")
+        
         if not df_b.empty:
             client = get_gsheet_client()
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
-            grid = st.columns(3)
             
-# --- ENTÊTES DU TABLEAU (À mettre une seule fois avant la boucle) ---
+            # --- 1. ENTÊTES DU TABLEAU ---
             h1, h2, h3, h4, h5 = st.columns([2.5, 1, 1, 1, 2])
             h1.write("**🏠 Bien & Adresse**")
             h2.write("**🎯 Score**")
@@ -284,69 +284,80 @@ if check_password():
             h5.write("**⚙️ Actions**")
             st.divider()
 
+            # --- 2. LA BOUCLE D'AFFICHAGE ---
             for idx, row in df_b.iterrows():
-                # --- STRATÉGIE DE DÉTECTION DÉCIMALE (Ta fonction) ---
-                def force_decimal(valeur):
+                
+                # FONCTION DE CONVERSION UNIVERSELLE (Point as decimal)
+                def to_f(valeur):
                     try:
-                        txt = str(valeur).replace(',', '.').strip()
-                        num = float(txt)
-                        if abs(num) > 500: return num / 100
-                        return num
-                    except: return 0.0
+                        # Nettoie les espaces et force le format numérique standard
+                        txt = str(valeur).replace(' ', '').replace(',', '.').strip()
+                        return float(txt)
+                    except:
+                        return 0.0
 
-                # Données calculées
-                d_score = int(force_decimal(row.get('Score', 0)))
-                d_cf = round(force_decimal(row.get('CF', 0)), 2)
-                d_rend = round(force_decimal(row.get('Rend', 0)), 2)
+                # Préparation des données pour l'affichage
+                d_score = int(to_f(row.get('Score', 0)))
+                d_cf = to_f(row.get('CF', 0))
+                d_rend = to_f(row.get('Rend', 0))
 
-                # --- AFFICHAGE EN LIGNE (TABLEAU) ---
+                # --- LIGNE DE DONNÉES ---
                 c1, c2, c3, c4, c5 = st.columns([2.5, 1, 1, 1, 2])
                 
-                # Colonne 1 : Infos principales
-                c1.markdown(f"**{row.get('Nom', 'Sans nom')}**\n\n<small>📍 {row.get('Secteur', '-')} | {row.get('Adresse', '-')}</small>", unsafe_allow_html=True)
+                # Nom et Localisation
+                c1.markdown(f"**{row.get('Nom', 'Sans nom')}**\n\n<small>📍 {row.get('CP', '-')} | {row.get('Adresse', '-')}</small>", unsafe_allow_html=True)
                 
-                # Colonnes chiffres
+                # Chiffres clés
                 c2.write(f"**{d_score}/100**")
-                c3.write(f"{d_cf} €")
-                c4.write(f"{d_rend} %")
+                c3.write(f"{d_cf:.2f} €")
+                c4.write(f"{d_rend:.2f} %")
                 
-                # Colonne Actions (Les 3 boutons)
+                # --- ZONE D'ACTIONS ---
                 b_edit, b_link, b_del = c5.columns(3)
                 
                 with b_edit:
                     if st.button("📝", key=f"ed_{idx}", help="Charger pour modifier"):
-                        # ON REMPLIT LA MÉMOIRE (Session State)
+                        # CHARGEMENT DANS LA MÉMOIRE (Session State)
+                        # Texte
                         st.session_state['nom_charge'] = row.get('Nom', '')
                         st.session_state['cp_charge'] = str(row.get('CP', ''))
                         st.session_state['adr_charge'] = row.get('Adresse', '')
                         st.session_state['lien_charge'] = row.get('Lien', '')
-                        st.session_state['surface_charge'] = force_decimal(row.get('Surface', 50))
                         st.session_state['dpe_charge'] = row.get('DPE', 'E')
-                        st.session_state['travaux_charge'] = force_decimal(row.get('Travaux', 0))
-                        st.session_state['tf_charge'] = force_decimal(row.get('TF', 0))
-                        st.session_state['charges_charge'] = force_decimal(row.get('Charges', 0))
-                        st.session_state['apport_charge'] = force_decimal(row.get('Apport', 0))
-                        st.session_state['duree_charge'] = force_decimal(row.get('Duree', 20))
-                        st.session_state['taux_charge'] = force_decimal(row.get('Taux', 4.2))
-                        st.session_state['frais_g_charge'] = force_decimal(row.get('Gestion', 8))
-                        st.session_state['obj_cf_charge'] = force_decimal(row.get('Obj_CF', 100))
-                        st.session_state['prix_a_charge'] = force_decimal(row.get('Prix_Achat', 100000))
-                        st.session_state['loyer_s_charge'] = force_decimal(row.get('Loyer', 650))
+
+                        # Chiffres financiers (Conversion directe via to_f)
+                        st.session_state['prix_a_charge'] = to_f(row.get('Prix_Achat', 100000))
+                        st.session_state['loyer_s_charge'] = to_f(row.get('Loyer', 650))
+                        st.session_state['surface_charge'] = to_f(row.get('Surface', 50))
+                        st.session_state['travaux_charge'] = to_f(row.get('Travaux', 0))
+                        st.session_state['tf_charge'] = to_f(row.get('TF', 0))
+                        st.session_state['charges_charge'] = to_f(row.get('Charges', 0))
+                        st.session_state['apport_charge'] = to_f(row.get('Apport', 0))
+                        st.session_state['duree_charge'] = int(to_f(row.get('Duree', 20)))
+                        st.session_state['taux_charge'] = to_f(row.get('Taux', 4.2))
+                        st.session_state['frais_g_charge'] = int(to_f(row.get('Gestion', 8)))
+                        st.session_state['obj_cf_charge'] = to_f(row.get('Obj_CF', 100))
                         
                         st.success("✅ Données prêtes !")
                         time.sleep(0.5)
                         st.rerun()
 
                 with b_link:
-                    lien_url = row.get('Lien', '')
-                    if lien_url and str(lien_url).startswith('http'):
-                        st.link_button("🌐", str(lien_url))
+                    url = row.get('Lien', '')
+                    if url and str(url).startswith('http'):
+                        st.link_button("🌐", str(url))
                     else:
-                        st.button("🚫", key=f"no_l_{idx}", disabled=True, help="Pas de lien")
-
+                        st.button("🚫", key=f"no_l_{idx}", disabled=True)
+                
                 with b_del:
                     if st.button("🗑️", key=f"del_{idx}"):
                         ws.delete_rows(idx + 2)
+                        st.cache_data.clear()
+                        st.rerun()
+                
+                st.divider()
+        else:
+            st.info("💡 Aucun bien dans le comparateur. Enregistrez votre première analyse !")
                         st.cache_data.clear()
                         st.rerun()
                 

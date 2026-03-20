@@ -29,7 +29,7 @@ if check_password():
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         return gspread.authorize(creds)
 
-    @st.cache_data(ttl=10) # Cache très court pour voir les suppressions/ajouts vite
+    @st.cache_data(ttl=5) # Cache ultra-court pour la réactivité
     def charger_onglet(nom_onglet):
         try:
             client = get_gsheet_client()
@@ -40,7 +40,7 @@ if check_password():
     def obtenir_donnees_secteur(cp_saisi):
         df_ref = charger_onglet("Referentiel_Secteurs")
         res = {"p": 1950, "l": 12.0, "s": 20, "n": 7, "label": "Standard France"}
-        if not df_ref.empty:
+        if not df_ref.empty and "CP" in df_ref.columns:
             df_ref['CP'] = df_ref['CP'].astype(str)
             match = df_ref[df_ref['CP'] == str(cp_saisi)]
             if not match.empty:
@@ -48,32 +48,32 @@ if check_password():
                 res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": "Référentiel Sheet"}
         return res
 
-    # --- 3. INTERFACE ---
+    # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
 
     with tab1:
         # Sidebar Financement
         st.sidebar.header("🏦 Financement")
-        apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée par la SCI.")
-        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du crédit immobilier.")
+        apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée cash par la SCI.")
+        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt.")
         taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1, help="Taux d'intérêt nominal.")
-        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="Provision pour frais d'agence et mois vides.")
-        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", 100, help="Surplus net mensuel visé.")
+        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="Provision pour frais de gestion et vacances locatives.")
+        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", 100, help="Votre objectif de gain net mensuel.")
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
-            nom = st.text_input("Nom du projet", "Appartement Test", help="Identifiant pour le comparateur.")
-            cp = st.text_input("Code Postal", "60000", help="Charge les données marché du secteur.")
-            adr = st.text_input("📍 Adresse exacte", "", help="Mémoire de l'emplacement précis.")
-            lien = st.text_input("🔗 Lien annonce", "", help="URL vers LeBonCoin ou agence.")
+            nom = st.text_input("Nom du projet", "Appartement Test", help="Nom pour identifier le bien.")
+            cp = st.text_input("Code Postal", "60000", help="Charge les données marché via Google Sheet.")
+            adr = st.text_input("📍 Adresse exacte", "", help="Précision pour vos futures visites.")
+            lien = st.text_input("🔗 Lien annonce", "", help="Lien vers l'annonce immobilière.")
         with c2:
-            surface = st.number_input("Surface (m²)", 1, 500, 50, help="Surface habitable Carrez.")
-            dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4, help="F/G ajoute 500€/m² de travaux d'isolation.")
-            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 5000, help="Budget rénovation (réglable dès 0€).")
+            surface = st.number_input("Surface (m²)", 1, 500, 50, help="Surface Carrez du bien.")
+            dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4, help="F/G ajoute automatiquement 500€/m² de travaux.")
+            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 5000, help="Budget de rénovation estimé.")
         with c3:
             tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(surface*15), help="Montant annuel de la taxe foncière.")
-            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 400, help="Charges de copropriété annuelles.")
+            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 400, help="Charges annuelles de copropriété.")
 
         # Intelligence Marché
         st.divider()
@@ -82,14 +82,16 @@ if check_password():
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            p_ref = st.number_input("Prix m² marché (€/m²)", value=int(data['p']), help="Prix de référence secteur.")
-            prix_a = st.number_input("Prix achat net vendeur (€)", value=int(p_ref * surface))
+            p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence du quartier.")
+            prix_a = st.number_input("Prix achat net vendeur (€)", value=int(p_ref * surface), help="Votre prix d'achat négocié.")
+            p_m2_reel = prix_a / surface
             diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100
+            st.write(f"Prix au m² projet : **{round(p_m2_reel, 1)} €/m²**")
             if diff_p <= 0: st.success(f"✅ {round(abs(diff_p),1)}% sous le marché")
             else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus")
         with col_m2:
-            l_ref = st.number_input("Loyer m² marché (€/m²)", value=float(data['l']), help="Loyer de référence secteur.")
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=int(l_ref * surface))
+            l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer de référence du secteur.")
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=int(l_ref * surface), help="Loyer que vous allez percevoir.")
             st.info(f"Marché estimé : {int(l_ref * surface)}€")
 
         # Calculs
@@ -98,8 +100,9 @@ if check_password():
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
         tm = (taux/100)/12
         mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
-        ch_an = tf + charges + (loyer_s * 12 * (f_g/100))
-        is_an = max(0, ((loyer_s*12) - ch_an - (emprunt*taux/100) - ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)) * 0.15)
+        ch_an = tf + charges + (loyer_s * 12 * (frais_g/100))
+        amort_an = ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)
+        is_an = max(0, ((loyer_s*12) - ch_an - (emprunt*taux/100) - amort_an) * 0.15)
         cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
@@ -129,6 +132,8 @@ if check_password():
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database").worksheet("Biens")
             sh.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, cp, score, cf_net, rend, adr, lien])
+            st.cache_data.clear()
+            st.success("Enregistré !")
             st.rerun()
 
     with tab2:
@@ -140,16 +145,18 @@ if check_password():
             grid = st.columns(3)
             for idx, row in df_b.iterrows():
                 with grid[idx % 3]:
-                    st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px;">
-                        <h4>{row['Nom']} ({row['Secteur']})</h4>
-                        <h2 style="color:orange;">{row['Score']}/100</h2>
-                        <p>CF : {row['CF']}€ | Rend : {row['Rend']}%</p>
+                    st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
+                        <h4 style="margin:0;">{row['Nom']}</h4>
+                        <p style="color:gray; font-size:12px;">📍 {row['Secteur']}</p>
+                        <h2 style="color:orange; margin:5px 0;">{row['Score']}/100</h2>
+                        <p>CF : <b>{row['CF']}€</b> | Rend : <b>{row['Rend']}%</b></p>
                     </div>""", unsafe_allow_html=True)
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if row.get('Lien'): st.link_button("🌐 Voir", row['Lien'], use_container_width=True)
-                    with c2:
+                    c_del, c_link = st.columns(2)
+                    with c_del:
                         if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
                             ws.delete_rows(idx + 2)
                             st.cache_data.clear()
                             st.rerun()
+                    with c_link:
+                        if 'Lien' in row and row['Lien']:
+                            st.link_button("🌐 Voir", row['Lien'], use_container_width=True)

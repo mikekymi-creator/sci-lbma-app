@@ -34,7 +34,8 @@ if check_password():
         try:
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database")
-            return pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
+            df = pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
+            return df
         except: return pd.DataFrame()
 
     def obtenir_donnees_secteur(cp_saisi):
@@ -45,24 +46,25 @@ if check_password():
             match = df_ref[df_ref['CP'] == str(cp_saisi)]
             if not match.empty:
                 row = match.iloc[0]
-                res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": "Référentiel Sheet"}
+                res = {"p": row.get('Prix_m2', 1950), "l": row.get('Loyer_m2', 12.0), 
+                       "s": row.get('Social_Pct', 20), "n": row.get('Secu_Note', 7), "label": "Référentiel Sheet"}
         return res
 
-    # --- 3. ONGLETS ---
+    # --- 3. STRUCTURE ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
 
     with tab1:
         st.sidebar.header("🏦 Financement")
         apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée cash par la SCI.")
-        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt.")
+        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20)
         taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1)
-        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8)
+        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="Détails : 5-7% gestion + 2-3% GLI + 1-2% vacance.")
         obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100)
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
-            nom = st.text_input("Nom du projet", "Appartement Test", help="Nom pour le comparateur.")
+            nom = st.text_input("Nom du projet", "Appartement Test")
             cp = st.text_input("Code Postal", "60000")
             adr = st.text_input("📍 Adresse exacte", "")
             lien = st.text_input("🔗 Lien annonce", "")
@@ -81,12 +83,10 @@ if check_password():
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']))
-            # FIX: Valeur manuelle par défaut pour éviter le changement auto
             prix_a = st.number_input("Prix d'achat net vendeur (€)", value=100000, step=1000)
             st.write(f"Prix au m² : **{round(prix_a/surface, 1)} €/m²**")
         with col_m2:
             l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']))
-            # FIX: Valeur manuelle par défaut pour éviter le changement auto
             loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10)
             st.info(f"Potentiel marché : {int(l_ref * surface)}€")
 
@@ -110,11 +110,11 @@ if check_password():
         v1, v2, v3, v4 = st.columns([1, 1, 1, 1.2])
         with v1:
             color = "green" if score >= 70 else "orange" if score >= 40 else "red"
-            st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score Global</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
-            # AJOUT DU PETIT CALCUL SOUS LE TOTAL
-            st.caption(f"{loyer_s}€ (Loyer) - {int(mens)}€ (Crédit) - {int(ch_m)}€ (Charges) - {int(is_m)}€ (IS)")
+            # DETAIL CALCUL PETIT FORMAT
+            st.caption(f"Détail : {loyer_s}€ - {int(mens)}€ (Crédit) - {int(ch_m)}€ (Charges) - {int(is_m)}€ (IS)")
         with v3:
             st.metric("Rendement Brut", f"{rend} %")
             st.write(f"🛡️ IS estimé : **{int(is_m*12)} €/an**")
@@ -137,12 +137,16 @@ if check_password():
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
             grid = st.columns(3)
             for idx, row in df_b.iterrows():
+                # SECURISATION DES COLONNES
+                sct = row.get('Secteur', row.get('CP', 'N/A'))
+                loc = row.get('Adresse', 'N/A')
+                
                 with grid[idx % 3]:
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
-                        <h4 style="margin:0;">{row['Nom']}</h4>
-                        <p style="color:gray; font-size:12px;">📍 {row['Secteur']} | {row['Adresse']}</p>
-                        <h2 style="color:orange; margin:5px 0;">{row['Score']}/100</h2>
-                        <p>💰 CF : <b>{row['CF']} €</b> | 📈 Rend : <b>{row['Rend']} %</b></p>
+                        <h4 style="margin:0;">{row.get('Nom', 'Sans nom')}</h4>
+                        <p style="color:gray; font-size:12px;">📍 {sct} | {loc}</p>
+                        <h2 style="color:orange; margin:5px 0;">{row.get('Score', 0)}/100</h2>
+                        <p>💰 CF : <b>{row.get('CF', 0)} €</b> | 📈 Rend : <b>{row.get('Rend', 0)} %</b></p>
                     </div>""", unsafe_allow_html=True)
                     c_del, c_link = st.columns(2)
                     with c_del:
@@ -151,4 +155,4 @@ if check_password():
                     with c_link:
                         url = str(row.get('Lien', ''))
                         if url.startswith('http'):
-                            st.link_button("🌐 Voir l'annonce", url, use_container_width=True)
+                            st.link_button("🌐 Voir", url, use_container_width=True)

@@ -32,13 +32,11 @@ if check_password():
     def obtenir_donnees_secteur(secteur_txt):
         # Valeurs standards (France hors IDF)
         p_m2, l_m2, label = 1950, 12.0, "🌐 Secteur Standard (Moyennes nationales)"
-        
         txt = secteur_txt.lower()
         if any(x in txt for x in ["argentine", "60000"]):
             p_m2, l_m2, label = 1350, 10.5, "🎯 Zone : Beauvais / Argentine (Stats 2024)"
         elif any(x in txt for x in ["beuvrages", "59192", "valenciennes"]):
             p_m2, l_m2, label = 1150, 10.0, "🎯 Zone : Beuvrages / Nord (Stats 2024)"
-        
         return p_m2, l_m2, label
 
     # --- CONNEXION GOOGLE SHEETS ---
@@ -63,7 +61,7 @@ if check_password():
     with tab1:
         st.title("🛡️ SCI LBMA - Pilotage Expert")
 
-        # --- BARRE LATÉRALE (FINANCEMENT) ---
+        # --- BARRE LATÉRALE ---
         st.sidebar.header("🏦 Stratégie de Financement")
         apport = st.sidebar.number_input("Apport personnel (€)", value=0)
         duree_credit = st.sidebar.select_slider("Durée du crédit (années)", options=list(range(1, 26)), value=20)
@@ -90,7 +88,7 @@ if check_password():
                 taxe_f_saisie = st.number_input("Taxe Foncière réelle (€)", value=tf_suggeree)
                 charges_copro = st.number_input("Charges de copropriété annuelles (€)", value=400)
 
-        # --- ANALYSE D'OPPORTUNITÉ HYBRIDE ---
+        # --- INTELLIGENCE DE MARCHÉ AJUSTABLE ---
         st.divider()
         p_sugg, l_sugg, label_s = obtenir_donnees_secteur(secteur)
         st.subheader("🧠 Intelligence de Marché")
@@ -98,38 +96,28 @@ if check_password():
 
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            # Prix marché ajustable
-            p_marche_m2 = st.number_input(
-                "Prix m² constaté dans le secteur (€/m²)", 
-                value=p_sugg, 
-                help="Basé sur les moyennes DVF 2024 injectées. Ajustez si vous avez une donnée notariale précise."
-            )
+            p_marche_m2 = st.number_input("Prix m² secteur (€/m²)", value=p_sugg, help="Moyenne locale DVF.")
             prix_affiche = st.number_input("Prix d'achat net vendeur (€)", value=57000, step=1000)
-            
             p_m2_reel = prix_affiche / surface
             diff_p = ((p_m2_reel - p_marche_m2) / p_marche_m2) * 100
+            st.write(f"Prix au m² du projet : **{round(p_m2_reel, 0)} €/m²**")
             if diff_p <= 0:
-                st.success(f"✅ Prix : {round(abs(diff_p), 1)}% sous le marché ({p_marche_m2}€/m²)")
+                st.success(f"✅ Affaire : {round(abs(diff_p), 1)}% sous le marché")
             else:
-                st.warning(f"⚠️ Prix : {round(diff_p, 1)}% au-dessus du marché")
+                st.warning(f"⚠️ Vigilance : {round(diff_p, 1)}% au-dessus du marché")
 
         with col_m2:
-            # Loyer marché ajustable
-            l_marche_m2 = st.number_input(
-                "Loyer m² constaté dans le secteur (€/m²)", 
-                value=l_sugg,
-                help="Moyenne locale observée. Un bien rénové peut se louer 10 à 15% plus cher."
-            )
-            loyer_saisi = st.number_input("Loyer mensuel HC prévu (€)", value=550)
-            
+            l_marche_m2 = st.number_input("Loyer m² secteur (€/m²)", value=l_sugg)
+            loyer_saisi = st.number_input("Loyer mensuel HC saisi (€)", value=550)
             loyer_estime_total = l_marche_m2 * surface
+            st.write(f"Loyer estimé marché : **{int(loyer_estime_total)} €**")
             diff_l = ((loyer_saisi - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
             if abs(diff_l) < 10:
-                st.info(f"📊 Loyer cohérent avec le secteur ({int(loyer_estime_total)}€)")
+                st.info(f"📊 Loyer cohérent avec le secteur")
             elif diff_l > 10:
-                st.warning(f"📈 Loyer ambitieux (+{round(diff_l, 1)}%)")
+                st.warning(f"📈 Loyer saisi élevé (+{round(diff_l, 1)}%)")
             else:
-                st.success(f"💎 Loyer sous-exploité (Potentiel: {int(loyer_estime_total)}€)")
+                st.success(f"💎 Potentiel sous-exploité ({round(diff_l, 1)}%)")
 
         if st.button("🔍 Diagnostic Sécurité & Mixité"):
             with st.spinner("Analyse des bases..."):
@@ -140,7 +128,7 @@ if check_password():
                 with s1: st.metric("Logements Sociaux", f"{h_sociaux}%")
                 with s2: st.metric("Note Sécurité", f"{secu_note}/10")
 
-        # --- CALCULS FINANCIERS COMPLETS ---
+        # --- CALCULS FINANCIERS COMPLETS (RETOUR À LA LOGIQUE V16.5) ---
         surplus_dpe = (surface * 500) if dpe in ["F", "G"] else 0
         travaux_finaux = travaux_base + surplus_dpe
         f_notaire = prix_affiche * 0.08
@@ -157,7 +145,7 @@ if check_password():
         cf_net = round(loyer_saisi - mensualite - (charges_an/12) - (impot_is_annuel/12), 2)
         rend_brut = round(((loyer_saisi * 12) / prix_affiche) * 100, 2) if prix_affiche > 0 else 0
 
-        # --- SCORE & VERDICT ---
+        # --- SCORE & VERDICT FINAL ---
         st.divider()
         score = 0
         if cf_net >= objectif_cf: score += 40
@@ -170,8 +158,12 @@ if check_password():
         with v1:
             c_score = "green" if score >= 70 else "orange" if score >= 40 else "red"
             st.markdown(f"<div style='text-align:center; border:3px solid {c_score}; border-radius:15px; padding:15px'><h3>Score</h3><h1 style='color:{c_score}'>{score}/100</h1></div>", unsafe_allow_html=True)
-        with v2: st.metric("Cash-Flow Net", f"{cf_net} €/m")
-        with v3: st.metric("Rendement Brut", f"{rend_brut} %")
+        with v2: 
+            st.metric("Cash-Flow Net", f"{cf_net} €/mois")
+            st.caption(f"Mensualité : {round(mensualite, 2)} €")
+        with v3: 
+            st.metric("Rendement Brut", f"{rend_brut} %")
+            st.caption(f"IS estimé : {int(impot_is_annuel)} €/an")
         with v4:
             if is_high_tax: st.error("⚠️ Profil Risqué")
             else: st.success("✅ Profil Patrimonial")

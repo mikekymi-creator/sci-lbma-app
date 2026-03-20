@@ -162,7 +162,7 @@ if check_password():
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ\n\nConforme aux objectifs.")
             else: st.info("📊 PROJET MOYEN")
 
-         if st.button("💾 Enregistrer / Mettre à jour", use_container_width=True):
+            if st.button("💾 Enregistrer / Mettre à jour", use_container_width=True):
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database").worksheet("Biens")
             

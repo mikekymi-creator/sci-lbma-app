@@ -237,44 +237,36 @@ if check_password():
                 client = get_gsheet_client()
                 sh = client.open("SCI_LBMA_Database").worksheet("Biens")
                 
-                # On prépare la ligne avec TOUS les critères pour pouvoir les recharger plus tard
-                # Ordre suggéré pour ton Sheet : 
-                # Nom, CP, Score, CF, Rend, Adresse, Lien, Surface, DPE, Travaux, TF, Charges, Apport, Durée, Taux, Frais_G, Date, ID
+                # On prépare la liste avec TOUTES les colonnes dans l'ordre exact
                 nouvelle_ligne = [
                     nom, cp, score, cf_net, rend, adr, lien,
                     surface, dpe, travaux, tf, charges, apport, duree, taux, frais_g,
-                    datetime.now().strftime("%d/%m/%Y"), str(time.time())
+                    obj_cf, prix_a, loyer_s, datetime.now().strftime("%d/%m/%Y")
                 ]
                 
-                # Lecture de l'existant pour éviter les doublons
+                # Vérification des doublons pour mise à jour
                 data_all = sh.get_all_records()
                 df_exist = pd.DataFrame(data_all)
-                
                 index_existant = -1
                 if not df_exist.empty and 'Nom' in df_exist.columns:
-                    # On cherche si le nom saisi existe déjà dans la colonne 'Nom'
                     matches = df_exist.index[df_exist['Nom'] == nom].tolist()
-                    if matches:
-                        index_existant = matches[0] + 2 # +2 (1 pour l'entête, 1 car Sheet commence à 1)
+                    if matches: index_existant = matches[0] + 2
                 
                 if index_existant != -1:
-                    # MISE À JOUR : On écrase la ligne existante (Plage A à R = 18 colonnes)
-                    range_label = f"A{index_existant}:R{index_existant}"
-                    sh.update(range_label, [nouvelle_ligne])
-                    st.success(f"🔄 Le projet '{nom}' a été mis à jour avec succès !")
+                    # Mise à jour de A à T (20 colonnes)
+                    sh.update(f"A{index_existant}:T{index_existant}", [nouvelle_ligne])
+                    st.success(f"🔄 Projet '{nom}' mis à jour !")
                 else:
-                    # CRÉATION : On ajoute une nouvelle ligne
+                    # Nouvel ajout
                     sh.append_row(nouvelle_ligne)
                     st.balloons()
-                    st.success(f"✅ Nouveau projet '{nom}' ajouté au comparateur !")
+                    st.success(f"✅ Nouveau projet enregistré !")
                 
-                # Nettoyage du cache pour forcer la lecture des nouvelles données dans l'onglet 2
                 st.cache_data.clear()
                 time.sleep(1)
                 st.rerun()
-                
             except Exception as e:
-                st.error(f"Erreur lors de l'enregistrement : {e}")
+                st.error(f"Erreur technique : {e}")
     with tab2:
         st.subheader("⚖️ Arbitrage de la SCI LBMA")
         df_b = charger_onglet("Biens")
@@ -283,42 +275,79 @@ if check_password():
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
             grid = st.columns(3)
             
+# --- ENTÊTES DU TABLEAU (À mettre une seule fois avant la boucle) ---
+            h1, h2, h3, h4, h5 = st.columns([2.5, 1, 1, 1, 2])
+            h1.write("**🏠 Bien & Adresse**")
+            h2.write("**🎯 Score**")
+            h3.write("**💰 CF Net**")
+            h4.write("**📈 Rend.**")
+            h5.write("**⚙️ Actions**")
+            st.divider()
+
             for idx, row in df_b.iterrows():
-                # --- STRATÉGIE DE DÉTECTION DÉCIMALE ---
+                # --- STRATÉGIE DE DÉTECTION DÉCIMALE (Ta fonction) ---
                 def force_decimal(valeur):
                     try:
-                        # 1. On nettoie les espaces et on force en texte
                         txt = str(valeur).replace(',', '.').strip()
                         num = float(txt)
-                        
-                        # 2. Si le chiffre est énorme (ex: 5265), c'est que la virgule a sauté
-                        # On part du principe qu'un CF ou un Rendement > 500 sur un seul lot 
-                        # est une erreur de virgule (5265 devient 52.65)
-                        if abs(num) > 500:
-                            return num / 100
+                        if abs(num) > 500: return num / 100
                         return num
-                    except:
-                        return 0.0
+                    except: return 0.0
 
-                # On applique la détection
-                d_score = int(force_decimal(row['Score']))
-                d_cf = round(force_decimal(row['CF']), 2)
-                d_rend = round(force_decimal(row['Rend']), 2)
+                # Données calculées
+                d_score = int(force_decimal(row.get('Score', 0)))
+                d_cf = round(force_decimal(row.get('CF', 0)), 2)
+                d_rend = round(force_decimal(row.get('Rend', 0)), 2)
 
-                with grid[idx % 3]:
-                    st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
-                        <h4 style="margin:0;">{row['Nom']}</h4>
-                        <p style="color:gray; font-size:12px;">📍 {row['Secteur']} | {row['Adresse']}</p>
-                        <h2 style="color:orange; margin:5px 0;">{d_score}/100</h2>
-                        <p>💰 CF : <b>{d_cf} €/m</b><br>📈 Rend : <b>{d_rend} %</b></p>
-                    </div>""", unsafe_allow_html=True)
-                    
-                    c_del, c_link = st.columns(2)
-                    with c_del:
-                        if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
-                            ws.delete_rows(idx + 2)
-                            st.cache_data.clear()
-                            st.rerun()
-                    with c_link:
-                        if 'Lien' in row and row['Lien']:
-                            st.link_button("🌐 Voir l'annonce", str(row['Lien']), use_container_width=True)
+                # --- AFFICHAGE EN LIGNE (TABLEAU) ---
+                c1, c2, c3, c4, c5 = st.columns([2.5, 1, 1, 1, 2])
+                
+                # Colonne 1 : Infos principales
+                c1.markdown(f"**{row.get('Nom', 'Sans nom')}**\n\n<small>📍 {row.get('Secteur', '-')} | {row.get('Adresse', '-')}</small>", unsafe_allow_html=True)
+                
+                # Colonnes chiffres
+                c2.write(f"**{d_score}/100**")
+                c3.write(f"{d_cf} €")
+                c4.write(f"{d_rend} %")
+                
+                # Colonne Actions (Les 3 boutons)
+                b_edit, b_link, b_del = c5.columns(3)
+                
+                with b_edit:
+                    if st.button("📝", key=f"ed_{idx}", help="Charger pour modifier"):
+                        # ON REMPLIT LA MÉMOIRE (Session State)
+                        st.session_state['nom_charge'] = row.get('Nom', '')
+                        st.session_state['cp_charge'] = str(row.get('CP', ''))
+                        st.session_state['adr_charge'] = row.get('Adresse', '')
+                        st.session_state['lien_charge'] = row.get('Lien', '')
+                        st.session_state['surface_charge'] = force_decimal(row.get('Surface', 50))
+                        st.session_state['dpe_charge'] = row.get('DPE', 'E')
+                        st.session_state['travaux_charge'] = force_decimal(row.get('Travaux', 0))
+                        st.session_state['tf_charge'] = force_decimal(row.get('TF', 0))
+                        st.session_state['charges_charge'] = force_decimal(row.get('Charges', 0))
+                        st.session_state['apport_charge'] = force_decimal(row.get('Apport', 0))
+                        st.session_state['duree_charge'] = force_decimal(row.get('Duree', 20))
+                        st.session_state['taux_charge'] = force_decimal(row.get('Taux', 4.2))
+                        st.session_state['frais_g_charge'] = force_decimal(row.get('Gestion', 8))
+                        st.session_state['obj_cf_charge'] = force_decimal(row.get('Obj_CF', 100))
+                        st.session_state['prix_a_charge'] = force_decimal(row.get('Prix_Achat', 100000))
+                        st.session_state['loyer_s_charge'] = force_decimal(row.get('Loyer', 650))
+                        
+                        st.success("✅ Données prêtes !")
+                        time.sleep(0.5)
+                        st.rerun()
+
+                with b_link:
+                    lien_url = row.get('Lien', '')
+                    if lien_url and str(lien_url).startswith('http'):
+                        st.link_button("🌐", str(lien_url))
+                    else:
+                        st.button("🚫", key=f"no_l_{idx}", disabled=True, help="Pas de lien")
+
+                with b_del:
+                    if st.button("🗑️", key=f"del_{idx}"):
+                        ws.delete_rows(idx + 2)
+                        st.cache_data.clear()
+                        st.rerun()
+                
+                st.divider()

@@ -63,26 +63,45 @@ if check_password():
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
-            # On cherche dans session_state, sinon on met la valeur par défaut
-            nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Appartement Test"), help="Nom pour identifier le bien.")
-            cp = st.text_input("Code Postal", value=st.session_state.get('cp_charge', "60000"), help="Charge les prix du marché.")
-            adr = st.text_input("📍 Adresse exacte", value=st.session_state.get('adr_charge', ""), help="Précision pour vos visites.")
-            lien = st.text_input("🔗 Lien annonce", value=st.session_state.get('lien_charge', ""), help="URL vers l'annonce.")
+            nom = st.text_input("Nom du projet", 
+                                value=st.session_state.get('nom_charge', "Appartement Test"), 
+                                help="Nom pour identifier le bien dans le comparateur.")
             
+            cp = st.text_input("Code Postal", 
+                               value=st.session_state.get('cp_charge', "60000"), 
+                               help="Charge les prix du marché via votre Google Sheet.")
+            
+            adr = st.text_input("📍 Adresse exacte", 
+                                value=st.session_state.get('adr_charge', ""), 
+                                help="Précision pour vos futures visites.")
+            
+            lien = st.text_input("🔗 Lien annonce", 
+                                 value=st.session_state.get('lien_charge', ""), 
+                                 help="URL vers l'annonce (LeBonCoin, SeLoger, etc.).")
         with c2:
-            surface = st.number_input("Surface (m²)", 1, 500, int(st.session_state.get('surface_charge', 50)))
-            # Pour le DPE, on cherche l'index (A=0, B=1... E=4)
+            surface = st.number_input("Surface (m²)", 1, 500, 
+                                      value=int(st.session_state.get('surface_charge', 50)), 
+                                      help="Surface habitable Carrez du bien.")
+            
             dpe_list = ["A","B","C","D","E","F","G"]
             dpe_val = st.session_state.get('dpe_charge', "E")
             dpe_idx = dpe_list.index(dpe_val) if dpe_val in dpe_list else 4
-            dpe = st.selectbox("DPE", dpe_list, index=dpe_idx)
+            dpe = st.selectbox("DPE", dpe_list, index=dpe_idx, 
+                               help="F/G ajoute automatiquement 500€/m² de travaux d'isolation.")
             
-            travaux = st.number_input("Budget Travaux (€)", 0, 500000, int(st.session_state.get('travaux_charge', 5000)))
-            
+            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 
+                                      value=int(st.session_state.get('travaux_charge', 5000)), 
+                                      help="Budget de rénovation estimé.")
         with c3:
-            tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(st.session_state.get('tf_charge', surface*15)))
-            charges = st.number_input("Charges Copro (€/an)", 0, 10000, int(st.session_state.get('charges_charge', 400)))
+            tf = st.number_input("Taxe Foncière (€)", 0, 5000, 
+                                 value=int(st.session_state.get('tf_charge', surface*15)), 
+                                 help="Montant annuel de la taxe foncière.")
+            
+            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 
+                                      value=int(st.session_state.get('charges_charge', 400)), 
+                                      help="Charges annuelles de copropriété.")
 
+        
         st.divider()
         st.markdown("### 🧠 Intelligence de Marché")
         data = obtenir_donnees_secteur(cp)

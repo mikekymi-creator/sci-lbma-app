@@ -38,23 +38,34 @@ if check_password():
         except: return pd.DataFrame()
 
     def obtenir_donnees_secteur(nom_ville):
-    # Charge ton onglet de référence (ex: "Data_Marche")
-    df_ref = charger_onglet("Data_Marche") 
-    
-    # On cherche la ligne où la Ville/Secteur correspond exactement
-    # Assure-toi que le nom de la colonne dans le code est identique au Sheet
-    ligne = df_ref[df_ref['Ville/Secteur'] == nom_ville]
-    
-    if not ligne.empty:
-        return {
-            'p': float(ligne.iloc[0]['Prix_m2']),
-            'l': float(ligne.iloc[0]['Loyer_m2']),
-            's': int(ligne.iloc[0]['Social']),
-            'n': int(ligne.iloc[0]['Note']),
-            'cp': str(ligne.iloc[0]['CP']), # On récupère aussi le CP pour l'enregistrement
-            'label': nom_ville
-        }
-    return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'cp': '00000', 'label': "Inconnu"}
+    """
+    Récupère les indicateurs de marché (Prix m2, Loyer, Note, Social) 
+    en cherchant le nom exact de la Ville/Secteur dans l'onglet de référence.
+    """
+    try:
+        # 1. On charge l'onglet 'Data_Marche'
+        df_ref = charger_onglet("Data_Marche") 
+        
+        # 2. On filtre pour trouver la ligne correspondant au quartier choisi
+        # Note : On s'assure que la colonne s'appelle bien 'Ville/Secteur'
+        ligne = df_ref[df_ref['Ville/Secteur'] == nom_ville]
+        
+        if not ligne.empty:
+            # On extrait les données de la première ligne trouvée
+            res = ligne.iloc[0]
+            return {
+                'p': float(str(res.get('Prix_m2', 2000)).replace(',', '.')),
+                'l': float(str(res.get('Loyer_m2', 12)).replace(',', '.')),
+                's': int(res.get('Social', 20)),
+                'n': int(res.get('Note', 5)),
+                'cp': str(res.get('CP', '00000')),
+                'label': nom_ville
+            }
+    except Exception as e:
+        st.error(f"Erreur lors de la lecture du secteur : {e}")
+        
+    # Valeurs de secours si la ville n'est pas trouvée ou si le code plante
+    return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'cp': '00000', 'label': "Secteur Inconnu"}
 
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])

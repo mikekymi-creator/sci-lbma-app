@@ -175,22 +175,28 @@ if check_password():
             client = get_gsheet_client()
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
             grid = st.columns(3)
-for idx, row in df_b.iterrows():
-                # --- CORRECTION CALCULS AFFICHAGE ---
-                # On force la conversion en nombre pour éviter les erreurs de texte
-                try:
-                    display_score = int(float(row['Score']))
-                    display_cf = round(float(row['CF']), 2)
-                    display_rend = round(float(row['Rend']), 2)
-                except:
-                    display_score, display_cf, display_rend = 0, 0, 0
+            
+            for idx, row in df_b.iterrows():
+                # --- NETTOYAGE STRICT VIRGULE -> POINT ---
+                def corriger_format(valeur):
+                    try:
+                        # Force la transformation de "52,65" en "52.65"
+                        s_val = str(valeur).replace(',', '.').strip()
+                        return float(s_val)
+                    except (ValueError, TypeError):
+                        return 0.0
+
+                # On applique la correction sur chaque donnée numérique
+                d_score = int(corriger_format(row['Score']))
+                d_cf = round(corriger_format(row['CF']), 2)
+                d_rend = round(corriger_format(row['Rend']), 2)
 
                 with grid[idx % 3]:
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
                         <h4 style="margin:0;">{row['Nom']}</h4>
                         <p style="color:gray; font-size:12px;">📍 {row['Secteur']} | {row['Adresse']}</p>
-                        <h2 style="color:orange; margin:5px 0;">{display_score}/100</h2>
-                        <p>💰 CF : <b>{display_cf} €/m</b><br>📈 Rend : <b>{display_rend} %</b></p>
+                        <h2 style="color:orange; margin:5px 0;">{d_score}/100</h2>
+                        <p>💰 CF : <b>{d_cf} €/m</b><br>📈 Rend : <b>{d_rend} %</b></p>
                     </div>""", unsafe_allow_html=True)
                     
                     c_del, c_link = st.columns(2)

@@ -162,11 +162,37 @@ if check_password():
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ\n\nConforme aux objectifs.")
             else: st.info("📊 PROJET MOYEN")
 
-        if st.button("💾 Ajouter au comparateur", use_container_width=True):
+         if st.button("💾 Enregistrer / Mettre à jour", use_container_width=True):
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database").worksheet("Biens")
-            sh.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, cp, score, cf_net, rend, adr, lien])
-            st.balloons(); st.success(f"✅ Bien '{nom}' enregistré !"); st.cache_data.clear(); st.rerun()
+            
+            # On prépare TOUTES les données (18 colonnes au total)
+            nouvelle_ligne = [
+                nom, cp, score, cf_net, rend, adr, lien,
+                surface, dpe, travaux, tf, charges, apport, duree, taux, frais_g,
+                datetime.now().strftime("%d/%m/%Y"), str(time.time())
+            ]
+            
+            data_all = sh.get_all_records()
+            df_exist = pd.DataFrame(data_all)
+            
+            # Mise à jour si le nom existe déjà, sinon ajout
+            index_existant = -1
+            if not df_exist.empty and 'Nom' in df_exist.columns:
+                matches = df_exist.index[df_exist['Nom'] == nom].tolist()
+                if matches: index_existant = matches[0] + 2
+            
+            if index_existant != -1:
+                sh.update(f"A{index_existant}:R{index_existant}", [nouvelle_ligne])
+                st.success(f"🔄 Projet '{nom}' mis à jour !")
+            else:
+                sh.append_row(nouvelle_ligne)
+                st.balloons()
+                st.success(f"✅ Nouveau projet enregistré !")
+            
+            st.cache_data.clear()
+            time.sleep(1)
+            st.rerun()
 
     with tab2:
         st.subheader("⚖️ Arbitrage de la SCI LBMA")

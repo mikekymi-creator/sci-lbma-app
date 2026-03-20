@@ -34,8 +34,7 @@ if check_password():
         try:
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database")
-            df = pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
-            return df
+            return pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
         except: return pd.DataFrame()
 
     def obtenir_donnees_secteur(cp_saisi):
@@ -46,19 +45,18 @@ if check_password():
             match = df_ref[df_ref['CP'] == str(cp_saisi)]
             if not match.empty:
                 row = match.iloc[0]
-                res = {"p": row.get('Prix_m2', 1950), "l": row.get('Loyer_m2', 12.0), 
-                       "s": row.get('Social_Pct', 20), "n": row.get('Secu_Note', 7), "label": "Référentiel Sheet"}
+                res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": "Référentiel Sheet"}
         return res
 
-    # --- 3. STRUCTURE ONGLETS ---
+    # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
 
     with tab1:
         st.sidebar.header("🏦 Financement")
         apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée cash par la SCI.")
-        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20)
-        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1)
-        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="Détails : 5-7% gestion + 2-3% GLI + 1-2% vacance.")
+        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt.")
+        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1, help="Taux d'intérêt nominal.")
+        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="5-7% gestion + 2-3% GLI + 1-2% vacance.")
         obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100)
 
         st.markdown("### 🏠 Caractéristiques du Bien")
@@ -83,23 +81,23 @@ if check_password():
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']))
-            prix_a = st.number_input("Prix d'achat net vendeur (€)", value=100000, step=1000)
-            st.write(f"Prix au m² : **{round(prix_a/surface, 1)} €/m²**")
+            prix_a = st.number_input("Prix achat net vendeur (€)", value=100000) # Fixé à 100k par défaut
+            st.write(f"Prix au m² projet : **{round(prix_a/surface, 1)} €/m²**")
         with col_m2:
             l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']))
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10)
-            st.info(f"Potentiel marché : {int(l_ref * surface)}€")
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650) # Fixé à 650 par défaut
+            st.info(f"Marché pour {surface}m² : {int(l_ref * surface)}€")
 
         # Calculs
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
         tm = (taux/100)/12
-        mens = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
-        ch_m = (tf + charges) / 12 + (loyer_s * (frais_g/100))
+        mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
+        ch_an = tf + charges + (loyer_s * 12 * (frais_g/100))
         amort_an = ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)
-        is_m = max(0, ((loyer_s*12) - (ch_m*12) - (emprunt*taux/100) - amort_an) * 0.15) / 12
-        cf_net = round(loyer_s - mens - ch_m - is_m, 2)
+        is_an = max(0, ((loyer_s*12) - ch_an - (emprunt*taux/100) - amort_an) * 0.15)
+        cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
         st.divider()
@@ -113,11 +111,10 @@ if check_password():
             st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score Global</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
-            # DETAIL CALCUL PETIT FORMAT
-            st.caption(f"Détail : {loyer_s}€ - {int(mens)}€ (Crédit) - {int(ch_m)}€ (Charges) - {int(is_m)}€ (IS)")
+            st.caption(f"{loyer_s}€ - {int(mensualite)}€ (Crédit) - {int(ch_an/12)}€ (Charges) - {int(is_an/12)}€ (IS)")
         with v3:
             st.metric("Rendement Brut", f"{rend} %")
-            st.write(f"🛡️ IS estimé : **{int(is_m*12)} €/an**")
+            st.write(f"🛡️ IS estimé : **{int(is_an)} €/an**")
         with v4:
             if cf_net < 0: st.error("❌ RENTABILITÉ NÉGATIVE")
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ")
@@ -127,7 +124,7 @@ if check_password():
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database").worksheet("Biens")
             sh.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, cp, score, cf_net, rend, adr, lien])
-            st.balloons(); st.success("Bien enregistré !"); st.cache_data.clear(); time.sleep(1); st.rerun()
+            st.balloons(); st.success("Bien ajouté !"); st.cache_data.clear(); time.sleep(1); st.rerun()
 
     with tab2:
         st.subheader("⚖️ Arbitrage de la SCI LBMA")
@@ -137,22 +134,27 @@ if check_password():
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
             grid = st.columns(3)
             for idx, row in df_b.iterrows():
-                # SECURISATION DES COLONNES
-                sct = row.get('Secteur', row.get('CP', 'N/A'))
-                loc = row.get('Adresse', 'N/A')
-                
                 with grid[idx % 3]:
+                    # Sécurité .get() pour éviter le KeyError si colonnes absentes
+                    nom_b = row.get('Nom', 'Sans nom')
+                    sec = row.get('Secteur', row.get('CP', 'N/A'))
+                    adr_b = row.get('Adresse', 'N/A')
+                    sc = row.get('Score', 0)
+                    cf_b = row.get('CF', 0)
+                    rd_b = row.get('Rend', 0)
+                    ln_b = row.get('Lien', '')
+
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
-                        <h4 style="margin:0;">{row.get('Nom', 'Sans nom')}</h4>
-                        <p style="color:gray; font-size:12px;">📍 {sct} | {loc}</p>
-                        <h2 style="color:orange; margin:5px 0;">{row.get('Score', 0)}/100</h2>
-                        <p>💰 CF : <b>{row.get('CF', 0)} €</b> | 📈 Rend : <b>{row.get('Rend', 0)} %</b></p>
+                        <h4 style="margin:0;">{nom_b}</h4>
+                        <p style="color:gray; font-size:12px;">📍 {sec} | {adr_b}</p>
+                        <h2 style="color:orange; margin:5px 0;">{sc}/100</h2>
+                        <p>💰 CF : <b>{cf_b} €</b> | 📈 Rend : <b>{rd_b} %</b></p>
                     </div>""", unsafe_allow_html=True)
+                    
                     c_del, c_link = st.columns(2)
                     with c_del:
                         if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
                             ws.delete_rows(idx + 2); st.cache_data.clear(); st.rerun()
                     with c_link:
-                        url = str(row.get('Lien', ''))
-                        if url.startswith('http'):
-                            st.link_button("🌐 Voir", url, use_container_width=True)
+                        if ln_b and str(ln_b).startswith('http'):
+                            st.link_button("🌐 Voir", ln_b, use_container_width=True)

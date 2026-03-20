@@ -5,7 +5,7 @@ import time
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- 1. CONFIGURATION ---
+# --- 1. CONFIGURATION & SECURITE ---
 st.set_page_config(page_title="SCI LBMA - Expert Immo", layout="wide")
 
 def check_password():
@@ -56,8 +56,9 @@ if check_password():
         apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée cash par la SCI.")
         duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt.")
         taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1, help="Taux d'intérêt nominal.")
-        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="5-7% gestion + 2-3% GLI + 1-2% vacance.")
-        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100)
+        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, 
+                                    help="Détails : 5-7% gestion agence + 2-3% assurance loyers impayés (GLI) + 1-2% provision pour vacance locative.")
+        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100, help="Gain net mensuel visé.")
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
@@ -81,12 +82,26 @@ if check_password():
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']))
-            prix_a = st.number_input("Prix achat net vendeur (€)", value=100000) # Fixé à 100k par défaut
-            st.write(f"Prix au m² projet : **{round(prix_a/surface, 1)} €/m²**")
+            prix_a = st.number_input("Prix achat net vendeur (€)", value=int(p_ref * surface))
+            p_m2_reel = prix_a / surface
+            diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100
+            st.write(f"Prix au m² projet : **{round(p_m2_reel, 1)} €/m²**")
+            if diff_p <= 0: st.success(f"✅ {round(abs(diff_p),1)}% sous le marché")
+            else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus")
         with col_m2:
             l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']))
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650) # Fixé à 650 par défaut
-            st.info(f"Marché pour {surface}m² : {int(l_ref * surface)}€")
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=int(l_ref * surface))
+            loyer_estime_total = l_ref * surface
+            diff_l = ((loyer_s - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
+            if abs(diff_l) < 10: st.info(f"📊 Loyer cohérent ({int(loyer_estime_total)}€)")
+            elif diff_l > 10: st.warning(f"📈 Loyer ambitieux (+{round(diff_l, 1)}%)")
+            else: st.success(f"💎 Loyer sous-exploité (Potentiel : {int(loyer_estime_total)}€)")
+
+        if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
+            d1, d2, d3 = st.columns(3)
+            d1.metric("Logements Sociaux", f"{data['s']}%")
+            d2.metric("Note Sécurité", f"{data['n']}/10")
+            d3.metric("Source Data", data['label'])
 
         # Calculs
         f_notaire = prix_a * 0.08
@@ -111,20 +126,26 @@ if check_password():
             st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score Global</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
-            st.caption(f"{loyer_s}€ - {int(mensualite)}€ (Crédit) - {int(ch_an/12)}€ (Charges) - {int(is_an/12)}€ (IS)")
+            st.caption(f"Détail : {loyer_s}€ - {int(mensualite)}€ (Prêt) - {int(ch_an/12)}€ (Ch.) - {int(is_an/12)}€ (IS)")
         with v3:
             st.metric("Rendement Brut", f"{rend} %")
             st.write(f"🛡️ IS estimé : **{int(is_an)} €/an**")
         with v4:
             if cf_net < 0: st.error("❌ RENTABILITÉ NÉGATIVE")
+            elif data['s'] > 45: st.warning("⚠️ RISQUE SOCIAL")
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ")
             else: st.info("📊 PROJET MOYEN")
 
         if st.button("💾 Ajouter au comparateur", use_container_width=True):
-            client = get_gsheet_client()
-            sh = client.open("SCI_LBMA_Database").worksheet("Biens")
-            sh.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, cp, score, cf_net, rend, adr, lien])
-            st.balloons(); st.success("Bien ajouté !"); st.cache_data.clear(); time.sleep(1); st.rerun()
+            with st.spinner("Enregistrement..."):
+                client = get_gsheet_client()
+                sh = client.open("SCI_LBMA_Database").worksheet("Biens")
+                sh.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, cp, score, cf_net, rend, adr, lien])
+                st.balloons()
+                st.success(f"✅ Bien '{nom}' ajouté !")
+                time.sleep(1)
+                st.cache_data.clear()
+                st.rerun()
 
     with tab2:
         st.subheader("⚖️ Arbitrage de la SCI LBMA")
@@ -135,20 +156,11 @@ if check_password():
             grid = st.columns(3)
             for idx, row in df_b.iterrows():
                 with grid[idx % 3]:
-                    # Sécurité .get() pour éviter le KeyError si colonnes absentes
-                    nom_b = row.get('Nom', 'Sans nom')
-                    sec = row.get('Secteur', row.get('CP', 'N/A'))
-                    adr_b = row.get('Adresse', 'N/A')
-                    sc = row.get('Score', 0)
-                    cf_b = row.get('CF', 0)
-                    rd_b = row.get('Rend', 0)
-                    ln_b = row.get('Lien', '')
-
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
-                        <h4 style="margin:0;">{nom_b}</h4>
-                        <p style="color:gray; font-size:12px;">📍 {sec} | {adr_b}</p>
-                        <h2 style="color:orange; margin:5px 0;">{sc}/100</h2>
-                        <p>💰 CF : <b>{cf_b} €</b> | 📈 Rend : <b>{rd_b} %</b></p>
+                        <h4 style="margin:0;">{row.get('Nom', 'N/A')}</h4>
+                        <p style="color:gray; font-size:12px;">📍 {row.get('Secteur', 'N/A')} | {row.get('Adresse', 'N/A')}</p>
+                        <h2 style="color:orange; margin:5px 0;">{row.get('Score', 0)}/100</h2>
+                        <p>💰 CF : <b>{row.get('CF', 0)} €</b> | 📈 Rend : <b>{row.get('Rend', 0)} %</b></p>
                     </div>""", unsafe_allow_html=True)
                     
                     c_del, c_link = st.columns(2)
@@ -156,5 +168,6 @@ if check_password():
                         if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
                             ws.delete_rows(idx + 2); st.cache_data.clear(); st.rerun()
                     with c_link:
-                        if ln_b and str(ln_b).startswith('http'):
-                            st.link_button("🌐 Voir", ln_b, use_container_width=True)
+                        url_annonce = row.get('Lien', '')
+                        if url_annonce and str(url_annonce).startswith('http'):
+                            st.link_button("🌐 Voir l'annonce", url_annonce, use_container_width=True)

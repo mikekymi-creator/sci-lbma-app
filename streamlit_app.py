@@ -143,26 +143,23 @@ def obtenir_donnees_secteur(nom_ville):
                                      value=int(st.session_state.get('charges_charge', 400)), 
                                      help="Charges annuelles de copropriété.")
             
-        
-
-        
         st.divider()
         st.markdown("### 🧠 Intelligence de Marché")
-        data = obtenir_donnees_secteur(cp)
         
+        # On utilise les variables p_ref, l_ref, etc., déjà créées dans le bloc c1
         col_m1, col_m2 = st.columns(2)
+        
         with col_m1:
-            # Prix de référence (Garde la valeur du secteur par défaut)
-            p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence du quartier.")
+            # Prix de référence (on utilise p_ref défini dans c1)
+            p_ref_input = st.number_input("Prix m² marché estimé (€/m²)", value=float(p_ref), help="Prix de référence du quartier.")
             
-            # --- MODIFICATION ICI : On accepte la valeur chargée si elle existe ---
             prix_a = st.number_input("Prix d'achat NET vendeur (€)", 
                                      value=int(st.session_state.get('prix_a_charge', 100000)), 
                                      step=1000, help="Votre prix d'achat négocié.")
             
-            # Calculs de comparaison (Gardés intacts)
+            # Calculs de comparaison
             p_m2_reel = prix_a / surface if surface > 0 else 0
-            diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100 if p_ref > 0 and surface > 0 else 0
+            diff_p = (((prix_a/surface) - p_ref_input) / p_ref_input) * 100 if p_ref_input > 0 and surface > 0 else 0
             
             st.write(f"Prix au m² projet : **{round(p_m2_reel, 1)} €/m²**")
             if diff_p <= 0: 
@@ -171,69 +168,55 @@ def obtenir_donnees_secteur(nom_ville):
                 st.warning(f"⚠️ {round(diff_p,1)}% au-dessus du marché")
             
         with col_m2:
-            # Loyer de référence
-            l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer HC de référence du secteur.")
+            # Loyer de référence (on utilise l_ref défini dans c1)
+            l_ref_input = st.number_input("Loyer m² marché estimé (€/m²)", value=float(l_ref), help="Loyer HC de référence du secteur.")
             
-            # --- MODIFICATION ICI : On accepte la valeur chargée si elle existe ---
             loyer_s = st.number_input("Loyer mensuel HC prévu (€)", 
                                       value=int(st.session_state.get('loyer_s_charge', 650)), 
                                       step=10, help="Le loyer réel prévu.")
             
-            # Calculs de comparaison (Gardés intacts)
-            loyer_estime_total = l_ref * surface
+            loyer_estime_total = l_ref_input * surface
             diff_l = ((loyer_s - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
             
             if abs(diff_l) < 10: 
-                st.info(f"📊 Loyer cohérent avec le marché ({int(loyer_estime_total)}€)")
+                st.info(f"📊 Loyer cohérent ({int(loyer_estime_total)}€)")
             elif diff_l > 10: 
-                st.warning(f"📈 Loyer ambitieux (+{round(diff_l, 1)}% vs marché)")
+                st.warning(f"📈 Loyer ambitieux (+{round(diff_l, 1)}%)")
             else: 
                 st.success(f"💎 Loyer sous-exploité (Potentiel : {int(loyer_estime_total)}€)")
 
-        # Section Diagnostic (Gardée intacte)
+        # Section Diagnostic
         if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
             d1, d2, d3 = st.columns(3)
-            d1.metric("Logements Sociaux", f"{data['s']}%", help="Un taux élevé impacte souvent la revente.")
-            d2.metric("Note Sécurité", f"{data['n']}/10", help="Basé sur les statistiques locales.")
-            d3.metric("Source Data", data['label'])
+            # On utilise les variables du bloc c1
+            d1.metric("Logements Sociaux", f"{social_rate}%")
+            d2.metric("Note Sécurité", f"{note_sector}/10")
+            d3.metric("Secteur", cp)
             
-# --- CALCULS ---
+        # --- CALCULS FINAUX ---
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
         tm = (taux/100)/12
-        mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
+        mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if (emprunt > 0 and tm > 0) else 0
+        
         ch_an = tf + charges + (loyer_s * 12 * (frais_g/100))
         amort_an = ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)
         is_an = max(0, ((loyer_s*12) - ch_an - (emprunt*taux/100) - amort_an) * 0.15)
         cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
-        # --- NOUVELLE LOGIQUE DE SCORE SCI ---
-        # 1. Rendement (40 pts) : Un rendement de 10% donne 40 points (4 pts par %)
+        # --- SCORE SCI ---
         score_rendement = min(40, (rend * 4)) 
-
-        # 2. Cash-Flow (40 pts) : 
+        
         if cf_net > 0:
-            if cf_net >= obj_cf:
-                score_cf = 40  # Objectif atteint
-            else:
-                # Si positif mais sous l'objectif, on donne entre 20 et 40 points
-                score_cf = 20 + (20 * (cf_net / obj_cf)) if obj_cf > 0 else 40
+            score_cf = 20 + (20 * (cf_net / obj_cf)) if obj_cf > 0 else 40
         else:
-            score_cf = 0  # 0 point si le projet coûte de l'argent
+            score_cf = 0 
 
-        # 3. Sécurité (20 pts) : Ta note sur 10 est doublée pour faire 20 points
-        score_secu = (data['n'] * 2)
-
-        # Total cumulé
+        score_secu = (note_sector * 2)
         score = int(score_rendement + score_cf + score_secu)
-
-        # Malus Mixité Sociale (Si trop de social, on retire des points pour la revente)
-        if data['s'] > 40:
-            score -= 15
-
-        # On s'assure que le score reste entre 0 et 100
+        if social_rate > 40: score -= 15
         score = max(0, min(100, score))
 
         st.divider()

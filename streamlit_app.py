@@ -98,7 +98,8 @@ def obtenir_donnees_secteur(nom_ville):
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
-with c1:
+        
+            with c1:
             nom = st.text_input("Nom du projet", value=st.session_state.get('nom_charge', "Projet"))
             
             # 1. Saisie du Code Postal

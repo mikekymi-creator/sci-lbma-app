@@ -127,29 +127,51 @@ if check_password():
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
+            # Prix de référence (Garde la valeur du secteur par défaut)
             p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence du quartier.")
-            prix_a = st.number_input("Prix d'achat NET vendeur (€)", value=100000, step=1000, help="Votre prix d'achat négocié.")
-            p_m2_reel = prix_a / surface
-            diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100
+            
+            # --- MODIFICATION ICI : On accepte la valeur chargée si elle existe ---
+            prix_a = st.number_input("Prix d'achat NET vendeur (€)", 
+                                     value=int(st.session_state.get('prix_a_charge', 100000)), 
+                                     step=1000, help="Votre prix d'achat négocié.")
+            
+            # Calculs de comparaison (Gardés intacts)
+            p_m2_reel = prix_a / surface if surface > 0 else 0
+            diff_p = (((prix_a/surface) - p_ref) / p_ref) * 100 if p_ref > 0 and surface > 0 else 0
+            
             st.write(f"Prix au m² projet : **{round(p_m2_reel, 1)} €/m²**")
-            if diff_p <= 0: st.success(f"✅ {round(abs(diff_p),1)}% sous le marché")
-            else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus du marché")
+            if diff_p <= 0: 
+                st.success(f"✅ {round(abs(diff_p),1)}% sous le marché")
+            else: 
+                st.warning(f"⚠️ {round(diff_p,1)}% au-dessus du marché")
             
         with col_m2:
+            # Loyer de référence
             l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer HC de référence du secteur.")
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10, help="Le loyer réel prévu.")
+            
+            # --- MODIFICATION ICI : On accepte la valeur chargée si elle existe ---
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", 
+                                      value=int(st.session_state.get('loyer_s_charge', 650)), 
+                                      step=10, help="Le loyer réel prévu.")
+            
+            # Calculs de comparaison (Gardés intacts)
             loyer_estime_total = l_ref * surface
             diff_l = ((loyer_s - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
-            if abs(diff_l) < 10: st.info(f"📊 Loyer cohérent avec le marché ({int(loyer_estime_total)}€)")
-            elif diff_l > 10: st.warning(f"📈 Loyer ambitieux (+{round(diff_l, 1)}% vs marché)")
-            else: st.success(f"💎 Loyer sous-exploité (Potentiel : {int(loyer_estime_total)}€)")
+            
+            if abs(diff_l) < 10: 
+                st.info(f"📊 Loyer cohérent avec le marché ({int(loyer_estime_total)}€)")
+            elif diff_l > 10: 
+                st.warning(f"📈 Loyer ambitieux (+{round(diff_l, 1)}% vs marché)")
+            else: 
+                st.success(f"💎 Loyer sous-exploité (Potentiel : {int(loyer_estime_total)}€)")
 
+        # Section Diagnostic (Gardée intacte)
         if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
             d1, d2, d3 = st.columns(3)
             d1.metric("Logements Sociaux", f"{data['s']}%", help="Un taux élevé impacte souvent la revente.")
             d2.metric("Note Sécurité", f"{data['n']}/10", help="Basé sur les statistiques locales.")
             d3.metric("Source Data", data['label'])
-
+            
 # --- CALCULS ---
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0

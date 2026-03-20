@@ -175,23 +175,30 @@ if check_password():
             client = get_gsheet_client()
             ws = client.open("SCI_LBMA_Database").worksheet("Biens")
             grid = st.columns(3)
-            for idx, row in df_b.iterrows():
-                # --- CALCULS TEMPS RÉEL POUR LE COMPARATEUR ---
-                # On s'assure que les valeurs numériques sont bien traitées
-                val_cf = float(row['CF']) if str(row['CF']).replace('.','').isdigit() else 0
-                val_rend = float(row['Rend']) if str(row['Rend']).replace('.','').isdigit() else 0
-                
+  for idx, row in df_b.iterrows():
+                # --- CORRECTION CALCULS AFFICHAGE ---
+                # On force la conversion en nombre pour éviter les erreurs de texte
+                try:
+                    display_score = int(float(row['Score']))
+                    display_cf = round(float(row['CF']), 2)
+                    display_rend = round(float(row['Rend']), 2)
+                except:
+                    display_score, display_cf, display_rend = 0, 0, 0
+
                 with grid[idx % 3]:
                     st.markdown(f"""<div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
                         <h4 style="margin:0;">{row['Nom']}</h4>
                         <p style="color:gray; font-size:12px;">📍 {row['Secteur']} | {row['Adresse']}</p>
-                        <h2 style="color:orange; margin:5px 0;">{row['Score']}/100</h2>
-                        <p>💰 CF : <b>{round(val_cf, 2)} €/m</b><br>📈 Rend : <b>{round(val_rend, 2)} %</b></p>
+                        <h2 style="color:orange; margin:5px 0;">{display_score}/100</h2>
+                        <p>💰 CF : <b>{display_cf} €/m</b><br>📈 Rend : <b>{display_rend} %</b></p>
                     </div>""", unsafe_allow_html=True)
+                    
                     c_del, c_link = st.columns(2)
                     with c_del:
                         if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
-                            ws.delete_rows(idx + 2); st.cache_data.clear(); st.rerun()
+                            ws.delete_rows(idx + 2)
+                            st.cache_data.clear()
+                            st.rerun()
                     with c_link:
                         if 'Lien' in row and row['Lien']:
                             st.link_button("🌐 Voir l'annonce", str(row['Lien']), use_container_width=True)

@@ -37,24 +37,16 @@ if check_password():
             return pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
         except: return pd.DataFrame()
 
-    def obtenir_donnees_secteur(nom_ville):
-    # Charge ton onglet de référence (ex: "Data_Marche")
-    df_ref = charger_onglet("Data_Marche") 
-    
-    # On cherche la ligne où la Ville/Secteur correspond exactement
-    # Assure-toi que le nom de la colonne dans le code est identique au Sheet
-    ligne = df_ref[df_ref['Ville/Secteur'] == nom_ville]
-    
-    if not ligne.empty:
-        return {
-            'p': float(ligne.iloc[0]['Prix_m2']),
-            'l': float(ligne.iloc[0]['Loyer_m2']),
-            's': int(ligne.iloc[0]['Social']),
-            'n': int(ligne.iloc[0]['Note']),
-            'cp': str(ligne.iloc[0]['CP']), # On récupère aussi le CP pour l'enregistrement
-            'label': nom_ville
-        }
-    return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'cp': '00000', 'label': "Inconnu"}
+    def obtenir_donnees_secteur(cp_saisi):
+        df_ref = charger_onglet("Referentiel_Secteurs")
+        res = {"p": 1950, "l": 12.0, "s": 20, "n": 7, "label": "Standard France"}
+        if not df_ref.empty and "CP" in df_ref.columns:
+            df_ref['CP'] = df_ref['CP'].astype(str)
+            match = df_ref[df_ref['CP'] == str(cp_saisi)]
+            if not match.empty:
+                row = match.iloc[0]
+                res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": "Référentiel Sheet"}
+        return res
 
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])

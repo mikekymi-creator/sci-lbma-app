@@ -99,9 +99,9 @@ def obtenir_donnees_secteur(nom_ville):
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
 
-st.write("Vérification du chargement...") # Si ça s'affiche, le début du tab1 fonctionne
+        st.write("Vérification du chargement...") # Si ça s'affiche, le début du tab1 fonctionne
 df_test = charger_onglet("Data_Marche")
-st.write("Colonnes trouvées :", df_test.columns.tolist()) # Si ça ne s'affiche pas, le bug est ICI
+        st.write("Colonnes trouvées :", df_test.columns.tolist()) # Si ça ne s'affiche pas, le bug est ICI
 
         
         with c1:

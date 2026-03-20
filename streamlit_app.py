@@ -5,7 +5,7 @@ import time
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- 1. CONFIGURATION & SECURITE ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="SCI LBMA - Expert Immo", layout="wide")
 
 def check_password():
@@ -48,31 +48,31 @@ if check_password():
                 res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": "Référentiel Sheet"}
         return res
 
-    # --- 3. STRUCTURE DES ONGLETS ---
+    # --- 3. ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
 
     with tab1:
         st.sidebar.header("🏦 Financement")
         apport = st.sidebar.number_input("Apport personnel (€)", 0, help="Somme injectée cash par la SCI.")
-        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt immobilier.")
-        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1, help="Taux d'intérêt nominal.")
-        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8, help="5-7% gestion + 2-3% GLI + 1-2% vacance.")
-        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100, help="Gain net mensuel visé.")
+        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20, help="Durée du prêt.")
+        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2, 0.1)
+        frais_g = st.sidebar.slider("Gestion/Vacance (%)", 0, 15, 8)
+        obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, value=100)
 
         st.markdown("### 🏠 Caractéristiques du Bien")
         c1, c2, c3 = st.columns(3)
         with c1:
             nom = st.text_input("Nom du projet", "Appartement Test", help="Nom pour le comparateur.")
-            cp = st.text_input("Code Postal", "60000", help="Charge les prix du marché.")
-            adr = st.text_input("📍 Adresse exacte", "", help="Localisation précise.")
-            lien = st.text_input("🔗 Lien annonce", "", help="URL de l'annonce.")
+            cp = st.text_input("Code Postal", "60000")
+            adr = st.text_input("📍 Adresse exacte", "")
+            lien = st.text_input("🔗 Lien annonce", "")
         with c2:
-            surface = st.number_input("Surface (m²)", 1, 500, 50, help="Surface habitable Carrez.")
-            dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4, help="F/G ajoute automatiquement 500€/m² de travaux.")
-            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 5000, help="Rénovation estimée.")
+            surface = st.number_input("Surface (m²)", 1, 500, 50)
+            dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4)
+            travaux = st.number_input("Budget Travaux (€)", 0, 500000, 5000)
         with c3:
-            tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(surface*15), help="Taxe foncière annuelle.")
-            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 400, help="Charges de copropriété annuelles.")
+            tf = st.number_input("Taxe Foncière (€)", 0, 5000, int(surface*15))
+            charges = st.number_input("Charges Copro (€/an)", 0, 10000, 400)
 
         st.divider()
         st.markdown("### 🧠 Intelligence de Marché")
@@ -80,31 +80,26 @@ if check_password():
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']), help="Prix de référence secteur.")
-            prix_a = st.number_input("Prix achat net vendeur (€)", value=100000, step=1000, help="Prix d'achat (indépendant de la surface).")
-            p_m2_reel = prix_a / surface
-            st.write(f"Prix au m² projet : **{round(p_m2_reel, 1)} €/m²**")
+            p_ref = st.number_input("Prix m² marché estimé (€/m²)", value=int(data['p']))
+            # FIX: Valeur manuelle par défaut pour éviter le changement auto
+            prix_a = st.number_input("Prix d'achat net vendeur (€)", value=100000, step=1000)
+            st.write(f"Prix au m² : **{round(prix_a/surface, 1)} €/m²**")
         with col_m2:
-            l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']), help="Loyer de référence secteur.")
-            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10, help="Loyer espéré (indépendant de la surface).")
-            st.info(f"Marché pour {surface}m² : **{int(l_ref * surface)}€**")
-
-        if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
-            d1, d2, d3 = st.columns(3)
-            d1.metric("Logements Sociaux", f"{data['s']}%")
-            d2.metric("Note Sécurité", f"{data['n']}/10")
-            d3.metric("Source Data", data['label'])
+            l_ref = st.number_input("Loyer m² marché estimé (€/m²)", value=float(data['l']))
+            # FIX: Valeur manuelle par défaut pour éviter le changement auto
+            loyer_s = st.number_input("Loyer mensuel HC prévu (€)", value=650, step=10)
+            st.info(f"Potentiel marché : {int(l_ref * surface)}€")
 
         # Calculs
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
         emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
         tm = (taux/100)/12
-        mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
-        ch_mensuelles = (tf + charges) / 12 + (loyer_s * (frais_g/100))
+        mens = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
+        ch_m = (tf + charges) / 12 + (loyer_s * (frais_g/100))
         amort_an = ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)
-        is_an = max(0, ((loyer_s*12) - (ch_mensuelles*12) - (emprunt*taux/100) - amort_an) * 0.15)
-        cf_net = round(loyer_s - mensualite - ch_mensuelles - (is_an/12), 2)
+        is_m = max(0, ((loyer_s*12) - (ch_m*12) - (emprunt*taux/100) - amort_an) * 0.15) / 12
+        cf_net = round(loyer_s - mens - ch_m - is_m, 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
         st.divider()
@@ -115,13 +110,14 @@ if check_password():
         v1, v2, v3, v4 = st.columns([1, 1, 1, 1.2])
         with v1:
             color = "green" if score >= 70 else "orange" if score >= 40 else "red"
-            st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score Global</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
-            st.markdown(f"<p style='font-size:12px; color:gray;'>Détail : {loyer_s}€ (Loyer) - {round(mensualite)}€ (Prêt) - {round(ch_mensuelles)}€ (Charges) - {round(is_an/12)}€ (IS)</p>", unsafe_allow_html=True)
+            # AJOUT DU PETIT CALCUL SOUS LE TOTAL
+            st.caption(f"{loyer_s}€ (Loyer) - {int(mens)}€ (Crédit) - {int(ch_m)}€ (Charges) - {int(is_m)}€ (IS)")
         with v3:
             st.metric("Rendement Brut", f"{rend} %")
-            st.write(f"🛡️ IS estimé : **{int(is_an)} €/an**")
+            st.write(f"🛡️ IS estimé : **{int(is_m*12)} €/an**")
         with v4:
             if cf_net < 0: st.error("❌ RENTABILITÉ NÉGATIVE")
             elif cf_net >= obj_cf: st.success("✅ PROJET VALIDÉ")
@@ -131,10 +127,7 @@ if check_password():
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database").worksheet("Biens")
             sh.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, cp, score, cf_net, rend, adr, lien])
-            st.balloons()
-            st.success(f"✅ Bien '{nom}' enregistré !")
-            st.cache_data.clear()
-            st.rerun()
+            st.balloons(); st.success("Bien enregistré !"); st.cache_data.clear(); time.sleep(1); st.rerun()
 
     with tab2:
         st.subheader("⚖️ Arbitrage de la SCI LBMA")
@@ -149,12 +142,13 @@ if check_password():
                         <h4 style="margin:0;">{row['Nom']}</h4>
                         <p style="color:gray; font-size:12px;">📍 {row['Secteur']} | {row['Adresse']}</p>
                         <h2 style="color:orange; margin:5px 0;">{row['Score']}/100</h2>
-                        <p>💰 CF : <b>{row['CF']} €/m</b><br>📈 Rend : <b>{row['Rend']} %</b></p>
+                        <p>💰 CF : <b>{row['CF']} €</b> | 📈 Rend : <b>{row['Rend']} %</b></p>
                     </div>""", unsafe_allow_html=True)
                     c_del, c_link = st.columns(2)
                     with c_del:
                         if st.button("🗑️ Supprimer", key=f"del_{idx}", use_container_width=True):
                             ws.delete_rows(idx + 2); st.cache_data.clear(); st.rerun()
                     with c_link:
-                        if 'Lien' in row and row['Lien']:
-                            st.link_button("🌐 Voir l'annonce", row['Lien'], use_container_width=True)
+                        url = str(row.get('Lien', ''))
+                        if url.startswith('http'):
+                            st.link_button("🌐 Voir l'annonce", url, use_container_width=True)

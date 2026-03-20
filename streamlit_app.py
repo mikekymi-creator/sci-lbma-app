@@ -6,35 +6,41 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 # --- CONFIGURATION PAGE ---
-st.set_page_config(page_title="SCI LBMA - Système Expert Data", layout="wide")
+st.set_page_config(page_title="SCI LBMA - Expert Immo Intégral", layout="wide")
 
 # --- SYSTÈME DE SÉCURITÉ ---
 def check_password():
+    def password_entered():
+        if st.session_state["password"] == st.secrets["password"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]
+        else:
+            st.session_state["password_correct"] = False
     if "password_correct" not in st.session_state:
         st.markdown("### 🔐 Accès Privé SCI LBMA")
-        pwd = st.text_input("Code d'accès familial", type="password")
-        if st.button("Connexion"):
-            if pwd == st.secrets["password"]:
-                st.session_state["password_correct"] = True
-                st.rerun()
-            else: st.error("Code incorrect.")
+        st.text_input("Veuillez saisir le code d'accès familial", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        st.text_input("Code incorrect. Réessayez", type="password", on_change=password_entered, key="password")
+        st.error("😕 Accès refusé.")
         return False
     return True
 
 if check_password():
     
-    # --- CONNEXION CLOUD & RÉFÉRENTIEL ---
+    # --- CONNEXION GOOGLE SHEETS ---
     def get_gsheet_client():
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds_dict = st.secrets["gcp_service_account"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         return gspread.authorize(creds)
 
-    @st.cache_data(ttl=600) # Garde les données en mémoire 10 min pour la rapidité
+    @st.cache_data(ttl=60) # Rafraîchissement toutes les minutes pour vos tests
     def charger_referentiel():
         try:
             client = get_gsheet_client()
-            sheet = client.open("SCI_LBMA_Database").worksheet("Referentiel_Secteurs")
+            sh = client.open("SCI_LBMA_Database")
+            sheet = sh.worksheet("Referentiel_Secteurs")
             return pd.DataFrame(sheet.get_all_records())
         except:
             return pd.DataFrame(columns=["Ville_CP", "Prix_m2", "Loyer_m2", "Social_Pct", "Secu_Note"])
@@ -42,103 +48,152 @@ if check_password():
     df_ref = charger_referentiel()
 
     def obtenir_donnees_locales(secteur_saisi):
-        # Valeurs par défaut si rien n'est trouvé
-        res = {"p": 1950, "l": 12.0, "s": 20, "n": 7, "label": "🌐 Secteur Standard (Hors base)"}
-        
-        # Recherche dans le dataframe (insensible à la casse)
-        match = df_ref[df_ref['Ville_CP'].str.contains(secteur_saisi, case=False, na=False)]
-        
-        if not match.empty:
-            row = match.iloc[0]
-            res = {
-                "p": row['Prix_m2'], "l": row['Loyer_m2'], 
-                "s": row['Social_Pct'], "n": row['Secu_Note'],
-                "label": f"🎯 Données sourcées : {row['Ville_CP']}"
-            }
+        # Valeurs par défaut (Standard France)
+        res = {"p": 1950, "l": 12.0, "s": 20, "n": 7, "label": "🌐 Secteur Standard (Valeurs nationales)"}
+        if not df_ref.empty:
+            match = df_ref[df_ref['Ville_CP'].str.contains(secteur_saisi, case=False, na=False)]
+            if not match.empty:
+                row = match.iloc[0]
+                res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": f"🎯 Données sourcées : {row['Ville_CP']}"}
         return res
 
-    # --- INTERFACE ---
-    tab1, tab2 = st.tabs(["📝 Analyse Multi-Sources", "⚖️ Comparateur SCI"])
+    # --- CONNEXION BASE DE DONNÉES BIENS ---
+    def connect_gsheet_biens():
+        try:
+            client = get_gsheet_client()
+            return client.open("SCI_LBMA_Database").worksheet("Biens")
+        except: return None
+
+    gsheet_biens = connect_gsheet_biens()
+
+    def load_cloud_data():
+        if gsheet_biens: return gsheet_biens.get_all_records()
+        return []
+
+    # --- STRUCTURE ONGLETS ---
+    tab1, tab2 = st.tabs(["📝 Nouvelle Analyse détaillée", "⚖️ Comparateur Familial"])
 
     with tab1:
         st.title("🛡️ SCI LBMA - Pilotage Expert")
 
-        # Configuration Latérale
-        st.sidebar.header("🏦 Financement")
-        apport = st.sidebar.number_input("Apport (€)", 0, help="Fonds propres de la SCI.")
-        duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 20)
-        taux = st.sidebar.slider("Taux (%)", 1.0, 6.0, 4.2)
-        frais_g = st.sidebar.slider("Gestion/Assur (%)", 0, 15, 8)
+        # --- BARRE LATÉRALE ---
+        st.sidebar.header("🏦 Stratégie de Financement")
+        apport = st.sidebar.number_input("Apport personnel (€)", value=0, help="Fonds propres injectés.")
+        duree_credit = st.sidebar.select_slider("Durée du crédit (années)", options=list(range(1, 26)), value=20)
+        taux_interet = st.sidebar.slider("Taux d'intérêt nominal (%)", 1.0, 6.0, 4.2, 0.1)
+        frais_gestion = st.sidebar.slider("Frais de gestion et assurances (%)", 0, 15, 8)
+        objectif_cf = st.sidebar.number_input("Objectif de Cash-Flow Net (€)", value=100)
 
-        # Saisie Bien
+        # --- ZONE DE SAISIE ---
         with st.container():
-            st.subheader("🏠 Caractéristiques")
+            st.subheader("🏠 Caractéristiques de l'Annonce")
             c1, c2, c3 = st.columns(3)
             with c1:
-                nom = st.text_input("Nom", "Projet X")
-                secteur = st.text_input("Ville ou CP", "Beuvrages", help="Tapez le nom présent dans votre Google Sheet.")
-                lien = st.text_input("Lien annonce", "")
+                nom = st.text_input("Nom du projet", "Ex: Appart Beuvrages", help="Nom pour le suivi.")
+                secteur = st.text_input("Quartier / Ville / CP", "Beuvrages", help="L'outil cherche ce nom dans votre onglet Referentiel_Secteurs.")
+                adresse_precise = st.text_input("📍 Adresse exacte", "", help="Pour affiner plus tard.")
+                lien_annonce = st.text_input("🔗 Lien de l'annonce", "")
             with c2:
-                surface = st.number_input("Surface (m²)", 50, min_value=1)
-                dpe = st.selectbox("DPE", ["A","B","C","D","E","F","G"], index=4)
-                travaux_base = st.number_input("Budget Travaux (€)", 5000)
+                surface = st.number_input("Surface habitable (m²)", value=50, min_value=1)
+                dpe = st.selectbox("DPE", ["A", "B", "C", "D", "E", "F", "G"], index=4, help="Un DPE F ou G ajoute 500€/m² de travaux d'isolation.")
+                travaux_base = st.number_input("Budget Travaux estimé (€)", value=5000)
             with c3:
-                tf_saisie = st.number_input("Taxe Foncière (€)", value=int(surface*15))
-                charges = st.number_input("Charges Copro (€/an)", 400)
+                # On détermine si c'est une zone à forte taxe foncière via le référentiel
+                tf_base = int(surface * 15)
+                taxe_f_saisie = st.number_input("Taxe Foncière réelle (€)", value=tf_base, help="À vérifier sur l'avis de taxe foncière.")
+                charges_copro = st.number_input("Charges de copropriété annuelles (€)", value=400)
 
-        # --- LOGIQUE DATA ---
-        data_loc = obtenir_donnees_locales(secteur)
+        # --- INTELLIGENCE DE MARCHÉ (HYBRIDE & DYNAMIQUE) ---
         st.divider()
+        data_loc = obtenir_donnees_locales(secteur)
         st.subheader("🧠 Intelligence de Marché")
         st.info(data_loc['label'])
 
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            p_m2_ref = st.number_input("Prix m² Marché (€/m²)", value=int(data_loc['p']), help="Tiré de votre onglet Referentiel_Secteurs.")
-            prix_vendeur = st.number_input("Prix Achat Net (€)", value=int(p_m2_ref * surface))
-            p_m2_reel = prix_vendeur / surface
-            diff_p = ((p_m2_reel - p_m2_ref) / p_m2_ref) * 100
-            st.write(f"Projet : **{int(p_m2_reel)} €/m²**")
-            if diff_p <= 0: st.success(f"✅ {round(abs(diff_p),1)}% sous le marché")
-            else: st.warning(f"⚠️ {round(diff_p,1)}% au-dessus")
+            p_marche_m2 = st.number_input("Prix m² secteur (€/m²)", value=int(data_loc['p']), help="Donnée issue de votre Google Sheet.")
+            prix_affiche = st.number_input("Prix d'achat net vendeur (€)", value=int(p_marche_m2 * surface), step=1000)
+            p_m2_reel = prix_affiche / surface
+            diff_p = ((p_m2_reel - p_marche_m2) / p_marche_m2) * 100
+            st.write(f"Prix au m² projet : **{round(p_m2_reel, 0)} €/m²**")
+            if diff_p <= 0: st.success(f"✅ Affaire : {round(abs(diff_p), 1)}% sous le marché")
+            else: st.warning(f"⚠️ Vigilance : {round(diff_p, 1)}% au-dessus")
 
         with col_m2:
-            l_m2_ref = st.number_input("Loyer m² Marché (€/m²)", value=float(data_loc['l']))
-            loyer_prevu = st.number_input("Loyer mensuel prévu (€)", value=int(l_m2_ref * surface))
-            loyer_m_total = l_m2_ref * surface
-            st.write(f"Loyer Marché : **{int(loyer_m_total)} €**")
-            diff_l = ((loyer_prevu - loyer_m_total) / loyer_m_total) * 100 if loyer_m_total > 0 else 0
-            if abs(diff_l) < 10: st.info("📊 Cohérent")
-            elif diff_l > 10: st.warning("📈 Ambitieux")
-            else: st.success("💎 Sous-exploité")
+            l_marche_m2 = st.number_input("Loyer m² secteur (€/m²)", value=float(data_loc['l']), help="Donnée issue de votre Google Sheet.")
+            loyer_saisi = st.number_input("Loyer mensuel HC prévu (€)", value=int(l_marche_m2 * surface))
+            loyer_estime_total = l_marche_m2 * surface
+            st.write(f"Loyer estimé marché : **{int(loyer_estime_total)} €**")
+            diff_l = ((loyer_saisi - loyer_estime_total) / loyer_estime_total) * 100 if loyer_estime_total > 0 else 0
+            if abs(diff_l) < 10: st.info("📊 Loyer cohérent")
+            elif diff_l > 10: st.warning(f"📈 Loyer élevé (+{round(diff_l, 1)}%)")
+            else: st.success(f"💎 Sous-exploité ({round(diff_l, 1)}%)")
 
-        # --- DIAGNOSTIC QUARTIER (BASÉ SUR SHEET) ---
-        if st.button("🔍 Voir Diagnostic Quartier"):
+        if st.button("🔍 Diagnostic Sécurité & Mixité", help="Affiche les stats de votre Google Sheet pour ce quartier."):
             s1, s2 = st.columns(2)
-            s1.metric("Logements Sociaux", f"{data_loc['s']}%", help="Donnée issue de votre référentiel Sheet.")
+            s1.metric("Logements Sociaux", f"{data_loc['s']}%")
             s2.metric("Note Sécurité", f"{data_loc['n']}/10")
 
         # --- CALCULS FINANCIERS ---
-        travaux_finaux = travaux_base + (surface * 500 if dpe in ["F","G"] else 0)
-        emprunt = (prix_vendeur + travaux_finaux + (prix_vendeur * 0.08)) - apport
-        tm = (taux/100)/12
-        mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
-        amort = ((prix_vendeur*0.85)/25) + (travaux_finaux/15)
-        ch_an = tf_saisie + charges + ((loyer_prevu*12)*(frais_g/100))
-        is_an = max(0, ((loyer_prevu*12) - ch_an - (emprunt*(taux/100)) - amort) * 0.15)
-        cf_net = round(loyer_prevu - mensualite - (ch_an/12) - (is_an/12), 2)
-        rend = round(((loyer_prevu*12)/prix_vendeur)*100, 2) if prix_vendeur > 0 else 0
+        surplus_dpe = (surface * 500) if dpe in ["F", "G"] else 0
+        travaux_finaux = travaux_base + surplus_dpe
+        f_notaire = prix_affiche * 0.08
+        emprunt = (prix_affiche + travaux_finaux + f_notaire) - apport
+        tm = (taux_interet/100)/12
+        n = duree_credit * 12
+        mensualite = emprunt * (tm * (1+tm)**n) / ((1+tm)**n - 1) if emprunt > 0 else 0
+        amortissement = ((prix_affiche * 0.85) / 25) + (travaux_finaux / 15)
+        charges_an = taxe_f_saisie + charges_copro + ((loyer_saisi * 12) * (frais_gestion/100))
+        impot_is_annuel = max(0, ((loyer_saisi * 12) - charges_an - (emprunt * (taux_interet/100)) - amortissement) * 0.15)
+        cf_net = round(loyer_saisi - mensualite - (charges_an/12) - (impot_is_annuel/12), 2)
+        rend_brut = round(((loyer_saisi * 12) / prix_affiche) * 100, 2) if prix_affiche > 0 else 0
 
-        # --- SCORE ---
+        # --- SCORE & VERDICT ---
         st.divider()
-        v1, v2, v3 = st.columns(3)
-        v1.metric("Cash-Flow Net", f"{cf_net} €/m")
-        st.caption(f"Crédit : {int(mensualite)}€ | IS : {int(is_an/12)}€")
-        v2.metric("Rendement Brut", f"{rend} %")
-        v3.metric("Score", f"{'🔥' if cf_net > 150 else '👍' if cf_net > 0 else '❌'}")
+        score = 0
+        if cf_net >= objectif_cf: score += 40
+        if rend_brut >= 8: score += 20
+        if data_loc['s'] > 45: score -= 15 # Malus si bcp de social
+        if dpe in ["A", "B", "C", "D"]: score += 10
+        
+        v1, v2, v3, v4 = st.columns(4)
+        with v1:
+            c_score = "green" if score >= 70 else "orange" if score >= 40 else "red"
+            st.markdown(f"<div style='text-align:center; border:3px solid {c_score}; border-radius:15px; padding:15px'><h3>Score</h3><h1 style='color:{c_score}'>{score}/100</h1></div>", unsafe_allow_html=True)
+        with v2: 
+            st.metric("Cash-Flow Net", f"{cf_net} €/m", help="Après TOUTES charges et IS.")
+            st.caption(f"Mensualité : {round(mensualite, 2)} €")
+        with v3: 
+            st.metric("Rendement Brut", f"{rend_brut} %")
+            st.caption(f"IS estimé : {int(impot_is_annuel)} €/an")
+        with v4:
+            if score < 40: st.error("⚠️ Profil Risqué")
+            else: st.success("✅ Profil Validé")
 
-        if st.button("🚀 Sauvegarder l'Analyse"):
-            client = get_gsheet_client()
-            sheet = client.open("SCI_LBMA_Database").worksheet("Biens")
-            sheet.append_row([str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, secteur, cf_net, rend])
-            st.success("C'est dans le Cloud !")
+        if st.button("🚀 Enregistrer et Partager", use_container_width=True):
+            if gsheet_biens:
+                row = [str(time.time()), datetime.now().strftime("%d/%m/%Y"), nom, secteur, score, cf_net, rend_brut, lien_annonce]
+                gsheet_biens.append_row(row)
+                st.success("Enregistré dans le Cloud !")
+                time.sleep(1)
+                st.rerun()
+
+    with tab2:
+        st.title("⚖️ Arbitrage de la SCI LBMA")
+        db = load_cloud_data()
+        if not db:
+            st.info("La base de données est vide.")
+        else:
+            cols = st.columns(3)
+            for i, bien in enumerate(db):
+                with cols[i % 3]:
+                    b_color = "#d4edda" if bien['Score'] >= 70 else "#fff3cd" if bien['Score'] >= 40 else "#f8d7da"
+                    t_color = "#155724" if bien['Score'] >= 70 else "#856404" if bien['Score'] >= 40 else "#721c24"
+                    st.markdown(f'<div style="background-color:{b_color}; padding:20px; border-radius:15px; border:2px solid {t_color}; margin-bottom:10px"><h3 style="color:{t_color}; margin-top:0">{bien["Nom"]}</h3><h1 style="color:{t_color}">{bien["Score"]}/100</h1><p>📍 {bien["Secteur"]}</p><hr style="border:0.5px solid {t_color}"><p>💰 CF : <b>{bien["CF"]}€/m</b> | 📈 Rend : <b>{bien["Rend"]}%</b></p></div>', unsafe_allow_html=True)
+                    c_btn1, c_btn2 = st.columns(2)
+                    with c_btn1:
+                        if 'Lien' in bien and bien['Lien']: st.link_button("🌐 Voir", bien['Lien'], use_container_width=True)
+                    with c_btn2:
+                        if st.button("🗑️", key=f"del_{bien['Id']}", use_container_width=True):
+                            gsheet_biens.delete_rows(i + 2)
+                            st.rerun()

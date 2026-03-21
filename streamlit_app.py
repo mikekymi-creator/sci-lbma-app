@@ -38,10 +38,11 @@ if check_password():
         except: 
             return pd.DataFrame()
 
-def obtenir_donnees_secteur(nom_ville):
+    def obtenir_donnees_secteur(nom_ville):
         try:
             df_ref = charger_onglet("Referentiel_Secteurs") 
             if not df_ref.empty:
+                # On cherche la ligne exacte correspondant au quartier/ville choisi
                 match = df_ref[df_ref['Ville / Secteur'] == nom_ville]
                 if not match.empty:
                     row = match.iloc[0]
@@ -50,11 +51,12 @@ def obtenir_donnees_secteur(nom_ville):
                         'l': float(str(row.get('Loyer_m2', 12)).replace(',', '.')),
                         's': int(row.get('Social_Pct', 20)),
                         'n': int(row.get('Secu_Note', 5)),
-                        'label': 'Référentiel Sheet' # <--- ON RAJOUTE CETTE LIGNE
+                        'label': 'Référentiel Sheet'  # <--- Ajouté pour corriger l'erreur ligne 210
                     }
         except: 
             pass
-        return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'label': 'Standard France'} # <--- ET ICI AUSSI
+        # Valeurs de secours si le quartier n'est pas trouvé ou erreur
+        return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'label': 'Standard France'}
     
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])

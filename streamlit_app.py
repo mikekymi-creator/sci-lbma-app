@@ -22,7 +22,7 @@ def check_password():
 
 if check_password():
     
-    # --- 2. FONCTIONS DATA ---
+# --- 2. FONCTIONS DATA (BLOC UNIQUE ET CORRIGÉ) ---
     def get_gsheet_client():
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds_dict = st.secrets["gcp_service_account"]
@@ -35,18 +35,28 @@ if check_password():
             client = get_gsheet_client()
             sh = client.open("SCI_LBMA_Database")
             return pd.DataFrame(sh.worksheet(nom_onglet).get_all_records())
-        except: return pd.DataFrame()
+        except: 
+            return pd.DataFrame()
 
-    def obtenir_donnees_secteur(cp_saisi):
-        df_ref = charger_onglet("Referentiel_Secteurs")
-        res = {"p": 1950, "l": 12.0, "s": 20, "n": 7, "label": "Standard France"}
-        if not df_ref.empty and "CP" in df_ref.columns:
-            df_ref['CP'] = df_ref['CP'].astype(str)
-            match = df_ref[df_ref['CP'] == str(cp_saisi)]
-            if not match.empty:
-                row = match.iloc[0]
-                res = {"p": row['Prix_m2'], "l": row['Loyer_m2'], "s": row['Social_Pct'], "n": row['Secu_Note'], "label": "Référentiel Sheet"}
-        return res
+    # Cette fonction unique va chercher les détails d'un quartier précis
+    def obtenir_donnees_secteur(nom_ville):
+        try:
+            df_ref = charger_onglet("Referentiel_Secteurs") 
+            if not df_ref.empty:
+                # On cherche la ligne exacte correspondant au quartier/ville choisi
+                match = df_ref[df_ref['Ville / Secteur'] == nom_ville]
+                if not match.empty:
+                    row = match.iloc[0]
+                    return {
+                        'p': float(str(row.get('Prix_m2', 2000)).replace(',', '.')),
+                        'l': float(str(row.get('Loyer_m2', 12)).replace(',', '.')),
+                        's': int(row.get('Social_Pct', 20)),
+                        'n': int(row.get('Secu_Note', 5))
+                    }
+        except: 
+            pass
+        # Valeurs de secours si le quartier n'est pas trouvé
+        return {'p': 2000, 'l': 12, 's': 20, 'n': 5}
 
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
@@ -86,9 +96,36 @@ if check_password():
                                 value=st.session_state.get('nom_charge', "Appartement Test"), 
                                 help="Nom pour identifier le bien dans le comparateur.")
             
-            cp = st.text_input("Code Postal", 
-                               value=st.session_state.get('cp_charge', "60000"), 
-                               help="Charge les prix du marché via votre Google Sheet.")
+# On saisit le CP
+            cp_saisi = st.text_input("📮 Code Postal", value=st.session_state.get('cp_charge', "60000"))
+            
+            # Initialisation des variables par défaut
+            p_ref, l_ref, social_rate, note_sector = 2000, 12, 20, 5
+            cp = cp_saisi 
+
+            try:
+                # 1. On charge ton référentiel
+                df_ref = charger_onglet("Referentiel_Secteurs")
+                
+                if not df_ref.empty:
+                    # 2. On filtre pour voir si ce CP existe dans ton tableau
+                    df_filtre = df_ref[df_ref['CP'].astype(str) == str(cp_saisi)]
+
+                    if not df_filtre.empty:
+                        # 3. Si oui, on affiche la liste des quartiers de ce CP
+                        liste_quartiers = df_filtre['Ville / Secteur'].unique().tolist()
+                        secteur_choisi = st.selectbox("🏘️ Quartier / Ville", options=liste_quartiers)
+                        
+                        # 4. On récupère les vraies données du quartier sélectionné
+                        infos = obtenir_donnees_secteur(secteur_choisi)
+                        p_ref, l_ref, social_rate, note_sector = infos['p'], infos['l'], infos['s'], infos['n']
+                        
+                        # Le nom du quartier devient notre référence pour la sauvegarde
+                        cp = secteur_choisi 
+                    else:
+                        st.info("ℹ️ Code postal inconnu dans le référentiel.")
+            except Exception as e:
+                st.error(f"Erreur de lecture : {e}")
             
             adr = st.text_input("📍 Adresse exacte", 
                                 value=st.session_state.get('adr_charge', ""), 

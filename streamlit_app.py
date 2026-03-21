@@ -278,7 +278,7 @@ if check_password():
             color = "green" if score >= 70 else "orange" if score >= 40 else "red"
             st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:10px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333; font-size:18px;">Score Global</h2><h1 style="color:{color}; font-size:45px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
             
-            # --- LE DÉTAIL DYNAMIQUE ---
+        # --- LE DÉTAIL DYNAMIQUE ---
             with st.expander("🔍 Pourquoi cette note ?", expanded=False):
                 st.caption(f"📈 Rendement ({rend}%): **{pts_rend}/40**")
                 

@@ -222,53 +222,50 @@ if check_password():
         cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
-        # --- NOUVELLE LOGIQUE DE SCORE SCI ---
-        # 1. Rendement (40 pts) : Un rendement de 10% donne 40 points (4 pts par %)
-        score_rendement = min(40, (rend * 4)) 
 
-        # 2. Cash-Flow (40 pts) : 
+        # --- CALCUL DÉTAILLÉ DU SCORE (Aligné) ---
+        pts_rend = int(min(40, (rend * 4)))
+
         if cf_net > 0:
             if cf_net >= obj_cf:
-                score_cf = 40  # Objectif atteint
+                pts_cf = 40 
             else:
-                # Si positif mais sous l'objectif, on donne entre 20 et 40 points
-                score_cf = 20 + (20 * (cf_net / obj_cf)) if obj_cf > 0 else 40
+                pts_cf = int(20 + (20 * (cf_net / obj_cf))) if obj_cf > 0 else 40
         else:
-            score_cf = 0  # 0 point si le projet coûte de l'argent
+            pts_cf = 0
 
-        # 3. Sécurité (20 pts) : Ta note sur 10 est doublée pour faire 20 points
-        score_secu = (data['n'] * 2)
+        pts_secu = int(data['n'] * 2)
+        score = pts_rend + pts_cf + pts_secu
 
-        # Total cumulé
-        score = int(score_rendement + score_cf + score_secu)
+        malus_social = 15 if data['s'] > 40 else 0
+        score = max(0, min(100, score - malus_social))
 
-        # Malus Mixité Sociale (Si trop de social, on retire des points pour la revente)
-        if data['s'] > 40:
-            score -= 15
-
-        # On s'assure que le score reste entre 0 et 100
-        score = max(0, min(100, score))
-
+        # --- AFFICHAGE DU VERDICT ---
         st.divider()
         st.markdown("### 🎯 Verdict SCI LBMA : Performance & Sécurité")
 
         v1, v2, v3, v4 = st.columns([1, 1, 1, 1.2])
+
         with v1:
-            # Ton affichage actuel du score (inchangé)
+            # Ton bloc de score global (inchangé)
             color = "green" if score >= 70 else "orange" if score >= 40 else "red"
             st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:10px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333; font-size:18px;">Score Global</h2><h1 style="color:{color}; font-size:45px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
             
-            # --- AJOUT DU DÉTAIL EN PETIT ---
-            with st.expander("🔍 Détail du score", expanded=False):
-                st.write("**Répartition des points :**")
-                # Version ultra-compacte pour ne pas prendre de place
-                st.caption("💰 Rentabilité (Cashflow) : /40")
-                st.caption(f"🛡️ Sécurité Marché ({cp}) : /30")
-                st.caption(f"🏘️ Quartier (Note {data['n']}/10) : /20")
-                st.caption("🚀 Potentiel Revente : /10")
+            # --- LE DÉTAIL DYNAMIQUE ---
+            with st.expander("🔍 Pourquoi cette note ?", expanded=False):
+                st.caption(f"📈 Rendement ({rend}%): **{pts_rend}/40**")
                 
-                if score >= 70:
-                    st.toast("Projet pépite ! 🌟")
+                # Petit indicateur visuel pour le Cash-flow
+                cf_label = "✅ Positif" if cf_net > 0 else "❌ Négatif"
+                st.caption(f"💰 Cash-Flow ({cf_label}): **{pts_cf}/40**")
+                
+                st.caption(f"🛡️ Sécurité Secteur: **{pts_secu}/20**")
+                
+                if malus_social > 0:
+                    st.caption(f"⚠️ Malus Mixité Sociale: **-{malus_social} pts**")
+                
+                st.divider()
+                st.write(f"**Total final : {score}/100**")
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
             st.caption(f"{loyer_s}€ - {int(mensualite)}€ (Prêt) - {int(ch_an/12)}€ (Ch.) - {int(is_an/12)}€ (IS)")

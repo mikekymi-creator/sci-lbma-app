@@ -38,6 +38,32 @@ if check_password():
         except: 
             return pd.DataFrame()
 
+    def calculer_amortissement(capital, taux_an, duree_an):
+        """Calcule les données de remboursement mois par mois."""
+        taux_mensuel = (taux_an / 100) / 12
+        nb_mois = int(duree_an * 12)
+        
+        # Calcul de la mensualité (formule standard)
+        if taux_mensuel > 0:
+            mensualite = capital * (taux_mensuel * (1 + taux_mensuel)**nb_mois) / ((1 + taux_mensuel)**nb_mois - 1)
+        else:
+            mensualite = capital / nb_mois
+        
+        table = []
+        solde = capital
+        for m in range(1, nb_mois + 1):
+            interets = solde * taux_mensuel
+            principal = mensualite - interets
+            solde -= principal
+            table.append({
+                "Mois": m,
+                "Année": (m - 1) // 12 + 1,
+                "Mensualité": round(mensualite, 2),
+                "Principal": round(principal, 2),
+                "Intérêts": round(interets, 2),
+                "Dette Restante": round(max(0, solde), 2)
+            })
+        return pd.DataFrame(table)
     def obtenir_donnees_secteur(nom_ville):
         try:
             df_ref = charger_onglet("Referentiel_Secteurs") 
@@ -57,30 +83,6 @@ if check_password():
             pass
         # Valeurs de secours si le quartier n'est pas trouvé ou erreur
         return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'label': 'Standard France'}
-
-    def calculer_amortissement(capital, taux_an, duree_an):
-    taux_mensuel = (taux_an / 100) / 12
-    nb_mois = duree_an * 12
-    # Formule de la mensualité standard
-    if taux_mensuel > 0:
-        mensualite = capital * (taux_mensuel * (1 + taux_mensuel)**nb_mois) / ((1 + taux_mensuel)**nb_mois - 1)
-    else:
-        mensualite = capital / nb_mois
-    
-    table = []
-    solde = capital
-    for m in range(1, nb_mois + 1):
-        interets = solde * taux_mensuel
-        principal = mensualite - interets
-        solde -= principal
-        table.append({
-            "Mois": m,
-            "Année": (m - 1) // 12 + 1,
-            "Principal": round(principal, 2),
-            "Intérêts": round(interets, 2),
-            "Dette Restante": round(max(0, solde), 2)
-        })
-    return pd.DataFrame(table)
     
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])

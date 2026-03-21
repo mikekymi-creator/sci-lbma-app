@@ -254,8 +254,21 @@ if check_password():
 
         v1, v2, v3, v4 = st.columns([1, 1, 1, 1.2])
         with v1:
+            # Ton affichage actuel du score (inchangé)
             color = "green" if score >= 70 else "orange" if score >= 40 else "red"
-            st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:20px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333;">Score Global</h2><h1 style="color:{color}; font-size:60px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="border:3px solid {color}; border-radius:15px; padding:10px; text-align:center; background-color:white;"><h2 style="margin:0; color:#333; font-size:18px;">Score Global</h2><h1 style="color:{color}; font-size:45px; margin:0">{score}/100</h1></div>', unsafe_allow_html=True)
+            
+            # --- AJOUT DU DÉTAIL EN PETIT ---
+            with st.expander("🔍 Détail du score", expanded=False):
+                st.write("**Répartition des points :**")
+                # Version ultra-compacte pour ne pas prendre de place
+                st.caption("💰 Rentabilité (Cashflow) : /40")
+                st.caption(f"🛡️ Sécurité Marché ({cp}) : /30")
+                st.caption(f"🏘️ Quartier (Note {data['n']}/10) : /20")
+                st.caption("🚀 Potentiel Revente : /10")
+                
+                if score >= 70:
+                    st.toast("Projet pépite ! 🌟")
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
             st.caption(f"{loyer_s}€ - {int(mensualite)}€ (Prêt) - {int(ch_an/12)}€ (Ch.) - {int(is_an/12)}€ (IS)")

@@ -230,14 +230,45 @@ if check_password():
 
         # Section Diagnostic (Vérifie bien que c'est écrit comme ça)
         if st.button("🔍 Lancer le Diagnostic Complet (Marché & Secteur)"):
-            d1, d2 = st.columns([1, 2]) # On donne plus de place au texte
+            d1, d2 = st.columns([1, 2])
             
             with d1:
-                st.metric("Logements Sociaux", f"{data['s']}%")
-                st.metric("Note Sécurité", f"{data['n']}/10")
+                # --- Logique Couleur Logements Sociaux ---
+                # Plus c'est bas, plus c'est vert (Calme social)
+                if data['s'] <= 15:
+                    color_s = "normal"  # Vert (Standard Streamlit)
+                    label_s = "🟢 Excellent"
+                elif data['s'] <= 30:
+                    color_s = "off"     # Gris/Orange
+                    label_s = "🟡 Moyen"
+                else:
+                    color_s = "inverse" # Rouge (Alerte)
+                    label_s = "🔴 Forte concentration"
+                
+                st.metric("Logements Sociaux", f"{data['s']}%", help=label_s, delta_color=color_s)
+
+                # --- Logique Couleur Sécurité ---
+                # Plus c'est haut, plus c'est vert
+                if data['n'] >= 8:
+                    label_n = "🟢 Très Sûr"
+                elif data['n'] >= 5:
+                    label_n = "🟡 Vigilance"
+                else:
+                    label_n = "🔴 Risqué"
+                
+                st.metric("Note Sécurité", f"{data['n']}/10", help=label_n)
             
             with d2:
-                st.info(f"**💡 Note Stratégique & Marché :**\n\n{data['note_strat']}")
+                # On affiche la note stratégique dans un encadré coloré selon le contenu
+                if "[PATRIMOINE]" in data['note_strat'] or "[PREMIUM]" in data['note_strat']:
+                    st.success(f"**💡 Note Stratégique :**\n\n{data['note_strat']}")
+                elif "[RENDEMENT]" in data['note_strat']:
+                    st.info(f"**💡 Note Stratégique :**\n\n{data['note_strat']}")
+                elif "[VIGILANCE]" in data['note_strat'] or "[ALERTE]" in data['note_strat']:
+                    st.warning(f"**💡 Note Stratégique :**\n\n{data['note_strat']}")
+                else:
+                    st.write(f"**💡 Note Stratégique :**\n\n{data['note_strat']}")
+                
                 st.caption(f"Source : {data['label']}")
             
 # --- CALCULS ---

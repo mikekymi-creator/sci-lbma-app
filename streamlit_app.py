@@ -68,7 +68,6 @@ if check_password():
         try:
             df_ref = charger_onglet("Referentiel_Secteurs") 
             if not df_ref.empty:
-                # On cherche la ligne exacte correspondant au quartier/ville choisi
                 match = df_ref[df_ref['Ville / Secteur'] == nom_ville]
                 if not match.empty:
                     row = match.iloc[0]
@@ -77,12 +76,13 @@ if check_password():
                         'l': float(str(row.get('Loyer_m2', 12)).replace(',', '.')),
                         's': int(row.get('Social_Pct', 20)),
                         'n': int(row.get('Secu_Note', 5)),
-                        'label': 'Référentiel Sheet'  # <--- Ajouté pour corriger l'erreur ligne 210
+                        # --- TA NOUVELLE COLONNE ICI ---
+                        'note_strat': str(row.get('Note_Strategique', 'Aucune donnée stratégique saisie.')),
+                        'label': 'Référentiel Sheet'
                     }
         except: 
             pass
-        # Valeurs de secours si le quartier n'est pas trouvé ou erreur
-        return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'label': 'Standard France'}
+        return {'p': 2000, 'l': 12, 's': 20, 'n': 5, 'note_strat': 'Standard France', 'label': 'Standard France'}
     
     # --- 3. STRUCTURE DES ONGLETS ---
     tab1, tab2 = st.tabs(["📝 Nouvelle Analyse", "⚖️ Comparateur de Biens"])
@@ -229,12 +229,16 @@ if check_password():
                 st.success(f"💎 Loyer sous-exploité (Potentiel : {int(loyer_estime_total)}€)")
 
         # Section Diagnostic (Vérifie bien que c'est écrit comme ça)
-        if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
-            d1, d2, d3 = st.columns(3)
-            # Ici on utilise 's' pour Social et 'n' pour Note (ce qu'on a défini dans la fonction)
-            d1.metric("Logements Sociaux", f"{data['s']}%")
-            d2.metric("Note Sécurité", f"{data['n']}/10")
-            d3.metric("Source Data", data['label'])
+        if st.button("🔍 Lancer le Diagnostic Complet (Marché & Secteur)"):
+            d1, d2 = st.columns([1, 2]) # On donne plus de place au texte
+            
+            with d1:
+                st.metric("Logements Sociaux", f"{data['s']}%")
+                st.metric("Note Sécurité", f"{data['n']}/10")
+            
+            with d2:
+                st.info(f"**💡 Note Stratégique & Marché :**\n\n{data['note_strat']}")
+                st.caption(f"Source : {data['label']}")
             
 # --- CALCULS ---
         f_notaire = prix_a * 0.08

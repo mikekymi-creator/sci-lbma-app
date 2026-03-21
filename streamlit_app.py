@@ -307,6 +307,27 @@ if check_password():
                 st.write(f"Apport personnel : **- {apport:,} €**".replace(',', ' '))
                 st.divider()
                 st.write(f"**MONTANT À EMPRUNTER : {int(emprunt):,} €**".replace(',', ' '))
+
+        # --- BLOC AMORTISSEMENT ---
+        if emprunt > 0:
+            with st.expander("⏳ Projection de la Dette & Patrimoine", expanded=False):
+                # Utilisation de la fonction définie à l'étape 1
+                df_amort = calculer_amortissement(emprunt, taux, duree)
+                
+                c_graph, c_chiffres = st.columns([2, 1])
+                with c_graph:
+                    st.line_chart(df_amort.set_index('Mois')['Dette Restante'])
+                with c_chiffres:
+                    # Extraction des valeurs à 5 et 10 ans
+                    crd_5ans = df_amort[df_amort['Mois'] == 60]['Dette Restante'].values[0] if len(df_amort) >= 60 else 0
+                    crd_10ans = df_amort[df_amort['Mois'] == 120]['Dette Restante'].values[0] if len(df_amort) >= 120 else 0
+                    
+                    st.write("**Capital remboursé :**")
+                    st.info(f"5 ans : **{int(emprunt - crd_5ans):,} €**".replace(',', ' '))
+                    st.success(f"10 ans : **{int(emprunt - crd_10ans):,} €**".replace(',', ' '))
+                
+                st.dataframe(df_amort, use_container_width=True, height=200)
+                
         with v2:
             st.metric("Cash-Flow Net", f"{cf_net} €/m")
             st.caption(f"{loyer_s}€ - {int(mensualite)}€ (Prêt) - {int(ch_an/12)}€ (Ch.) - {int(is_an/12)}€ (IS)")

@@ -112,7 +112,7 @@ if check_password():
         
         # --- L'OBJECTIF CASH-FLOW (L'élément manquant) ---
         obj_cf = st.sidebar.number_input("Objectif Cash-Flow (€)", min_value=0, 
-                                         value=int(st.session_state.get('obj_cf_charge', 100)), 
+                                         value=int(st.session_state.get('obj_cf_charge', 0)), 
                                          help="Gain net mensuel visé. C'est ce seuil qui valide le score global.")
 
         st.markdown("### 🏠 Caractéristiques du Bien")

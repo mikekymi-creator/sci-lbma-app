@@ -172,7 +172,7 @@ if check_password():
                                help="F/G ajoute automatiquement 500€/m² de travaux d'isolation.")
             
             travaux = st.number_input("Budget Travaux (€)", 0, 500000, 
-                                      value=int(st.session_state.get('travaux_charge', 5000)), 
+                                      value=int(st.session_state.get('travaux_charge', 0)), 
                                       help="Budget de rénovation estimé.")
         with c3:
             tf = st.number_input("Taxe Foncière (€)", 0, 5000, 

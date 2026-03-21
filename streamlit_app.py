@@ -97,7 +97,7 @@ if check_password():
         
         # Durée du prêt
         duree = st.sidebar.select_slider("Durée (ans)", range(1, 26), 
-                                         value=int(st.session_state.get('duree_charge', 0)), 
+                                         value=int(st.session_state.get('duree_charge', 20)), 
                                          help="Durée du prêt immobilier.")
         
         # Taux d'intérêt
@@ -172,7 +172,7 @@ if check_password():
                                help="F/G ajoute automatiquement 500€/m² de travaux d'isolation.")
             
             travaux = st.number_input("Budget Travaux (€)", 0, 500000, 
-                                      value=int(st.session_state.get('travaux_charge', 0)), 
+                                      value=int(st.session_state.get('travaux_charge', 5000)), 
                                       help="Budget de rénovation estimé.")
         with c3:
             tf = st.number_input("Taxe Foncière (€)", 0, 5000, 
@@ -195,7 +195,7 @@ if check_password():
             
             # --- MODIFICATION ICI : On accepte la valeur chargée si elle existe ---
             prix_a = st.number_input("Prix d'achat NET vendeur (€)", 
-                                     value=int(st.session_state.get('prix_a_charge', 0)), 
+                                     value=int(st.session_state.get('prix_a_charge', 100000)), 
                                      step=1000, help="Votre prix d'achat négocié.")
             
             # Calculs de comparaison (Gardés intacts)
@@ -214,7 +214,7 @@ if check_password():
             
             # --- MODIFICATION ICI : On accepte la valeur chargée si elle existe ---
             loyer_s = st.number_input("Loyer mensuel HC prévu (€)", 
-                                      value=int(st.session_state.get('loyer_s_charge', 0)), 
+                                      value=int(st.session_state.get('loyer_s_charge', 650)), 
                                       step=10, help="Le loyer réel prévu.")
             
             # Calculs de comparaison (Gardés intacts)

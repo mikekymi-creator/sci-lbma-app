@@ -240,6 +240,20 @@ if check_password():
         malus_social = 15 if data['s'] > 40 else 0
         score = max(0, min(100, score - malus_social))
 
+        # --- DÉTAIL DU FINANCEMENT (À afficher pour comprendre l'emprunt) ---
+        with st.expander("🏦 Détail du Financement Bancaire", expanded=False):
+            c_f1, c_f2 = st.columns(2)
+            with c_f1:
+                st.write(f"Prix Net Vendeur : **{prix_a:,} €**".replace(',', ' '))
+                st.write(f"Travaux prévus : **{travaux:,} €**".replace(',', ' '))
+                if prov_dpe > 0:
+                    st.write(f"Provision Isolation (DPE) : **{prov_dpe:,} €**".replace(',', ' '))
+            with c_f2:
+                st.write(f"Frais de Notaire (estim.) : **{int(f_notaire):,} €**".replace(',', ' '))
+                st.write(f"Apport personnel : **- {apport:,} €**".replace(',', ' '))
+                st.divider()
+                st.write(f"**MONTANT À EMPRUNTER : {int(emprunt):,} €**".replace(',', ' '))
+                
         # --- AFFICHAGE DU VERDICT ---
         st.divider()
         st.markdown("### 🎯 Verdict SCI LBMA : Performance & Sécurité")

@@ -202,11 +202,12 @@ if check_password():
             else: 
                 st.success(f"💎 Loyer sous-exploité (Potentiel : {int(loyer_estime_total)}€)")
 
-        # Section Diagnostic (Gardée intacte)
+        # Section Diagnostic (Vérifie bien que c'est écrit comme ça)
         if st.button("🔍 Lancer le Diagnostic Sécurité & Mixité Sociale"):
             d1, d2, d3 = st.columns(3)
-            d1.metric("Logements Sociaux", f"{data['s']}%", help="Un taux élevé impacte souvent la revente.")
-            d2.metric("Note Sécurité", f"{data['n']}/10", help="Basé sur les statistiques locales.")
+            # Ici on utilise 's' pour Social et 'n' pour Note (ce qu'on a défini dans la fonction)
+            d1.metric("Logements Sociaux", f"{data['s']}%")
+            d2.metric("Note Sécurité", f"{data['n']}/10")
             d3.metric("Source Data", data['label'])
             
 # --- CALCULS ---

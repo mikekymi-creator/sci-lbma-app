@@ -38,10 +38,7 @@ if check_password():
         except: 
             return pd.DataFrame()
 
-    # Cette fonction unique va chercher les détails d'un quartier précis
-va corriger ça immédiatement pour que tout redevienne fluide.
-
-    def obtenir_donnees_secteur(nom_ville):
+def obtenir_donnees_secteur(nom_ville):
         try:
             df_ref = charger_onglet("Referentiel_Secteurs") 
             if not df_ref.empty:

@@ -89,7 +89,13 @@ if check_password():
 
     with tab1:
         st.sidebar.header("🏦 Financement")
-        
+        # --- 🆕 AJOUT DU BOUTON ON/OFF ---
+    # Ce bouton définit si la SCI porte la dette ou non
+        credit_actif = st.sidebar.toggle("Activer le crédit (SCI)", value=True, 
+                                    help="Désactivez si l'achat est financé à l'extérieur ou cash.")
+    
+        st.sidebar.divider() # Petite ligne de séparation visuelle
+    
         # Apport personnel
         apport = st.sidebar.number_input("Apport personnel (€)", 0, 
                                          value=int(st.session_state.get('apport_charge', 0)), 
@@ -255,13 +261,31 @@ if check_password():
 # --- CALCULS ---
         f_notaire = prix_a * 0.08
         prov_dpe = (surface * 500) if dpe in ["F","G"] else 0
-        emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
-        tm = (taux/100)/12
-        mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
+        
+        # On vérifie si le crédit est activé via le bouton Toggle
+        if credit_actif:
+            emprunt = (prix_a + travaux + prov_dpe + f_notaire) - apport
+            tm = (taux/100)/12
+            # Calcul de la mensualité classique
+            mensualite = emprunt * (tm * (1+tm)**(duree*12)) / ((1+tm)**(duree*12) - 1) if emprunt > 0 else 0
+            interets_an = (emprunt * taux / 100)
+        else:
+            # Mode Père (Crédit extérieur / Cash) : La SCI ne voit pas de dette
+            emprunt = 0
+            mensualite = 0
+            interets_an = 0
+
+        # Charges et Amortissements (Toujours valables)
         ch_an = tf + charges + (loyer_s * 12 * (frais_g/100))
         amort_an = ((prix_a*0.85)/25 + (travaux+prov_dpe)/15)
-        is_an = max(0, ((loyer_s*12) - ch_an - (emprunt*taux/100) - amort_an) * 0.15)
+        
+        # Calcul de l'IS (L'intérêt est à 0 si pas de crédit SCI)
+        is_an = max(0, ((loyer_s*12) - ch_an - interets_an - amort_an) * 0.15)
+        
+        # Calcul du Cash-flow Net
         cf_net = round(loyer_s - mensualite - (ch_an/12) - (is_an/12), 2)
+        
+        # Rendement Brut
         rend = round((loyer_s * 12 / prix_a) * 100, 2) if prix_a > 0 else 0
 
 

@@ -13,7 +13,7 @@ type Property = {
 const initialProperties: Property[] = [];
 
 const money = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-const blank = { name: "", city: "Valenciennes", price: "80000", surface: "50", rent: "600", dpe: "E", url: "", visit: "", notes: "" };
+const blank = { name: "", city: "Valenciennes", price: "80000", surface: "50", rent: "600", dpe: "E", status: "À étudier", url: "", visit: "", notes: "" };
 
 export default function Home() {
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -86,7 +86,7 @@ export default function Home() {
   const openNew = () => { setEditing(null); setForm(blank); setShowForm(true); };
   const openEdit = (p: Property) => {
     setEditing(p.id);
-    setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, url: p.url, visit: p.visit, notes: p.notes });
+    setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url, visit: p.visit, notes: p.notes });
     setShowForm(true);
   };
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -96,7 +96,7 @@ export default function Home() {
     if (!form.name.trim() || !form.city.trim() || price <= 0 || surface <= 0 || rent < 0) return;
     const score = Math.max(0, Math.min(100, Math.round((rent * 12 / price) * 9 + (form.dpe === "F" || form.dpe === "G" ? -10 : 12))));
     const cashflow = Math.round(rent - (price * 0.0065) - 95);
-    const status = editing ? properties.find(p => p.id === editing)?.status ?? "À étudier" : "À étudier";
+    const status = editing ? form.status : "À étudier";
     const row = {
       owner_id: user.id, title: form.name.trim(), city: form.city.trim(), price, surface,
       rent_estimate: rent, score, cashflow, status, dpe: form.dpe,
@@ -121,6 +121,18 @@ export default function Home() {
     setShowForm(false);
     setNotice("Bien sauvegardé dans Supabase.");
   };
+  const deleteProperty = async () => {
+    if (!editing || !user) return;
+    const confirmed = window.confirm("Supprimer définitivement ce bien de LBMA ?");
+    if (!confirmed) return;
+    const { error } = await supabase.from("properties").delete().eq("id", editing);
+    if (error) { setNotice("Impossible de supprimer ce bien. Réessayez."); return; }
+    setProperties(prev => prev.filter(p => p.id !== editing));
+    setShowForm(false);
+    setEditing(null);
+    setNotice("Bien supprimé.");
+  };
+
   const total = properties.length;
   const averageScore = total ? Math.round(properties.reduce((sum, p) => sum + p.score, 0) / total) : 0;
   const expectedRent = properties.reduce((sum, p) => sum + p.rent, 0);
@@ -236,10 +248,11 @@ export default function Home() {
         <label>Surface (m²)<input required type="number" min="1" value={form.surface} onChange={e => setForm({...form, surface:e.target.value})}/></label>
         <label>Loyer mensuel estimé (€)<input required type="number" min="0" value={form.rent} onChange={e => setForm({...form, rent:e.target.value})}/></label>
         <label>DPE<select value={form.dpe} onChange={e => setForm({...form, dpe:e.target.value})}>{["A","B","C","D","E","F","G","Inconnu"].map(v => <option key={v}>{v}</option>)}</select></label>
+        <label>Statut<select value={form.status} onChange={e => setForm({...form, status:e.target.value})}>{["À étudier","À visiter","À vérifier","Offre faite","Écarté"].map(v => <option key={v}>{v}</option>)}</select></label>
         <label className="full-field">Lien de l'annonce<input type="url" value={form.url} onChange={e => setForm({...form, url:e.target.value})} placeholder="https://…"/></label>
         <label className="full-field">Date de visite (facultatif)<input type="date" value={form.visit} onChange={e => setForm({...form, visit:e.target.value})}/></label>
         <label className="full-field">Notes<textarea rows={3} value={form.notes} onChange={e => setForm({...form, notes:e.target.value})} placeholder="Travaux à prévoir, questions à poser…"/></label>
-      </div><div className="modal-actions"><button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Annuler</button><button className="primary-btn" type="submit">Enregistrer le bien ↗</button></div><p className="form-footnote">Les biens sont sauvegardés dans votre base Supabase privée.</p></form></section></div>}
+      </div><div className="modal-actions">{editing && <button type="button" className="secondary-btn" onClick={deleteProperty}>Supprimer</button>}<button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Annuler</button><button className="primary-btn" type="submit">Enregistrer le bien ↗</button></div><p className="form-footnote">Les biens sont sauvegardés dans votre base Supabase privée.</p></form></section></div>}
     </main>
   );
 }

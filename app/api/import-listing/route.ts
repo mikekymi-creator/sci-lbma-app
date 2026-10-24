@@ -92,12 +92,12 @@ export async function POST(request: NextRequest) {
     const image = typeof product.image === "string" ? product.image : Array.isArray(product.image) ? product.image[0] : meta(html, "og:image");
     const price = findNumber(offers?.price ?? product.price ?? meta(html, "product:price:amount"));
     const text = (title + " " + description + " " + html.slice(0, 500000)).replace(/<[^>]+>/g, " ");
-    const surfaceMatch = text.match(/(?:surface(?:s+habitable)?|superficie)[^\d]{0,20}(\d{1,4}(?:[,.]\d{1,2})?)\s*m(?:²|2)/i)
+    const surfaceMatch = text.match(/(?:surface(?:\\s+habitable)?|superficie)[^\d]{0,20}(\d{1,4}(?:[,.]\d{1,2})?)\s*m(?:²|2)/i)
       ?? text.match(/(\d{1,4}(?:[,.]\d{1,2})?)\s*m(?:²|2)\b/i);
     const surface = surfaceMatch ? Number(surfaceMatch[1].replace(",", ".")) : null;
     const dpeMatch = text.match(/(?:DPE|classe énergétique)[^A-G]{0,20}([A-G])\b/i);
     const dpe = dpeMatch?.[1] ?? "";
-    const rentMatch = text.match(/(?:loyer(?:s+mensuel)?|loués+à)[^\d]{0,20}(\d[\d\s.,]*)\s*€/i);
+    const rentMatch = text.match(/(?:loyer(?:\\s+mensuel)?|loué\\s+à)[^\d]{0,20}(\d[\d\s.,]*)\s*€/i);
     const rent = rentMatch ? findNumber(rentMatch[1]) : null;
     const success = Boolean(title || price || surface || description);
     if (!success) {

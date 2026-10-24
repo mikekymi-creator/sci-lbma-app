@@ -33,6 +33,7 @@ export default function Home() {
   const [notice, setNotice] = useState("Connexion à Supabase…");
   const [importBusy, setImportBusy] = useState(false);
   const [importMessage, setImportMessage] = useState("");
+  const [listingText, setListingText] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -85,7 +86,7 @@ export default function Home() {
     (statusFilter === "Tous les statuts" || p.status === statusFilter)
   ), [properties, query, statusFilter]);
 
-  const openNew = () => { setEditing(null); setForm(blank); setImportMessage(""); setShowForm(true); };
+  const openNew = () => { setEditing(null); setForm(blank); setImportMessage(""); setListingText(""); setShowForm(true); };
 
   const importListing = async () => {
     if (!form.url.trim()) {
@@ -123,6 +124,38 @@ export default function Home() {
       setImportBusy(false);
     }
   };
+  const importFromText = () => {
+    const text = listingText.trim();
+    if (!text) {
+      setImportMessage("Collez d'abord le texte de l'annonce dans la zone prévue.");
+      return;
+    }
+    const lines = text.split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
+    const priceMatch = text.match(/(?:prix(?: de vente)?|prix)\\s*[:\\-]?\\s*([0-9][0-9\\s.,]*)\\s*€/i)
+      ?? text.match(/([0-9][0-9\\s.,]*)\\s*€(?:\\s*(?:\\n|$))/i);
+    const surfaceMatch = text.match(/(?:surface(?: habitable)?|superficie)\\s*[:\\-]?\\s*([0-9]{1,4}(?:[,.][0-9]{1,2})?)\\s*m(?:²|2)/i)
+      ?? text.match(/([0-9]{1,4}(?:[,.][0-9]{1,2})?)\\s*m(?:²|2)\\b/i);
+    const dpeMatch = text.match(/(?:DPE|classe énergétique)\\s*[:\\-]?\\s*([A-G])\\b/i);
+    const price = priceMatch ? Number(priceMatch[1].replace(/\\s/g, "").replace(/\.(?=.*\\.)/g, "").replace(",", ".")) : NaN;
+    const surface = surfaceMatch ? Number(surfaceMatch[1].replace(",", ".")) : NaN;
+    const title = lines.find(line => line.length > 5 && !/https?:\\/\\//i.test(line) && !/leboncoin/i.test(line)) || "";
+    const dpe = dpeMatch?.[1]?.toUpperCase() || "";
+    const hasData = Boolean(title || (Number.isFinite(price) && price > 0) || (Number.isFinite(surface) && surface > 0) || dpe);
+    if (!hasData) {
+      setImportMessage("Je n'ai pas reconnu de données sûres. Vérifiez le texte ou complétez les champs manuellement.");
+      return;
+    }
+    setForm(prev => ({
+      ...prev,
+      name: title || prev.name,
+      price: Number.isFinite(price) && price > 0 ? String(Math.round(price)) : prev.price,
+      surface: Number.isFinite(surface) && surface > 0 ? String(surface) : prev.surface,
+      dpe: dpe || prev.dpe,
+      notes: [prev.notes, "Texte copié de l'annonce Leboncoin :\\n" + text].filter(Boolean).join("\\n\\n")
+    }));
+    setImportMessage("Extraction depuis le texte terminée quand les données étaient reconnaissables. Vérifiez le nom, le prix, la surface et le DPE ; le loyer n'est pas deviné automatiquement.");
+  };
+
   const openEdit = (p: Property) => {
     setEditing(p.id);
     setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url, visit: p.visit, visitTime: p.visitTime, notes: p.notes });
@@ -308,6 +341,13 @@ export default function Home() {
         <div className="full-field" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <button type="button" className="secondary-btn" onClick={importListing} disabled={importBusy}>{importBusy ? "Lecture en cours…" : "↧ Importer les données de l'annonce"}</button>
           {importMessage && <p role="status" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>{importMessage}</p>}
+        </div>
+        <div className="full-field" style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+          <label>Solution de secours : texte de l'annonce Leboncoin
+            <textarea rows={5} value={listingText} onChange={e => setListingText(e.target.value)} placeholder="Ouvrez l'annonce dans votre navigateur, copiez son texte et collez-le ici…"/>
+          </label>
+          <button type="button" className="secondary-btn" onClick={importFromText}>Extraire depuis le texte copié</button>
+          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>Cette méthode fonctionne sans accès automatique à Leboncoin. Les données extraites peuvent être incomplètes ou incorrectes : vérifiez-les avant d'enregistrer.</p>
         </div>
         <label>Date de visite (facultatif)<input type="date" value={form.visit} onChange={e => setForm({...form, visit:e.target.value})}/></label>
         <label>Heure de visite (facultatif)<input type="time" value={form.visitTime} onChange={e => setForm({...form, visitTime:e.target.value})}/></label>

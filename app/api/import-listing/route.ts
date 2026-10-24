@@ -3,14 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 function meta(html: string, key: string): string {
-  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const patterns = [
-    new RegExp('<meta[^>]+(?:property|name)=["\\']' + escaped + '["\\'][^>]+content=["\\']([^"\\']*)["\\'][^>]*>', "i"),
-    new RegExp('<meta[^>]+content=["\\']([^"\\']*)["\\'][^>]+(?:property|name)=["\\']' + escaped + '["\\'][^>]*>', "i")
-  ];
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match?.[1]) return decode(match[1]);
+  // Parse meta tags without dynamic regular expressions that need quote escaping.
+  const tags = html.match(/<meta\\b[^>]*>/gi) ?? [];
+  for (const tag of tags) {
+    const name = tag.match(/(?:property|name)\\s*=\\s*["']([^"']+)["']/i)?.[1];
+    const value = tag.match(/content\\s*=\\s*["']([^"']*)["']/i)?.[1];
+    if (name?.toLowerCase() === key.toLowerCase() && value) return decode(value);
   }
   return "";
 }
@@ -19,12 +17,12 @@ function decode(value: string): string {
   return value
     .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x2F;/g, "/")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 }
 
 function jsonLd(html: string): any[] {
   const results: any[] = [];
-  const scripts = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  const scripts = html.matchAll(/<script[^>]+type=["']application\\/ld\\+json["'][^>]*>([\\s\\S]*?)<\\/script>/gi);
   for (const match of scripts) {
     try {
       const parsed = JSON.parse(match[1]);
@@ -45,7 +43,7 @@ function jsonLd(html: string): any[] {
 function findNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const parsed = Number(value.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", "."));
+    const parsed = Number(value.replace(/[^\\d.,]/g, "").replace(/\\s/g, "").replace(",", "."));
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
   return null;
@@ -92,19 +90,19 @@ export async function POST(request: NextRequest) {
     const image = typeof product.image === "string" ? product.image : Array.isArray(product.image) ? product.image[0] : meta(html, "og:image");
     const price = findNumber(offers?.price ?? product.price ?? meta(html, "product:price:amount"));
     const text = (title + " " + description + " " + html.slice(0, 500000)).replace(/<[^>]+>/g, " ");
-    const surfaceMatch = text.match(/(?:surface(?:\\s+habitable)?|superficie)[^\d]{0,20}(\d{1,4}(?:[,.]\d{1,2})?)\s*m(?:²|2)/i)
-      ?? text.match(/(\d{1,4}(?:[,.]\d{1,2})?)\s*m(?:²|2)\b/i);
+    const surfaceMatch = text.match(/(?:surface(?:\\s+habitable)?|superficie)[^\\d]{0,20}(\\d{1,4}(?:[,.]\\d{1,2})?)\\s*m(?:²|2)/i)
+      ?? text.match(/(\\d{1,4}(?:[,.]\\d{1,2})?)\\s*m(?:²|2)\\b/i);
     const surface = surfaceMatch ? Number(surfaceMatch[1].replace(",", ".")) : null;
-    const dpeMatch = text.match(/(?:DPE|classe énergétique)[^A-G]{0,20}([A-G])\b/i);
+    const dpeMatch = text.match(/(?:DPE|classe énergétique)[^A-G]{0,20}([A-G])\\b/i);
     const dpe = dpeMatch?.[1] ?? "";
-    const rentMatch = text.match(/(?:loyer(?:\\s+mensuel)?|loué\\s+à)[^\d]{0,20}(\d[\d\s.,]*)\s*€/i);
+    const rentMatch = text.match(/(?:loyer(?:\\s+mensuel)?|loué\\s+à)[^\\d]{0,20}(\\d[\\d\\s.,]*)\\s*€/i);
     const rent = rentMatch ? findNumber(rentMatch[1]) : null;
     const success = Boolean(title || price || surface || description);
     if (!success) {
       return NextResponse.json({ error: "Le site n'a pas fourni de données lisibles. Cela arrive notamment lorsque Leboncoin bloque l'accès automatique. Vous pouvez conserver le lien et compléter la fiche manuellement." }, { status: 422 });
     }
     return NextResponse.json({
-      title: title.replace(/\s*[|–-]\s*(Leboncoin|SeLoger|Bien'ici|Logic-Immo).*$/i, "").trim(),
+      title: title.replace(/\\s*[|–-]\\s*(Leboncoin|SeLoger|Bien'ici|Logic-Immo).*$/i, "").trim(),
       city: String(city),
       price,
       surface,

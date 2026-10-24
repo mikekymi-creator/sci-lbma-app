@@ -31,6 +31,8 @@ export default function Home() {
   const [form, setForm] = useState(blank);
   const [activeNav, setActiveNav] = useState("Vue d’ensemble");
   const [notice, setNotice] = useState("Connexion à Supabase…");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importMessage, setImportMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -83,7 +85,44 @@ export default function Home() {
     (statusFilter === "Tous les statuts" || p.status === statusFilter)
   ), [properties, query, statusFilter]);
 
-  const openNew = () => { setEditing(null); setForm(blank); setShowForm(true); };
+  const openNew = () => { setEditing(null); setForm(blank); setImportMessage(""); setShowForm(true); };
+
+  const importListing = async () => {
+    if (!form.url.trim()) {
+      setImportMessage("Collez d'abord le lien de l'annonce dans le champ ci-dessous.");
+      return;
+    }
+    setImportBusy(true);
+    setImportMessage("Lecture de l'annonce en cours…");
+    try {
+      const response = await fetch("/api/import-listing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: form.url.trim() })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setImportMessage(data.error || "Import impossible. Vous pouvez remplir les champs manuellement.");
+        return;
+      }
+      setForm(prev => ({
+        ...prev,
+        name: data.title || prev.name,
+        city: data.city || prev.city,
+        price: data.price ? String(data.price) : prev.price,
+        surface: data.surface ? String(data.surface) : prev.surface,
+        rent: data.rent ? String(data.rent) : prev.rent,
+        dpe: data.dpe || prev.dpe,
+        url: data.url || prev.url,
+        notes: [prev.notes, data.description ? "Description de l'annonce : " + data.description : ""].filter(Boolean).join("\n\n")
+      }));
+      setImportMessage("Données récupérées quand elles étaient accessibles. Vérifiez chaque champ avant d'enregistrer.");
+    } catch {
+      setImportMessage("L'import a échoué. Vérifiez votre connexion et complétez la fiche manuellement.");
+    } finally {
+      setImportBusy(false);
+    }
+  };
   const openEdit = (p: Property) => {
     setEditing(p.id);
     setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url, visit: p.visit, visitTime: p.visitTime, notes: p.notes });
@@ -265,7 +304,11 @@ export default function Home() {
         <label>Loyer mensuel estimé (€)<input required type="number" min="0" value={form.rent} onChange={e => setForm({...form, rent:e.target.value})}/></label>
         <label>DPE<select value={form.dpe} onChange={e => setForm({...form, dpe:e.target.value})}>{["A","B","C","D","E","F","G","Inconnu"].map(v => <option key={v}>{v}</option>)}</select></label>
         <label>Statut<select value={form.status} onChange={e => setForm({...form, status:e.target.value})}>{["À étudier","À visiter","À vérifier","Offre faite","Écarté"].map(v => <option key={v}>{v}</option>)}</select></label>
-        <label className="full-field">Lien de l'annonce<input type="url" value={form.url} onChange={e => setForm({...form, url:e.target.value})} placeholder="https://…"/></label>
+        <label className="full-field">Lien de l'annonce<input type="url" value={form.url} onChange={e => { setForm({...form, url:e.target.value}); setImportMessage(""); }} placeholder="https://…"/></label>
+        <div className="full-field" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button type="button" className="secondary-btn" onClick={importListing} disabled={importBusy}>{importBusy ? "Lecture en cours…" : "↧ Importer les données de l'annonce"}</button>
+          {importMessage && <p role="status" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>{importMessage}</p>}
+        </div>
         <label>Date de visite (facultatif)<input type="date" value={form.visit} onChange={e => setForm({...form, visit:e.target.value})}/></label>
         <label>Heure de visite (facultatif)<input type="time" value={form.visitTime} onChange={e => setForm({...form, visitTime:e.target.value})}/></label>
         <label className="full-field">Notes<textarea rows={3} value={form.notes} onChange={e => setForm({...form, notes:e.target.value})} placeholder="Travaux à prévoir, questions à poser…"/></label>

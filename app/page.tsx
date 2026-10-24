@@ -199,8 +199,8 @@ export default function Home() {
         <div className="brand"><div className="brand-mark"><span>LB</span><i>MA</i></div><div><strong>LBMA</strong><small>LABO IMMOBILIER</small></div></div>
         <div className="workspace-label">ESPACE FAMILIAL</div>
         <nav>
-          {["Vue d’ensemble", "Portefeuille", "Calendrier des visites", "Notes partagées"].map((item, i) =>
-            <button key={item} className={activeNav === item ? "nav-item active" : "nav-item"} onClick={() => { setActiveNav(item); if (item !== "Vue d’ensemble" && item !== "Portefeuille") setNotice("Section prévue dans une prochaine version : " + item + "."); }}>
+          {["Vue d’ensemble", "Portefeuille", "Calendrier des visites", "Notes des biens"].map((item, i) =>
+            <button key={item} className={activeNav === item ? "nav-item active" : "nav-item"} onClick={() => { setActiveNav(item); setNotice(item === "Calendrier des visites" ? "Dates de visite enregistrées sur vos biens." : item === "Notes des biens" ? "Notes enregistrées sur chaque fiche de bien." : "Biens synchronisés avec Supabase."); }}>
               <span className="nav-icon">{["▦", "⌂", "▣", "▤"][i]}</span>{item}{item === "Calendrier des visites" && <span className="nav-count">{properties.filter(p => p.visit).length}</span>}
             </button>
           )}
@@ -216,6 +216,20 @@ export default function Home() {
         <div className="content">
           <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"></span> TABLEAU DE BORD / 001</div><h1>Chasse aux opportunités<span>.</span></h1><p>Repérez, comparez et suivez les biens à potentiel autour de Valenciennes.</p></div><button className="primary-btn" onClick={openNew}><span>＋</span> Ajouter un bien</button></div>
           <div className="notice"><span className="notice-icon">i</span><span>{notice}</span><button onClick={() => setNotice("Biens synchronisés avec Supabase.")} aria-label="Fermer">×</button></div>
+          {activeNav === "Calendrier des visites" ? (
+            <section className="empty-state" style={{ marginTop: 24 }}>
+              <h2>Calendrier des visites</h2>
+              <p>Les visites enregistrées dans les fiches de biens apparaissent ici.</p>
+              {properties.filter(p => p.visit).length === 0 ? <p>Aucune visite planifiée pour le moment. Ouvrez une fiche et renseignez une date de visite.</p> : <div style={{ display: "grid", gap: 12, textAlign: "left", marginTop: 20 }}>{[...properties].filter(p => p.visit).sort((a,b) => a.visit.localeCompare(b.visit)).map(p => <article key={p.id} className="stat-card"><div className="stat-top"><span>{new Date(p.visit + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><span className="status">{p.status}</span></div><h3>{p.name}</h3><p>{p.city} · {p.price.toLocaleString("fr-FR")} €</p><button className="text-btn" onClick={() => openEdit(p)}>Ouvrir la fiche ↗</button></article>)}</div>}
+            </section>
+          ) : activeNav === "Notes des biens" ? (
+            <section className="empty-state" style={{ marginTop: 24 }}>
+              <h2>Notes des biens</h2>
+              <p>Les notes sont conservées dans chaque fiche de bien. Pour l’instant, elles sont privées à ton compte : le partage familial sera ajouté séparément.</p>
+              {properties.filter(p => p.notes.trim()).length === 0 ? <p>Aucune note enregistrée. Ajoute des notes depuis une fiche de bien.</p> : <div style={{ display: "grid", gap: 12, textAlign: "left", marginTop: 20 }}>{properties.filter(p => p.notes.trim()).map(p => <article key={p.id} className="stat-card"><div className="stat-top"><span>{p.city}</span><span className="status">{p.status}</span></div><h3>{p.name}</h3><p style={{ whiteSpace: "pre-wrap" }}>{p.notes}</p><button className="text-btn" onClick={() => openEdit(p)}>Modifier les notes ↗</button></article>)}</div>}
+            </section>
+          ) : (
+          <>
           <section className="stats-grid">
             <article className="stat-card"><div className="stat-top"><span>BIENS SUIVIS</span><span className="stat-icon">⌂</span></div><div className="stat-value">{String(total).padStart(2, "0")}<small> biens</small></div><div className="stat-foot"><span className="tiny-dot teal"></span> Dans votre portefeuille</div></article>
             <article className="stat-card"><div className="stat-top"><span>SCORE MOYEN</span><span className="stat-icon">◈</span></div><div className="stat-value">{averageScore}<small>/100</small></div><div className="stat-foot"><span className="tiny-dot orange"></span> Indicateur provisoire</div></article>
@@ -238,6 +252,8 @@ export default function Home() {
             </article>
           )}</div>}
           <footer className="footer-note"><span>LBMA <b>·</b> VERSION 0.1</span><span>Les chiffres sont indicatifs et ne constituent pas un conseil financier.</span></footer>
+          </>
+          )}
         </div>
       </section>
 

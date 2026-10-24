@@ -130,15 +130,15 @@ export default function Home() {
       setImportMessage("Collez d'abord le texte de l'annonce dans la zone prévue.");
       return;
     }
-    const lines = text.split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
-    const priceMatch = text.match(/(?:prix(?: de vente)?|prix)\\s*[:\\-]?\\s*([0-9][0-9\\s.,]*)\\s*€/i)
-      ?? text.match(/([0-9][0-9\\s.,]*)\\s*€(?:\\s*(?:\\n|$))/i);
-    const surfaceMatch = text.match(/(?:surface(?: habitable)?|superficie)\\s*[:\\-]?\\s*([0-9]{1,4}(?:[,.][0-9]{1,2})?)\\s*m(?:²|2)/i)
-      ?? text.match(/([0-9]{1,4}(?:[,.][0-9]{1,2})?)\\s*m(?:²|2)\\b/i);
-    const dpeMatch = text.match(/(?:DPE|classe énergétique)\\s*[:\\-]?\\s*([A-G])\\b/i);
-    const price = priceMatch ? Number(priceMatch[1].replace(/\\s/g, "").replace(/\.(?=.*\\.)/g, "").replace(",", ".")) : NaN;
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    const priceMatch = text.match(/(?:prix(?: de vente)?|prix)\s*[:\-]?\s*([0-9][0-9\s.,]*)\s*€/i)
+      ?? text.match(/([0-9][0-9\s.,]*)\s*€(?:\s*(?:\n|$))/i);
+    const surfaceMatch = text.match(/(?:surface(?: habitable)?|superficie)\s*[:\-]?\s*([0-9]{1,4}(?:[,.][0-9]{1,2})?)\s*m(?:²|2)/i)
+      ?? text.match(/([0-9]{1,4}(?:[,.][0-9]{1,2})?)\s*m(?:²|2)\b/i);
+    const dpeMatch = text.match(/(?:DPE|classe énergétique)\s*[:\-]?\s*([A-G])\b/i);
+    const price = priceMatch ? Number(priceMatch[1].replace(/\s/g, "").replace(/\.(?=.*\.)/g, "").replace(",", ".")) : NaN;
     const surface = surfaceMatch ? Number(surfaceMatch[1].replace(",", ".")) : NaN;
-    const title = lines.find(line => line.length > 5 && !/https?:\\/\\//i.test(line) && !/leboncoin/i.test(line)) || "";
+    const title = lines.find(line => line.length > 5 && !/https?:\/\//i.test(line) && !/leboncoin/i.test(line)) || "";
     const dpe = dpeMatch?.[1]?.toUpperCase() || "";
     const hasData = Boolean(title || (Number.isFinite(price) && price > 0) || (Number.isFinite(surface) && surface > 0) || dpe);
     if (!hasData) {
@@ -151,7 +151,7 @@ export default function Home() {
       price: Number.isFinite(price) && price > 0 ? String(Math.round(price)) : prev.price,
       surface: Number.isFinite(surface) && surface > 0 ? String(surface) : prev.surface,
       dpe: dpe || prev.dpe,
-      notes: [prev.notes, "Texte copié de l'annonce Leboncoin :\\n" + text].filter(Boolean).join("\\n\\n")
+      notes: [prev.notes, "Texte copié de l'annonce Leboncoin :\n" + text].filter(Boolean).join("\n\n")
     }));
     setImportMessage("Extraction depuis le texte terminée quand les données étaient reconnaissables. Vérifiez le nom, le prix, la surface et le DPE ; le loyer n'est pas deviné automatiquement.");
   };

@@ -7,13 +7,13 @@ import { supabase } from "../lib/supabase";
 type Property = {
   id: string; name: string; city: string; price: number; surface: number;
   rent: number; score: number; cashflow: number; status: string; dpe: string;
-  url: string; visit: string; notes: string;
+  url: string; visit: string; visitTime: string; notes: string;
 };
 
 const initialProperties: Property[] = [];
 
 const money = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-const blank = { name: "", city: "Valenciennes", price: "80000", surface: "50", rent: "600", dpe: "E", status: "À étudier", url: "", visit: "", notes: "" };
+const blank = { name: "", city: "Valenciennes", price: "80000", surface: "50", rent: "600", dpe: "E", status: "À étudier", url: "", visit: "", visitTime: "", notes: "" };
 
 export default function Home() {
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -69,7 +69,7 @@ export default function Home() {
         rent: Number(row.rent_estimate ?? 0), score: Number(row.score ?? 0),
         cashflow: Number(row.cashflow ?? 0), status: row.status ?? "À étudier",
         dpe: row.dpe ?? "Inconnu", url: row.listing_url ?? "",
-        visit: row.visit_date ?? "", notes: row.notes ?? ""
+        visit: row.visit_date ?? "", visitTime: row.visit_time ?? "", notes: row.notes ?? ""
       })));
       setNotice("Biens synchronisés avec Supabase.");
     };
@@ -86,7 +86,7 @@ export default function Home() {
   const openNew = () => { setEditing(null); setForm(blank); setShowForm(true); };
   const openEdit = (p: Property) => {
     setEditing(p.id);
-    setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url, visit: p.visit, notes: p.notes });
+    setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url, visit: p.visit, visitTime: p.visitTime, notes: p.notes });
     setShowForm(true);
   };
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -100,7 +100,7 @@ export default function Home() {
     const row = {
       owner_id: user.id, title: form.name.trim(), city: form.city.trim(), price, surface,
       rent_estimate: rent, score, cashflow, status, dpe: form.dpe,
-      listing_url: form.url || null, visit_date: form.visit || null, notes: form.notes
+      listing_url: form.url || null, visit_date: form.visit || null, visit_time: form.visitTime || null, notes: form.notes
     };
     const result = editing
       ? await supabase.from("properties").update(row).eq("id", editing).select().single()
@@ -115,7 +115,7 @@ export default function Home() {
       surface: Number(data.surface ?? 0), rent: Number(data.rent_estimate ?? 0),
       score: Number(data.score ?? 0), cashflow: Number(data.cashflow ?? 0),
       status: data.status ?? "À étudier", dpe: data.dpe ?? "Inconnu",
-      url: data.listing_url ?? "", visit: data.visit_date ?? "", notes: data.notes ?? ""
+      url: data.listing_url ?? "", visit: data.visit_date ?? "", visitTime: data.visit_time ?? "", notes: data.notes ?? ""
     };
     setProperties(prev => editing ? prev.map(p => p.id === editing ? saved : p) : [saved, ...prev]);
     setShowForm(false);
@@ -220,7 +220,7 @@ export default function Home() {
             <section className="empty-state" style={{ marginTop: 24 }}>
               <h2>Calendrier des visites</h2>
               <p>Les visites enregistrées dans les fiches de biens apparaissent ici.</p>
-              {properties.filter(p => p.visit).length === 0 ? <p>Aucune visite planifiée pour le moment. Ouvrez une fiche et renseignez une date de visite.</p> : <div className="property-grid" style={{ marginTop: 20 }}>{[...properties].filter(p => p.visit).sort((a,b) => a.visit.localeCompare(b.visit)).map((p, index) => <article key={p.id} className="property-card"><div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">VISITE PLANIFIÉE</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{p.score}</b><small>/100</small></span></div><div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div><div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Prix au m² indisponible"}</span></div><div className="card-metrics"><div><small>DATE DE VISITE</small><b>{new Date(p.visit + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</b></div><div><small>LOYER ESTIMÉ</small><b>{money(p.rent)}<i>/mois</i></b></div></div><div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => openEdit(p)}>Voir la fiche <span>↗</span></button></div></div></article>)}</div>}
+              {properties.filter(p => p.visit).length === 0 ? <p>Aucune visite planifiée pour le moment. Ouvrez une fiche et renseignez une date de visite.</p> : <div className="property-grid" style={{ marginTop: 20 }}>{[...properties].filter(p => p.visit).sort((a,b) => a.visit.localeCompare(b.visit)).map((p, index) => <article key={p.id} className="property-card"><div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">VISITE PLANIFIÉE</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{p.score}</b><small>/100</small></span></div><div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div><div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Prix au m² indisponible"}</span></div><div className="card-metrics"><div><small>DATE ET HEURE DE VISITE</small><b>{new Date(p.visit + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}{p.visitTime ? " · " + p.visitTime : " · Heure à préciser"}</b></div><div><small>LOYER ESTIMÉ</small><b>{money(p.rent)}<i>/mois</i></b></div></div><div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => openEdit(p)}>Voir la fiche <span>↗</span></button></div></div></article>)}</div>}
             </section>
           ) : activeNav === "Notes des biens" ? (
             <section className="empty-state" style={{ marginTop: 24 }}>
@@ -266,7 +266,8 @@ export default function Home() {
         <label>DPE<select value={form.dpe} onChange={e => setForm({...form, dpe:e.target.value})}>{["A","B","C","D","E","F","G","Inconnu"].map(v => <option key={v}>{v}</option>)}</select></label>
         <label>Statut<select value={form.status} onChange={e => setForm({...form, status:e.target.value})}>{["À étudier","À visiter","À vérifier","Offre faite","Écarté"].map(v => <option key={v}>{v}</option>)}</select></label>
         <label className="full-field">Lien de l'annonce<input type="url" value={form.url} onChange={e => setForm({...form, url:e.target.value})} placeholder="https://…"/></label>
-        <label className="full-field">Date de visite (facultatif)<input type="date" value={form.visit} onChange={e => setForm({...form, visit:e.target.value})}/></label>
+        <label>Date de visite (facultatif)<input type="date" value={form.visit} onChange={e => setForm({...form, visit:e.target.value})}/></label>
+        <label>Heure de visite (facultatif)<input type="time" value={form.visitTime} onChange={e => setForm({...form, visitTime:e.target.value})}/></label>
         <label className="full-field">Notes<textarea rows={3} value={form.notes} onChange={e => setForm({...form, notes:e.target.value})} placeholder="Travaux à prévoir, questions à poser…"/></label>
       </div><div className="modal-actions">{editing && <button type="button" className="secondary-btn" onClick={deleteProperty}>Supprimer</button>}<button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Annuler</button><button className="primary-btn" type="submit">Enregistrer le bien ↗</button></div><p className="form-footnote">Les biens sont sauvegardés dans votre base Supabase privée.</p></form></section></div>}
     </main>

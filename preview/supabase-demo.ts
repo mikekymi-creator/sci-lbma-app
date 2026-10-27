@@ -1,5 +1,6 @@
 /** Browser-only preview transport. No requests or real account credentials. */
 import {read,write,event,USER,HOUSEHOLD,type State} from "./store";
+import {sciSettingsSchema} from "../lib/sci";
 const demoUser={id:USER,email:"demo@example.test"};
 class Query{
  private action="select";private payload:any;private filters:((row:any)=>boolean)[]=[];private one=false;private optional=false;private sortKey="";private ascending=true;private max=Infinity;private head=false;
@@ -20,7 +21,7 @@ class Query{
   try{
    const state=read();const name=this.table as keyof State;
    let source:any[];
-   if(this.table==="household_members")source=[{household_id:HOUSEHOLD,user_id:USER,role:"admin",households:{id:HOUSEHOLD,name:"SCI LBMA · Démonstration"}}];
+   if(this.table==="household_members")source=[{household_id:HOUSEHOLD,user_id:USER,role:"admin",households:state.households.find(h=>h.id===HOUSEHOLD)}];
    else source=Array.isArray(state[name])?state[name] as any[]:[];
    const decorated=source.map(row=>this.table==="visits"?{...row,properties:state.properties.find(p=>p.id===row.property_id)}:row);
    const selected=decorated.filter(r=>this.filters.every(f=>f(r)));let data=selected;
@@ -48,6 +49,7 @@ class Query{
  }
 }
 export const configured=true;
+export const isDemo=true;
 export const supabase={
  auth:{getSession:async()=>({data:{session:{user:demoUser}},error:null}),onAuthStateChange:(_listener:any)=>({data:{subscription:{unsubscribe(){}}}}),signOut:async()=>{throw new Error("Cette prévisualisation ne connecte aucun compte réel. Vous pouvez réinitialiser vos essais avec le bouton en haut de page.");},signInWithPassword:async()=>({data:{session:{user:demoUser}},error:null}),signUp:async()=>({data:{session:{user:demoUser}},error:null})},
  from:(table:string)=>new Query(table),
@@ -55,6 +57,11 @@ export const supabase={
   try{
    if(name==="add_household_member")return {data:null,error:{message:"L’ajout de vrais membres est désactivé dans cette prévisualisation."}};
    const state=read(),property=state.properties.find(p=>p.id===args.p);
+   if(name==="save_sci_settings"){
+    const parsed=sciSettingsSchema.safeParse(args.settings),household=state.households.find(h=>h.id===args.h);
+    if(!parsed.success||!household)return {data:null,error:{message:"Paramètres SCI invalides."}};
+    household.sci_settings=parsed.data;write(state);return {data:parsed.data,error:null};
+   }
    if(name==="append_property_photo"&&property){if(!property.photo_paths.includes(args.object_path))property.photo_paths.push(args.object_path);write(state);return {data:property.photo_paths,error:null};}
    if(name==="remove_property_photo"&&property){property.photo_paths=property.photo_paths.filter((p:string)=>p!==args.object_path);write(state);return {data:property.photo_paths,error:null};}
    return {data:null,error:{message:"Fonction non disponible dans la prévisualisation."}};

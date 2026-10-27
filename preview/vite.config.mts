@@ -13,7 +13,7 @@ export default defineConfig({root,base,publicDir:false,
    .replace(/window[.]history[.]replaceState\(\{\},\s*"",\s*"\/"\)/g,`window.history.replaceState({},"",${JSON.stringify(base)})`);
  },generateBundle(){
   for(const name of ["logo.svg","icon-192.png","icon-512.png"])this.emitFile({type:"asset",fileName:name,source:readFileSync(resolve(root,"../public",name))});
-  this.emitFile({type:"asset",fileName:"manifest.webmanifest",source:JSON.stringify({name:"LBMA — Prévisualisation",short_name:"LBMA Test",start_url:"./",scope:"./",display:"standalone",background_color:"#f4f6f5",theme_color:"#12292b",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})});
+  this.emitFile({type:"asset",fileName:"manifest.webmanifest",source:JSON.stringify({name:"LBMA — Prévisualisation",short_name:"LBMA Test",start_url:"./",scope:"./",display:"standalone",background_color:"#141910",theme_color:"#141910",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})});
   this.emitFile({type:"asset",fileName:"sw.js",source:"self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));"});
  }}],build:{outDir:resolve(root,"../preview-dist"),emptyOutDir:true}
 });

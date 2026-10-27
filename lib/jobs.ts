@@ -8,6 +8,7 @@ import { analyse, defaultFinance } from "./finance";
 import { notificationBody, validPushEndpoint } from "./push";
 import { z } from "zod";
 import { criteriaSchema, matchesCriteria } from "./search";
+import {sciSettingsSchema,projectFinance} from "./sci";
 function checked(result:{error:any}){if(result.error)throw new Error("Opération Supabase refusée : "+result.error.code);}
 export async function runJobs(){
  const db=adminClient(),holder=randomUUID();
@@ -46,7 +47,9 @@ export async function runJobs(){
      }
      const reference=await db.from("sector_references").select("*").eq("household_id",source.household_id).eq("city_key",data.city.trim().toLocaleLowerCase("fr-FR")).maybeSingle();checked(reference);
      const ref=reference.data;
-     const finance={...defaultFinance,market_price_m2:ref?.market_price_m2??null,security_note:ref?.security_note??null,social_pct:ref?.social_pct??null};
+     const household=await db.from("households").select("sci_settings").eq("id",source.household_id).single();checked(household);
+     const settings=sciSettingsSchema.safeParse(household.data?.sci_settings);
+     const finance={...projectFinance(settings.success?settings.data:null),market_price_m2:ref?.market_price_m2??null,security_note:ref?.security_note??null,social_pct:ref?.social_pct??null};
      const rent_estimate=data.rent_estimate??(ref?.rent_m2&&data.surface?Math.round(ref.rent_m2*data.surface):null);
      const notes="Collecté automatiquement ; données de l’annonce à vérifier."+(communeLocation?" Distance estimée depuis le centre de la commune ; emplacement exact du bien à confirmer.":"")+(ref?` Références locales : ${ref.source_note}. Loyer issu de l’annonce ou estimé selon le référentiel.`:"");
      const input=propertySchema.parse({...data,rent_estimate,household_id:source.household_id,status:"À vérifier",notes,finance});

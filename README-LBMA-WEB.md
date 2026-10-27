@@ -1,4 +1,4 @@
-# SCI LBMA — Base Camp 0.2
+# SCI LBMA — Base Camp 0.3
 
 Application familiale Next.js/Supabase, développée sur `feature/lbma-web-v0-1`. L’ancienne application Streamlit est conservée. Le code local ne modifie pas automatiquement le site déjà publié.
 
@@ -96,3 +96,13 @@ Les tests navigateur utilisent Chromium (`/usr/bin/chromium` par défaut, ou `PL
 Avant mise en service réelle : vérifier deux comptes de la même SCI et un compte extérieur, un téléversement/une lecture de photo privée, un export PDF, une source réelle, une modification partagée et une notification reçue sur chaque téléphone. Aucun envoi réel, aucune migration de production et aucun déploiement ne sont effectués par les tests.
 
 Voir `RAPPORT-LBMA.md` pour les capacités vérifiées et les limites actuelles.
+
+## Version sombre 0.3
+
+Le dossier s’ouvre désormais sur une page dédiée avec les onglets **Le dossier**, **Simulation financière** et **Visites & famille**. Le formulaire d’édition reste accessible depuis **Modifier**. Les quatre indicateurs du haut de l’accueil sont retirés.
+
+**Paramètres SCI** gère capital social, noms des associés, parts sociales (total de 100 %), apports envisagés, réserve et hypothèses des nouveaux projets. Modifier les apports ne modifie pas les parts ; modifier les valeurs par défaut ne réécrit pas les anciens dossiers. La prévisualisation conserve les essais de la version 0.2 sur le même appareil.
+
+Pour la version Supabase connectée, appliquer également `supabase/migrations/202610270002_sci_settings.sql` après la migration initiale. La modification des paramètres communs est réservée aux administrateurs de la SCI et validée en base. Aucune migration de production n’est exécutée par la publication statique.
+
+Le bilan utilisateur complet et l’explication de la veille se trouvent dans `BILAN-FONCTIONNALITES.md`. Ne pas présenter la démonstration comme un service de collecte ou de notifications opérationnel.

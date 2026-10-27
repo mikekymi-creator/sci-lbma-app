@@ -7,6 +7,13 @@ set role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
 select public.create_household('Test SCI') as household \gset
 select public.add_household_member(:'household','member@example.test');
+select public.save_sci_settings(:'household','{"capital":1000,"reserve":500,"associates":[{"name":"Associé A","shares":50,"contribution":2000},{"name":"Associé B","shares":50,"contribution":1000}],"finance_defaults":{"credit":true,"contribution":3000,"years":20,"rate":4.2,"management_pct":8,"cashflow_target":0,"notary_pct":8}}'::jsonb);
+do $$declare h uuid;s jsonb;begin
+ select id,sci_settings into h,s from public.households limit 1;
+ if(s->>'capital')::numeric<>1000 then raise exception 'SCI save failed';end if;
+ begin perform public.save_sci_settings(h,jsonb_set(s,'{associates,0,shares}','90'));raise exception 'Invalid shares accepted';exception when raise_exception then if sqlerrm='Invalid shares accepted' then raise;end if;end;
+ begin perform public.save_sci_settings(h,s#-'{finance_defaults,credit}');raise exception 'Missing credit flag accepted';exception when raise_exception then if sqlerrm='Missing credit flag accepted' then raise;end if;end;
+end$$;
 begin;
 insert into public.properties(id,owner_id,household_id,title,price,surface,rent_estimate,analysis_ready)
  values('10000000-0000-0000-0000-000000000001',auth.uid(),:'household','Appartement test',79000,50,650,true);
@@ -15,6 +22,10 @@ do $$begin
  if(select count(*) from public.events)<>1 then raise exception 'Missing property event';end if;
 end$$;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
+do $$declare h uuid;s jsonb;begin
+ select id,sci_settings into h,s from public.households limit 1;
+ begin perform public.save_sci_settings(h,s);raise exception 'Member changed SCI settings';exception when raise_exception then if sqlerrm='Member changed SCI settings' then raise;end if;end;
+end$$;
 update public.properties set status='À visiter' where id='10000000-0000-0000-0000-000000000001';
 insert into public.comments(property_id,author_id,body) values('10000000-0000-0000-0000-000000000001',auth.uid(),'Commentaire de test');
 insert into public.visits(property_id,created_by,starts_at) values('10000000-0000-0000-0000-000000000001',auth.uid(),now()+interval '2 hours');

@@ -9,7 +9,10 @@ for attempt in {1..30}; do
   sleep 1
 done
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < tests/database-bootstrap.sql
-docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/202610270001_basecamp.sql
-# Reapplication exercises idempotence before running the functional RLS tests.
-docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/202610270001_basecamp.sql
+# Reapply the complete migration chain to exercise idempotence.
+for pass in 1 2; do
+  for migration in supabase/migrations/*.sql; do
+    docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < "$migration"
+  done
+done
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < tests/database.test.sql

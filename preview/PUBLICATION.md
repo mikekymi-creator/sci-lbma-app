@@ -18,8 +18,10 @@ Un push sur `feature/lbma-basecamp-v0-2` déclenche la publication. Les modifica
 
 La prévisualisation réutilise les composants réels avec des données fictives enregistrées dans le navigateur. Elle ne reprend pas les données du prototype privé ChatGPT, ne connecte aucun compte réel et n’exécute ni collecte ni notification réelle. Le bouton de réinitialisation efface uniquement les essais de cet appareil.
 
-Sur Android : ouvrir le lien dans Chrome, menu ⋮, puis « Installer l’application » ou « Ajouter à l’écran d’accueil ». L’installation sur un téléphone physique reste à confirmer par l’utilisateur.
+Sur Android : ouvrir le lien dans Chrome, menu ⋮, puis « Installer l’application » ou « Ajouter à l’écran d’accueil ». L’installation sur un téléphone physique a été confirmée par l’utilisateur.
 
 ## Mise à jour 0.4
 
 Revue des indicateurs : couleurs, aides « ? », fiabilité explicite, provenance persistante et PDF. Vingt tests de base, quatre tests navigateur de prévisualisation, deux tests navigateur Next et compilation Next réussis avant publication. La validation du déploiement public est consignée après son achèvement. Le même raccourci Android est conservé ; lien de rafraîchissement : https://mikekymi-creator.github.io/sci-lbma-app/?v=0.4 .
+
+Version 0.4 vérifiée sur le site public : HTTP 200 et titre « LBMA — Prévisualisation 0.4 », puis les quatre parcours navigateur exécutés contre le domaine publié ont réussi (aides au toucher/survol/clavier, provenance déclarative, valeur modifiée, parcours du dossier et compatibilité des anciens essais). Publication du code `fc3786441b2801e4ba803118e6cf00fd747bb069` : https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40517416745 .

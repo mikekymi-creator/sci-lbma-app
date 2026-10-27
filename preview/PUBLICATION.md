@@ -1,15 +1,16 @@
-# Activation du lien de test
+# Lien de test publié
 
-La branche `feature/lbma-basecamp-v0-2` est enregistrée sur GitHub et déclenche le workflow `LBMA — lien de prévisualisation`.
+https://mikekymi-creator.github.io/sci-lbma-app/
 
-La première exécution a échoué à l’étape de configuration Pages : `Get Pages site failed ... verify that the repository has Pages enabled and configured to build using GitHub Actions`.
+La publication GitHub Pages a réussi pour le commit `9149613`, avec le workflow :
+https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40496702832
 
-Le propriétaire du dépôt doit ouvrir :
+La page, le manifest et l’icône ont répondu HTTP 200. Le parcours Chromium à 390 px a été exécuté contre le site public : modification du financement et du statut, photo, commentaire, visite, persistance après rechargement et téléchargement du PDF. Aucune requête aux services Supabase ou aux API de production n’a été effectuée par ce parcours.
 
-https://github.com/mikekymi-creator/sci-lbma-app/settings/pages
+Les blocages initiaux sont résolus : GitHub Pages est activé avec la source GitHub Actions, et l’environnement `github-pages` autorise `main` ainsi que `feature/lbma-basecamp-v0-2`. Ne pas redemander ces activations sans constater un nouveau problème.
 
-Dans **Build and deployment**, choisir **GitHub Actions** comme **Source**. Cette activation ne nécessite pas de transmettre une clé ou un mot de passe au chat. Si GitHub demande ensuite une confirmation, suivre la confirmation affichée.
+Un push sur `feature/lbma-basecamp-v0-2` déclenche la publication. Les modifications purement documentaires peuvent utiliser `[skip ci]`. Vérifier la réussite de la publication et le site avant d’annoncer une mise à jour.
 
-Après activation, relancer le workflow ou effectuer un nouveau push sur la branche de prévisualisation. Vérifier la réussite du déploiement avant de communiquer le lien fourni par GitHub Pages. Ne pas confondre l’URL de la branche GitHub avec celle de l’application.
+La prévisualisation réutilise les composants réels avec des données fictives enregistrées dans le navigateur. Elle ne reprend pas les données du prototype privé ChatGPT, ne connecte aucun compte réel et n’exécute ni collecte ni notification réelle. Le bouton de réinitialisation efface uniquement les essais de cet appareil.
 
-L’interface de test réutilise les composants réels, avec des données fictives et un stockage sur l’appareil. Elle ne reprend pas les données de la publication privée ChatGPT, ne connecte aucun compte réel et n’exécute ni collecte ni notifications mobiles réelles.
+Sur Android : ouvrir le lien dans Chrome, menu ⋮, puis « Installer l’application » ou « Ajouter à l’écran d’accueil ». L’installation sur un téléphone physique reste à confirmer par l’utilisateur.

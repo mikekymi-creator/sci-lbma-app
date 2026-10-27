@@ -2,7 +2,7 @@
 
 Application familiale Next.js/Supabase, développée sur `feature/lbma-web-v0-1`. L’ancienne application Streamlit est conservée. Le code local ne modifie pas automatiquement le site déjà publié.
 
-Une branche dédiée `feature/lbma-basecamp-v0-2` contient désormais aussi une prévisualisation autonome des écrans, sans connexion à la base réelle. Voir `preview/README.md` pour le test mobile et la publication GitHub Pages. Cette prévisualisation ne met pas à jour la publication privée ChatGPT existante.
+Une branche dédiée `feature/lbma-basecamp-v0-2` contient désormais aussi une prévisualisation autonome des écrans, sans connexion à la base réelle. Voir `preview/README.md` pour le test mobile et la publication GitHub Pages. Cette prévisualisation ne met pas à jour la publication privée ChatGPT existante. Lien de test publié et vérifié : https://mikekymi-creator.github.io/sci-lbma-app/ . Les données y sont fictives et conservées sur chaque appareil.
 
 ## Ce qui est construit
 

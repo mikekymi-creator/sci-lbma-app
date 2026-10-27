@@ -29,3 +29,5 @@ Version 0.4 vérifiée sur le site public : HTTP 200 et titre « LBMA — Prévi
 ## Mise à jour 0.4.1
 
 Origine déclarée des chiffres (dont IA), justificatifs attendus sous les champs et guide automatique/manuel source par source. Aucun connecteur statistique financier actif. Validation locale : 21 tests de base, quatre parcours navigateur et build Next réussis. Les essais des versions précédentes restent conservés. Le titre de la page doit afficher « LBMA — Prévisualisation 0.4.1 » après publication ; lien : https://mikekymi-creator.github.io/sci-lbma-app/?v=0.4.1 .
+
+Publication 0.4.1 réussie pour `cb0a775bd1a8307fef971926d7802993b51b79ab` : https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40522319249 . Site public vérifié HTTP 200, titre et nouveau fichier JavaScript confirmés ; les quatre parcours navigateur passent également contre le domaine publié, dont la persistance de l’origine IA et l’état non actif des sept connecteurs statistiques.

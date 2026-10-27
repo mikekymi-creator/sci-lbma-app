@@ -80,7 +80,7 @@ Détail de l’IS historique : charges = taxe foncière + copropriété + gestio
 
 Le PDF contient **50 lignes de secteurs** et les colonnes `CP`, `Ville / Secteur`, `Prix_m2`, `Loyer_m2`, `Social_Pct`, `Secu_Note`, `Note_Strategique`.
 
-- Le tableau ne comporte pas de taxe foncière. Aucune source, année de mesure, méthode, taille d’échantillon ou frontière de quartier n’est fournie. Les valeurs ne peuvent être qualifiées de vérifiées ; leur origine ne permet pas non plus d’affirmer qu’elles ont été inventées. Leur statut correct est **ancien référentiel fourni, non sourcé et à valider**.
+- Le tableau ne comporte pas de taxe foncière. Aucune source, année de mesure, méthode, taille d’échantillon ou frontière de quartier n’est fournie. L’utilisateur précise que ces chiffres ont été obtenus dans un échange avec ChatGPT. Leur statut correct est **estimations fournies par une IA, non sourcées et non validées**. Une valeur plausible n’est pas une preuve ; elles ne doivent pas être reprises comme statistiques officielles.
 - Les prix et loyers sont un point de départ à comparer à des données récentes. Les valeurs différentes de quartiers ne doivent pas être ramenées au seul code postal partagé.
 - Les notes de sécurité sont des appréciations, pas des statistiques publiques.
 - Plusieurs commentaires affirment une hausse future, une « sécurité totale » ou une « prise de valeur garantie ». Ces affirmations ne sont pas démontrées et ne doivent pas être reprises comme des faits.

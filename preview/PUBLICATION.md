@@ -25,3 +25,7 @@ Sur Android : ouvrir le lien dans Chrome, menu ⋮, puis « Installer l’applic
 Revue des indicateurs : couleurs, aides « ? », fiabilité explicite, provenance persistante et PDF. Vingt tests de base, quatre tests navigateur de prévisualisation, deux tests navigateur Next et compilation Next réussis avant publication. La validation du déploiement public est consignée après son achèvement. Le même raccourci Android est conservé ; lien de rafraîchissement : https://mikekymi-creator.github.io/sci-lbma-app/?v=0.4 .
 
 Version 0.4 vérifiée sur le site public : HTTP 200 et titre « LBMA — Prévisualisation 0.4 », puis les quatre parcours navigateur exécutés contre le domaine publié ont réussi (aides au toucher/survol/clavier, provenance déclarative, valeur modifiée, parcours du dossier et compatibilité des anciens essais). Publication du code `fc3786441b2801e4ba803118e6cf00fd747bb069` : https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40517416745 .
+
+## Mise à jour 0.4.1
+
+Origine déclarée des chiffres (dont IA), justificatifs attendus sous les champs et guide automatique/manuel source par source. Aucun connecteur statistique financier actif. Validation locale : 21 tests de base, quatre parcours navigateur et build Next réussis. Les essais des versions précédentes restent conservés. Le titre de la page doit afficher « LBMA — Prévisualisation 0.4.1 » après publication ; lien : https://mikekymi-creator.github.io/sci-lbma-app/?v=0.4.1 .

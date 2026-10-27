@@ -2,11 +2,16 @@ import {z} from "zod";
 
 export const evidenceKeys=["price","surface","rent_estimate","dpe","works","property_tax","annual_charges","market_price_m2","security_note","social_pct"] as const;
 export type EvidenceKey=typeof evidenceKeys[number];
+// These origins are declared by a person. Automatic imports will need server-owned records.
+export const evidenceKinds={manual:"Hypothèse personnelle",listing:"Annonce / agence",document:"Document du vendeur / professionnel",public_manual:"Source publique recopiée manuellement",ai:"Estimation ChatGPT / IA non validée"} as const;
+export type EvidenceKind=keyof typeof evidenceKinds;
+export function evidenceOrigin(evidence:Evidence|undefined){return evidence?.kind?evidenceKinds[evidence.kind]:"Origine non précisée";}
 const entry=z.object({
  source:z.string().trim().max(400),
  url:z.union([z.literal(""),z.string().url().max(2000).refine(s=>s.startsWith("https://"))]),
  period:z.string().trim().max(80),geography:z.string().trim().max(160),
  value:z.union([z.number().finite(),z.string().max(100)]),
+ kind:z.enum(["manual","listing","document","public_manual","ai"]).optional(),
 });
 export type Evidence=z.infer<typeof entry>;
 export type EvidenceMap=Partial<Record<EvidenceKey,Evidence>>;
@@ -18,8 +23,9 @@ export const evidenceSchema=z.object({
 export function evidenceState(value:number|string|null,evidence:Evidence|undefined,fictitious=false){
  if(value===null||value==="Inconnu")return {label:"Non renseigné",tone:"unknown"};
  if(fictitious)return {label:"Exemple fictif",tone:"watch"};
+ if(evidence&&evidence.value!==value)return {label:"Valeur modifiée · source à revoir",tone:"watch"};
+ if(evidence?.kind==="ai")return {label:"Estimation IA · non validée",tone:"watch"};
  if(!evidence?.source)return {label:"Saisie / hypothèse non vérifiée",tone:"watch"};
- if(evidence.value!==value)return {label:"Valeur modifiée · source à revoir",tone:"watch"};
  if(!evidence.period||!evidence.geography)return {label:"Source incomplète · non contrôlée",tone:"watch"};
  return {label:"Source déclarée · non contrôlée",tone:"neutral"};
 }

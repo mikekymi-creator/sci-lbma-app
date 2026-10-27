@@ -1,7 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { analyse, defaultFinance } from "./finance";
 import type { Property } from "./model";
-import {evidenceKeys,evidenceState,isFictitiousProperty} from "./evidence";
+import {evidenceKeys,evidenceState,evidenceOrigin,isFictitiousProperty} from "./evidence";
 import {indicatorHelp} from "./indicators";
 export async function propertyPdf(p: Property) {
  const doc = await PDFDocument.create();
@@ -52,7 +52,7 @@ export async function propertyPdf(p: Property) {
  for(const key of evidenceKeys){
   const value=key==="price"||key==="surface"||key==="rent_estimate"||key==="dpe"?p[key]:f[key];
   const source=p.finance.evidence?.[key],state=evidenceState(value,source,isFictitiousProperty(p.id,true));
-  line(`${indicatorHelp[key].title} : ${state.label}`);
+  line(`${indicatorHelp[key].title} : ${state.label}${source?" | "+evidenceOrigin(source):""}`);
   if(source?.source)line(`${source.source} | Période : ${source.period||"non renseignée"} | Périmètre : ${source.geography||"non renseigné"} | Valeur rattachée : ${source.value}${source.url?" | "+source.url:""}`,10);
  }
  y-=12;line("NOTES",13);line(p.notes||"Aucune note.");

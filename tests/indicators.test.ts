@@ -35,3 +35,9 @@ test('source metadata preserves old inputs and financial results; unsafe URLs ar
  assert.deepEqual(analyse({...p,finance:original}),analyse({...p,finance:documented}));
  for(const url of ['javascript:alert(1)','http://example.test','data:text/html,test'])assert.equal(financeSchema.safeParse({...original,evidence:{property_tax:{...evidence,url}}}).success,false);
 });
+test('an AI estimate stays unvalidated even when a public link and complete metadata are declared',()=>{
+ const ai=financeSchema.parse({...defaultFinance,evidence:{property_tax:{...evidence,kind:'ai'}}}).evidence!.property_tax!;
+ assert.equal(evidenceState(800,ai).label,'Estimation IA · non validée');assert.equal(evidenceState(800,ai).tone,'watch');
+ assert.match(evidenceState(900,ai).label,/Valeur modifiée/);
+ assert.equal(financeSchema.safeParse({...defaultFinance,evidence:{property_tax:{...evidence,kind:'automatic'}}}).success,false);
+});

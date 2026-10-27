@@ -83,7 +83,7 @@ export default function Home(){
     {tab===tabs[3]&&<SciSettings household={household} admin={role==="admin"} onSaved={setSciConfig}/>}
     {tab===tabs[4]&&<Settings household={household} admin={role==="admin"} onChange={()=>void loadFamilies()} demo={isDemo}/>}
     </>}
-    <footer className="footer-note"><span>LBMA <b>·</b> BASE CAMP / 0.4</span><span>Couleurs = lecture du modèle · Données à vérifier · Score historique non validé, hors assurance et frais de revente.</span></footer>
+    <footer className="footer-note"><span>LBMA <b>·</b> BASE CAMP / 0.4.1</span><span>Couleurs = lecture du modèle · Données à vérifier · Score historique non validé, hors assurance et frais de revente.</span></footer>
    </>}</div>
   </section>
   {editing!==undefined&&household&&<PropertyDialog key={editing?.id??"new"} property={editing} initialFinance={projectFinance(sciConfig)} household={household} userId={user.id} onClose={()=>setEditing(undefined)} onDeleted={id=>{setProperties(prev=>prev.filter(p=>p.id!==id));setEditing(undefined);closeProperty();void reload();}} onSaved={p=>{savedProperty(p);setEditing(undefined);openProperty(p);}}/>}

@@ -49,3 +49,9 @@ L’audit du PDF joint trouve 50 lignes de secteurs sans source ni période ; au
 Validation avant publication : 20 tests de calcul/extraction/provenance, quatre parcours navigateur de prévisualisation (mobile et bureau), deux parcours Next avec transport simulé, compilation Next et TypeScript réussis. Les nouveaux tests couvrent le toucher/survol/clavier, les couleurs, le maintien du caractère fictif, la persistance des sources et la détection d’une valeur modifiée. Export PDF ouvert et texte contrôlé ; écrans vérifiés visuellement. Aucune migration supplémentaire nécessaire (métadonnées dans le JSON financier existant).
 
 La version 0.4 a également été vérifiée sur l’URL publique (HTTP 200 et nouveau titre). Les quatre parcours navigateur de prévisualisation passent sur le site réellement publié, sans modifier les données du téléphone de l’utilisateur.
+
+## Clarification des origines et du raccordement 0.4.1
+
+L’utilisateur précise que les 50 lignes du référentiel ont été obtenues auprès de ChatGPT : classement en estimations IA non sourcées et non validées. Guide public/manual détaillé ajouté à l’interface, justificatifs attendus indiqués sous les champs, type d’origine déclaré et exporté dans le PDF. Aucun reclassement automatique des données existantes, aucun effacement des essais ni changement du barème financier.
+
+Raccordement statistique non activé. Un appel réel à geo.api.gouv.fr a identifié Beauvais (60057) ; accès aux domaines data.gouv.fr, data.ademe.fr et georisques.gouv.fr refusés par le réseau (HTTP 403). Le plan [RACCORDEMENT-DONNEES.md](RACCORDEMENT-DONNEES.md) détaille les imports, rapprochements, fréquences et prérequis du service central, sans revendiquer d’intégration déjà validée.

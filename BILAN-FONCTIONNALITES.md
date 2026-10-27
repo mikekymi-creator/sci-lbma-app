@@ -26,3 +26,5 @@ Le lien GitHub Pages reste une démonstration publique. Les données sont enregi
 Dans la prévisualisation, enregistrer ou activer une source ne lance aucune recherche et n’envoie aucune notification. Les paramètres SCI fixent le cadre financier ; l’onglet de veille prépare les futures entrées de données.
 
 Mise à jour 0.4 : couleurs des résultats, aides au survol/toucher/clavier, inventaire de fiabilité, sources déclaratives persistantes et exportées dans le PDF. Le score historique est affiché non validé ; la part sociale reste neutre. Voir [la revue des indicateurs](REVUE-INDICATEURS.md). Aucun flux public de données ou contrôle de sécurité n’est activé.
+
+Version 0.4.1 : distinction explicite entre origine manuelle, annonce, document vendeur/professionnel, source publique recopiée et estimation IA ; guide des connecteurs à raccorder et des pièces à saisir. Le raccordement statistique reste non livré en service actif ; voir [le plan détaillé](RACCORDEMENT-DONNEES.md).

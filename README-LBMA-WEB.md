@@ -112,3 +112,9 @@ Le bilan utilisateur complet et l’explication de la veille se trouvent dans `B
 [Audit complet](REVUE-INDICATEURS.md) : inventaire, fiabilité actuelle, ancien référentiel de 50 secteurs et sources publiques à raccorder. Couleurs accompagnées de texte, aides « ? » au survol/clavier/toucher, provenance déclarative dans `finance.evidence` (source, lien HTTPS facultatif, période, périmètre et valeur rattachée). Une valeur modifiée signale la référence à revoir. Les fiches DÉMO restent fictives ; déclarer une source ne valide pas une donnée. Les métadonnées sont conservées dans le JSON financier existant et dans le PDF, sans nouvelle migration SQL.
 
 Le score historique conserve son barème, dont le malus social non validé, signalé explicitement. Le taux social reste neutre à l’affichage. Aucun raccordement statistique, score de vivabilité ni contrôle de sécurité du bâtiment n’est livré.
+
+## Provenance et raccordement 0.4.1
+
+[Plan de raccordement](RACCORDEMENT-DONNEES.md) : APIs ciblées, imports de tables officielles, identification des biens, mise en cache et distinction entre lectures publiques et hypothèses. Le référentiel fourni provient de ChatGPT et reste une estimation IA non validée.
+
+L’origine déclarée dans `finance.evidence` peut être une hypothèse personnelle, une annonce, un document, une source publique recopiée manuellement ou une estimation IA. Aucun choix ne peut revendiquer un import automatique. Les anciennes métadonnées restent compatibles ; l’origine est conservée dans les simulations et le PDF. Les champs et le guide indiquent les justificatifs attendus et les connecteurs à raccorder. Aucun connecteur statistique supplémentaire n’est actif dans cette version.

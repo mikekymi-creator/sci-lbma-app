@@ -28,6 +28,15 @@ test('mobile touch help, honest provenance, save/reload and stale evidence',asyn
  await page.getByLabel('Taxe foncière / an (€)',{exact:true}).fill('950');await expect(row.getByText('Valeur modifiée · source à revoir',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Enregistrer la simulation',exact:true}).click();await expect(page.getByText('Simulation enregistrée.',{exact:true})).toBeVisible();
  await page.reload();await page.getByRole('tab',{name:'Simulation financière',exact:true}).click();await expect(page.getByText('Valeur modifiée · source à revoir',{exact:true})).toBeVisible();
+
+ await page.getByText('Documenter la source d’un indicateur',{exact:true}).click();
+ await page.getByRole('combobox',{name:'Origine du chiffre',exact:true}).selectOption('ai');
+ await expect(page.getByRole('row').filter({has:page.getByRole('rowheader',{name:'Taxe foncière annuelle',exact:false})}).getByText('Estimation IA · non validée',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Enregistrer la simulation',exact:true}).click();await expect(page.getByText('Simulation enregistrée.',{exact:true})).toBeVisible();
+ await page.reload();await page.getByRole('tab',{name:'Simulation financière',exact:true}).click();await expect(page.getByText('Estimation IA · non validée',{exact:true})).toBeVisible();
+ await page.getByText('Automatique ou manuel : comment obtenir les données ?',{exact:true}).click();
+ await expect(page.getByText('État actuel : aucun des connecteurs ci-dessous n’est actif.',{exact:true})).toBeVisible();
+ await expect(page.getByText('À raccorder',{exact:true})).toHaveCount(7);
  await expect(page.getByTestId('simulation-cashflow').locator('..')).toHaveClass(/metric-bad/);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

@@ -57,3 +57,15 @@ L’utilisateur précise que les 50 lignes du référentiel ont été obtenues a
 Raccordement statistique non activé. Un appel réel à geo.api.gouv.fr a identifié Beauvais (60057) ; accès aux domaines data.gouv.fr, data.ademe.fr et georisques.gouv.fr refusés par le réseau (HTTP 403). Le plan [RACCORDEMENT-DONNEES.md](RACCORDEMENT-DONNEES.md) détaille les imports, rapprochements, fréquences et prérequis du service central, sans revendiquer d’intégration déjà validée.
 
 Validation 0.4.1 : 21 tests de base, TypeScript et build Next réussis ; quatre parcours navigateur passent localement puis sur le site public publié. Origine IA persistante et guide sans faux statut de connexion vérifiés. Publication GitHub Pages réussie, mêmes raccourci Android et stockage local conservés.
+
+## Partage web/mobile et activation 0.4.2
+
+Diagnostic confirmé : le lien public était en mode local ; les photos et fiches restaient dans le navigateur de chaque appareil. Aucune configuration Supabase n’est disponible dans l’environnement de développement et les accès API aux variables/secrets GitHub sont refusés à l’intégration. Aucun identifiant privé n’a été consulté, aucun projet Supabase créé ou modifié.
+
+Ajout d’un mode connecté du frontend GitHub Pages utilisant les comptes réels, accès RLS, fiches et photos privées du même projet Supabase. Activation explicite par trois variables publiques ; une configuration connectée incomplète ou une clé serveur reconnue fait échouer la construction plutôt que d’utiliser des données de test. Le mode local reste le défaut tant que cette configuration n’est pas fournie. Aucun connecteur statistique ou envoi de notification n’est activé par ce mode.
+
+Le mode local affiche l’absence de synchronisation des photos et propose une sauvegarde privée contenant fiches, paramètres et images. Le mode connecté conserve la possibilité de sauvegarder les anciens essais locaux, sans les transférer implicitement dans la SCI. Les règles de calcul restent identiques.
+
+[Guide d’activation](ACTIVER-LBMA-ET-DONNEES.md) : création d’un projet vide, deux migrations, stockage privé, variables GitHub, authentification, comptes SCI et contrôle ordinateur/mobile. Le guide décrit ensuite les sept raccordements de sources à implémenter et valider, et les justificatifs à saisir manuellement.
+
+Validation : 22 tests de base, TypeScript, build Next et tests PostgreSQL/RLS réussis. Le test connecté utilise deux contextes navigateur isolés et un service Supabase simulé : photo et fiche partagées, statut partagé dans l’autre sens, PDF et conservation/sauvegarde des anciens essais. Les tests de démo couvrent aussi le téléchargement contenant réellement les photos. L’activation et le test d’un projet Supabase réel restent nécessaires.

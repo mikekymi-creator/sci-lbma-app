@@ -14,7 +14,8 @@
     "push:keys": "node --import tsx scripts/generate-push-keys.ts",
     "preview:build": "vite build --config preview/vite.config.mts",
     "preview:test": "playwright test --config playwright.preview.config.ts",
-    "preview:serve": "vite preview --config preview/vite.config.mts --host 127.0.0.1 --port 4173"
+    "preview:serve": "vite preview --config preview/vite.config.mts --host 127.0.0.1 --port 4173",
+    "test:connected": "playwright test --config playwright.connected.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",

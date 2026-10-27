@@ -2,7 +2,7 @@ import {test,expect} from "@playwright/test";
 test("mobile dossier tabs: finance, photos, comments, visit, persistence and PDF",async({page})=>{
  await page.setViewportSize({width:390,height:844});const unexpected:string[]=[];
  page.on("request",r=>{if(/supabase[.]|\/rest\/v1|\/api\//.test(r.url()))unexpected.push(r.url());});
- await page.goto("./");await expect(page.getByText("LBMA · TEST 0.4.1",{exact:true})).toBeVisible();
+ await page.goto("./");await expect(page.getByText("LBMA · TEST 0.4.2",{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>getComputedStyle(document.body).backgroundColor)).toBe('rgb(20, 25, 16)');
  await expect(page.getByText('PISTES EN PORTEFEUILLE',{exact:true})).toHaveCount(0);
  await page.screenshot({path:'test-results/dark-dashboard-mobile.png',fullPage:true});
@@ -15,7 +15,10 @@ test("mobile dossier tabs: finance, photos, comments, visit, persistence and PDF
  await page.getByRole('tab',{name:'Visites & famille',exact:true}).click();await page.getByLabel('Votre commentaire',{exact:true}).fill('Test familial : examiner les travaux.');await page.getByRole('button',{name:'Publier le commentaire',exact:true}).click();
  await expect(page.getByText('Test familial : examiner les travaux.',{exact:true})).toBeVisible();
  await page.getByLabel('Date et heure',{exact:true}).fill('2030-11-10T14:00');await page.getByRole('button',{name:'Planifier la visite',exact:true}).click();await expect(page.getByRole('button',{name:'Annuler la visite',exact:true})).toBeVisible();
- await page.getByRole('tab',{name:'Le dossier',exact:true}).click();await page.locator('input[type=file]').setInputFiles('public/icon-192.png');await expect(page.getByText('Photo ajoutée.',{exact:true})).toBeVisible();await expect(page.locator('.photo-gallery img')).toHaveCount(1);
+ await page.getByRole('tab',{name:'Le dossier',exact:true}).click();await page.locator('input[type=file]').setInputFiles('public/icon-192.png');await expect(page.getByText('Photo ajoutée sur cet appareil uniquement.',{exact:true})).toBeVisible();await expect(page.locator('.photo-gallery img')).toHaveCount(1);
+ const backupDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Sauvegarder fiches et photos',exact:true}).click();const backup=await backupDownload;await backup.saveAs('test-results/local-backup.json');
+ const data=JSON.parse(await (await import('node:fs/promises')).readFile('test-results/local-backup.json','utf8'));expect(data.format).toBe('lbma-local-backup');expect(data.data.properties.some((p:any)=>p.photo_paths.length===1)).toBe(true);expect(Object.values(data.data.uploads).some((value:any)=>value.startsWith('data:image/png;base64,'))).toBe(true);
+
  const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:'Télécharger le dossier PDF',exact:true}).click();const file=await downloaded;expect(file.suggestedFilename()).toBe('dossier-lbma.pdf');await file.saveAs('test-results/dark-dossier.pdf');
  await page.reload();await expect(page.getByRole('tab',{name:'Le dossier',exact:true})).toHaveAttribute('aria-selected','true');
  await page.getByRole('tab',{name:'Simulation financière',exact:true}).click();await expect(page.getByLabel('Apport (€)',{exact:true})).toHaveValue('20000');

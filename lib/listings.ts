@@ -4,7 +4,8 @@ import ipaddr from "ipaddr.js";
 import { Agent, fetch } from "undici";
 import {parseNumber} from "./numbers";
 export {parseNumber} from "./numbers";
-export function canonicalListingUrl(raw:string){const u=new URL(raw);u.hash="";for(const key of [...u.searchParams.keys()])if(/^(utm_|at_|fbclid$|gclid$)/i.test(key))u.searchParams.delete(key);return u.href;}
+import {canonicalListingUrl} from "./listing-url";
+export {canonicalListingUrl} from "./listing-url";
 export function allowedUrl(raw: string, hosts=(process.env.IMPORT_ALLOWED_HOSTS??"").split(",").map(h=>h.trim()).filter(Boolean)) {
  const u=new URL(raw);
  if(u.protocol!=="https:"||u.username||u.password||(u.port&&u.port!=="443")||!hosts.includes(u.hostname)) throw new Error("Domaine HTTPS non autorisé. Ajoutez cette source aux domaines approuvés du serveur.");

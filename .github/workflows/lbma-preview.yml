@@ -13,6 +13,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      LBMA_DEPLOYMENT_MODE: ${{ vars.LBMA_DEPLOYMENT_MODE || 'demo' }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

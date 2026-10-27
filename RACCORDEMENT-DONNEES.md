@@ -32,7 +32,7 @@ Une saisie manuelle peut être exacte et bien justifiée. Un import automatique 
 ## Circuit de raccordement recommandé
 
 1. **Identifier le bien** : adresse, code INSEE, coordonnées et précision de localisation ; numéro DPE si disponible. Une localisation au centre de la commune ne devient pas l’adresse du bien.
-2. **Installer le service de données** dans l’application reliée à sa base centrale privée : import périodique des tables et appels ciblés. Le site GitHub Pages actuel reste un test local à chaque appareil, sans ce service. Ne pas exposer de clé privée dans le navigateur.
+2. **Installer le service de données** dans l’application reliée à sa base centrale privée : import périodique des tables et appels ciblés. Le lien GitHub Pages est actuellement en mode test local. Un mode connecté est préparé pour partager fiches et photos via Supabase ; les traitements statistiques demandent encore leur service de collecte distinct. Voir [le guide d’activation](ACTIVER-LBMA-ET-DONNEES.md). Ne pas exposer de clé privée dans le navigateur.
 3. **Conserver les lectures des sources séparément des hypothèses** : producteur, référence du jeu et version/millésime, source URL, période des faits, date de récupération, périmètre, valeur/unité, méthode et échantillon pour les estimations. Conserver également erreurs, couverture et absence de résultat.
 4. **Rapprocher et contrôler** : code INSEE, type, période, précision, unités, doublons et plausibilité. Ces contrôles automatiques ne garantissent pas l’exactitude de chaque observation.
 5. **Présenter une valeur proposée** : fait publié, estimation calculée ou pièce du vendeur. L’utilisateur peut retenir une autre hypothèse de simulation sans perdre la valeur d’origine ni sa provenance.

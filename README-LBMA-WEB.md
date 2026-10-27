@@ -1,4 +1,4 @@
-# SCI LBMA — Base Camp 0.4
+# SCI LBMA — Base Camp 0.4.2
 
 Application familiale Next.js/Supabase, développée sur `feature/lbma-web-v0-1`. L’ancienne application Streamlit est conservée. Le code local ne modifie pas automatiquement le site déjà publié.
 
@@ -118,3 +118,9 @@ Le score historique conserve son barème, dont le malus social non validé, sign
 [Plan de raccordement](RACCORDEMENT-DONNEES.md) : APIs ciblées, imports de tables officielles, identification des biens, mise en cache et distinction entre lectures publiques et hypothèses. Le référentiel fourni provient de ChatGPT et reste une estimation IA non validée.
 
 L’origine déclarée dans `finance.evidence` peut être une hypothèse personnelle, une annonce, un document, une source publique recopiée manuellement ou une estimation IA. Aucun choix ne peut revendiquer un import automatique. Les anciennes métadonnées restent compatibles ; l’origine est conservée dans les simulations et le PDF. Les champs et le guide indiquent les justificatifs attendus et les connecteurs à raccorder. Aucun connecteur statistique supplémentaire n’est actif dans cette version.
+
+## Mode partagé sur le même lien — 0.4.2
+
+[Guide d’activation étape par étape](ACTIVER-LBMA-ET-DONNEES.md). Le frontend GitHub Pages peut être construit en mode `connected` avec les variables publiques du projet Supabase. Il utilise comptes réels, accès RLS, base et photos privées directement ; le mode `demo` reste le défaut. Aucun secret serveur n’entre dans ce frontend. L’import par URL, les notifications et les connecteurs statistiques requièrent leurs services distincts et ne sont pas activés par ce changement.
+
+La prévisualisation locale indique explicitement l’absence de synchronisation des photos et permet de télécharger une sauvegarde privée des fiches et images. Les essais restent conservés et leur reprise dans la SCI partagée n’est pas automatique. Le mode connecté affiche encore leur sauvegarde si des essais locaux subsistent. `npm run test:connected` vérifie deux sessions isolées sur transport simulé ; un essai réel sur le projet Supabase reste à faire après configuration.

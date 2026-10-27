@@ -35,3 +35,5 @@ Publication 0.4.1 réussie pour `cb0a775bd1a8307fef971926d7802993b51b79ab` : htt
 ## Mise à jour 0.4.2
 
 Sauvegarde des fiches/photos locales, avertissement explicite de non-synchronisation et mode connecté optionnel avec Supabase privé sur le même lien. Le workflow reste en mode local par défaut. Activation du mode réel décrite dans [ACTIVER-LBMA-ET-DONNEES.md](../ACTIVER-LBMA-ET-DONNEES.md), sans service-role dans le navigateur. Aucun projet réel n’a été configuré. Les raccordements statistiques restent distincts et à implémenter.
+
+La version 0.4.2 locale est publiée et vérifiée HTTP 200, titre et nouvelle interface confirmés : https://mikekymi-creator.github.io/sci-lbma-app/?v=0.4.2 . Publication réussie du commit `3201afe24575090a36c83f2f5be7db3f6475bde9` : https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40527042512 . Les quatre parcours navigateur passent aussi sur le domaine public, dont la sauvegarde JSON contenant les photos. Cela ne valide pas un projet Supabase réel : le mode partagé attend encore ses variables et les migrations.

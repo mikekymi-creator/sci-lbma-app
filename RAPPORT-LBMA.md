@@ -69,3 +69,5 @@ Le mode local affiche l’absence de synchronisation des photos et propose une s
 [Guide d’activation](ACTIVER-LBMA-ET-DONNEES.md) : création d’un projet vide, deux migrations, stockage privé, variables GitHub, authentification, comptes SCI et contrôle ordinateur/mobile. Le guide décrit ensuite les sept raccordements de sources à implémenter et valider, et les justificatifs à saisir manuellement.
 
 Validation : 22 tests de base, TypeScript, build Next et tests PostgreSQL/RLS réussis. Le test connecté utilise deux contextes navigateur isolés et un service Supabase simulé : photo et fiche partagées, statut partagé dans l’autre sens, PDF et conservation/sauvegarde des anciens essais. Les tests de démo couvrent aussi le téléchargement contenant réellement les photos. L’activation et le test d’un projet Supabase réel restent nécessaires.
+
+Publication de la démo 0.4.2 réussie ; HTTP 200, titre et fichiers de la nouvelle version vérifiés. Les quatre parcours navigateur passent sur le site réellement publié, y compris la sauvegarde des images. Le test du mode partagé reste simulé ; aucune activation de Supabase ni connecteur de données publiques réel n’est revendiqué.

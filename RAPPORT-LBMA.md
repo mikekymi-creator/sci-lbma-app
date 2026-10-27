@@ -1,6 +1,6 @@
 # Livraison Base Camp — bilan
 
-Le développement reprend la branche `feature/lbma-web-v0-1`. Les modifications restent locales pour revue. Le site fourni n’est pas déployé depuis cet environnement, et son inspection HTTP a été refusée par le proxy réseau (403). L’exemple Bien’ici est conservé comme cas de validation future, sans prétendre en avoir extrait les données.
+Le développement reprend la branche `feature/lbma-web-v0-1`. Le code et la prévisualisation autonome sont maintenant enregistrés sur GitHub dans `feature/lbma-basecamp-v0-2`. La publication privée ChatGPT d’origine n’est pas modifiée : son outil de publication n’est pas disponible dans cet environnement. L’exemple Bien’ici reste un cas de validation future, sans prétendre en avoir extrait les données.
 
 | Demande | Réalisation | Condition de mise en service |
 |---|---|---|
@@ -32,4 +32,4 @@ Les vérifications locales ne remplacent pas le test du Supabase de production, 
 
 ## Prévisualisation demandée depuis cette conversation
 
-Un export de démonstration réutilisant les composants modifiés est préparé sur `feature/lbma-basecamp-v0-2`, avec un workflow GitHub Pages. Son test navigateur mobile réel vérifie financement, photo, commentaire, visite, persistance après rechargement et PDF, sans appels aux services de production. Les deux exemples sont fictifs et les essais restent sur l’appareil. Le statut de publication doit être confirmé par GitHub avant de présenter le lien comme disponible.
+Un export de démonstration réutilisant les composants modifiés est préparé sur `feature/lbma-basecamp-v0-2`, avec un workflow GitHub Pages. Son test navigateur mobile réel vérifie financement, photo, commentaire, visite, persistance après rechargement et PDF, sans appels aux services de production. Les deux exemples sont fictifs et les essais restent sur l’appareil. La première exécution de publication GitHub Actions a atteint `actions/configure-pages`, puis échoué car GitHub Pages n’est pas activé pour ce dépôt. Le propriétaire doit choisir la source GitHub Actions dans les paramètres Pages. Le lien ne doit pas être annoncé comme disponible avant une publication réussie.

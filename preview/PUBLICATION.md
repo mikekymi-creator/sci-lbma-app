@@ -1,11 +1,16 @@
-# Lien de test publié
+# Lien de test publié — version 0.3
 
 https://mikekymi-creator.github.io/sci-lbma-app/
 
-La publication GitHub Pages a réussi pour le commit `9149613`, avec le workflow :
-https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40496702832
+La publication sombre 0.3 a réussi pour le commit `70cca34`, avec le workflow :
+https://github.com/mikekymi-creator/sci-lbma-app/actions/runs/40502769739
 
-La page, le manifest et l’icône ont répondu HTTP 200. Le parcours Chromium à 390 px a été exécuté contre le site public : modification du financement et du statut, photo, commentaire, visite, persistance après rechargement et téléchargement du PDF. Aucune requête aux services Supabase ou aux API de production n’a été effectuée par ce parcours.
+La page publique a répondu HTTP 200 avec le titre « LBMA — Prévisualisation 0.3 ». Les deux tests navigateur ont été exécutés contre le site public et sont passés :
+
+- mobile 390 px : palette sombre, absence des quatre indicateurs d’accueil, onglets du dossier, simulation interactive, statut, photo, commentaire, visite, persistance et PDF ;
+- ordinateur 1440 px : migration des essais 0.2 sans perte, paramètres SCI persistants, conservation des parts, préremplissage des nouvelles fiches sans modification des anciennes et navigation clavier des onglets.
+
+Les tests unitaires (16), le build Next.js, les deux tests du parcours connecté simulé et les tests PostgreSQL incluant les permissions des paramètres SCI passent également. La version Supabase réelle reste à configurer ; sa nouvelle migration `202610270002_sci_settings.sql` n’a été exécutée que dans une base de test.
 
 Les blocages initiaux sont résolus : GitHub Pages est activé avec la source GitHub Actions, et l’environnement `github-pages` autorise `main` ainsi que `feature/lbma-basecamp-v0-2`. Ne pas redemander ces activations sans constater un nouveau problème.
 

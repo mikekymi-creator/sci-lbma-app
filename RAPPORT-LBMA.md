@@ -1,4 +1,4 @@
-# Livraison Base Camp — bilan
+# Livraison Base Camp — bilan 0.3
 
 Le développement reprend la branche `feature/lbma-web-v0-1`. Le code et la prévisualisation autonome sont maintenant enregistrés sur GitHub dans `feature/lbma-basecamp-v0-2`. La publication privée ChatGPT d’origine n’est pas modifiée : son outil de publication n’est pas disponible dans cet environnement. L’exemple Bien’ici reste un cas de validation future, sans prétendre en avoir extrait les données.
 
@@ -33,3 +33,9 @@ Les vérifications locales ne remplacent pas le test du Supabase de production, 
 ## Prévisualisation demandée depuis cette conversation
 
 Un export de démonstration réutilisant les composants modifiés est préparé sur `feature/lbma-basecamp-v0-2`, avec un workflow GitHub Pages. Son test navigateur mobile réel vérifie financement, photo, commentaire, visite, persistance après rechargement et PDF, sans appels aux services de production. Les deux exemples sont fictifs et les essais restent sur l’appareil. La publication GitHub Pages a maintenant réussi : https://mikekymi-creator.github.io/sci-lbma-app/ . Le parcours mobile a aussi été exécuté contre ce site public, avec succès : financement, statut, photo, commentaire, visite, persistance après rechargement et PDF. Le stockage reste local à chaque navigateur ; aucune collecte ni notification réelle n’est activée. Voir `preview/PUBLICATION.md` pour le suivi du déploiement.
+
+## Mise à jour sombre 0.3
+
+Les quatre indicateurs d’accueil sont retirés. Les fiches s’ouvrent sur une page avec **Le dossier**, **Simulation financière** et **Visites & famille**. Le nouvel onglet **Paramètres SCI** conserve séparément capital, parts, apports et réserve ; ses valeurs de financement préremplissent uniquement les nouvelles fiches. Les essais de la prévisualisation 0.2 restent conservés. Les données financières personnelles visibles dans la capture de l’utilisateur ne sont pas utilisées comme valeurs publiques par défaut.
+
+La version est publiée et les deux parcours navigateur passent contre le site public. Voir `BILAN-FONCTIONNALITES.md` pour le classement livré / en test / non livré en réel et l’explication de l’onglet de veille.

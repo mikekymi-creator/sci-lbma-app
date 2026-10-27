@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import {supabase} from "../lib/supabase";
 import {defaultCriteria} from "../lib/search";
 import References from "./References";
+import {PublicDataGuide,IndicatorCatalogue} from "./IndicatorReview";
 export default function Settings({household,admin,onChange,demo=false}:{household:string;admin:boolean;onChange:()=>void;demo?:boolean}){
  const [email,setEmail]=useState(""),[message,setMessage]=useState(""),[sources,setSources]=useState<any[]>([]);
  const [name,setName]=useState(""),[url,setUrl]=useState(""),[interval,setInterval]=useState(30);
@@ -25,6 +26,6 @@ export default function Settings({household,admin,onChange,demo=false}:{househol
   </form></details>}
   {sources.map(source=><article className="activity-item" key={source.id}><strong>{source.name}</strong><p>{source.enabled?"Activée":"Désactivée"} · toutes les {source.interval_minutes} min · Dernier passage : {source.last_run_at?new Date(source.last_run_at).toLocaleString("fr-FR"):"jamais"}</p>{source.last_error&&<p role="status">{source.last_error}</p>}{admin&&<button className="secondary-btn" onClick={async()=>{const {error}=await db.from("watch_sources").update({enabled:!source.enabled,next_run_at:new Date().toISOString()}).eq("id",source.id);if(error)setMessage("Modification impossible.");else await load();}}>{source.enabled?"Suspendre":"Activer"}</button>}</article>)}
   <p role="status">{message}</p>
-  <References household={household} admin={admin}/>
+  <IndicatorCatalogue/><PublicDataGuide/><References household={household} admin={admin}/>
  </section>;
 }

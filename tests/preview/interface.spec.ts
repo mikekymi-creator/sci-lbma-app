@@ -2,7 +2,7 @@ import {test,expect} from "@playwright/test";
 test("mobile dossier tabs: finance, photos, comments, visit, persistence and PDF",async({page})=>{
  await page.setViewportSize({width:390,height:844});const unexpected:string[]=[];
  page.on("request",r=>{if(/supabase[.]|\/rest\/v1|\/api\//.test(r.url()))unexpected.push(r.url());});
- await page.goto("./");await expect(page.getByText("LBMA · TEST 0.3",{exact:true})).toBeVisible();
+ await page.goto("./");await expect(page.getByText("LBMA · TEST 0.4",{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>getComputedStyle(document.body).backgroundColor)).toBe('rgb(20, 25, 16)');
  await expect(page.getByText('PISTES EN PORTEFEUILLE',{exact:true})).toHaveCount(0);
  await page.screenshot({path:'test-results/dark-dashboard-mobile.png',fullPage:true});

@@ -1,5 +1,6 @@
 import test from "node:test";
 import "./sci-imports";
+import "./indicators.test";
 import assert from "node:assert/strict";
 import {analyse,defaultFinance} from "../lib/finance";
 import {extractListing,parseNumber,publicAddress,allowedUrl,robotsAllows,feedLinks,searchLinks,canonicalListingUrl,communeCoordinates} from "../lib/listings";

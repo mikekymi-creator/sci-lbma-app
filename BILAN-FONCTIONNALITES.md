@@ -1,4 +1,4 @@
-# Bilan des fonctionnalités — prévisualisation 0.3
+# Bilan des fonctionnalités — prévisualisation 0.4
 
 Le lien GitHub Pages reste une démonstration publique. Les données sont enregistrées sur l’appareil, sans comptes familiaux ni base partagée connectée.
 
@@ -24,3 +24,5 @@ Le lien GitHub Pages reste une démonstration publique. Les données sont enregi
 - **Les références locales** documentent les loyers au m², valeurs de marché et indicateurs utilisés par l’analyse. Ce sont des hypothèses à sourcer, pas des données automatiquement certifiées.
 
 Dans la prévisualisation, enregistrer ou activer une source ne lance aucune recherche et n’envoie aucune notification. Les paramètres SCI fixent le cadre financier ; l’onglet de veille prépare les futures entrées de données.
+
+Mise à jour 0.4 : couleurs des résultats, aides au survol/toucher/clavier, inventaire de fiabilité, sources déclaratives persistantes et exportées dans le PDF. Le score historique est affiché non validé ; la part sociale reste neutre. Voir [la revue des indicateurs](REVUE-INDICATEURS.md). Aucun flux public de données ou contrôle de sécurité n’est activé.

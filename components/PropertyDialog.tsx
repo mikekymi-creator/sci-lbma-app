@@ -5,6 +5,9 @@ import {api,money} from "../lib/client";
 import {analyse,defaultFinance,type Finance} from "../lib/finance";
 import {statuses,type Property,type PropertyInput} from "../lib/model";
 import {parseNumber} from "../lib/numbers";
+import FinancialFields from "./FinancialFields";
+import IndicatorHelp from "./IndicatorHelp";
+import {metricSignal} from "../lib/indicators";
 const blank=(household:string):PropertyInput=>({household_id:household,title:"",city:"",description:"",price:null,surface:null,rent_estimate:null,dpe:"Inconnu",status:"À étudier",listing_url:null,agency_name:"",agency_phone:"",agency_email:"",notes:"",finance:{...defaultFinance}});
 type Comment={id:string;author_id:string;author_name:string;body:string;created_at:string};
 type Visit={id:string;starts_at:string;notes:string};
@@ -42,16 +45,10 @@ export default function PropertyDialog({property,household,userId,onClose,onSave
    </div></fieldset>
    <details><summary>Importer un texte copié (si le site bloque l’accès)</summary><label className="stack-label">Texte de l’annonce<textarea rows={5} maxLength={20000} value={text} onChange={e=>setText(e.target.value)}/></label><button type="button" disabled={busy} className="secondary-btn" onClick={importText}>Extraire le texte</button></details>
    <fieldset disabled={busy}><legend>Financement et références du secteur</legend><div className="form-grid">
-    <label className="check-label"><input type="checkbox" checked={form.finance.credit} onChange={e=>setForm(p=>({...p,finance:{...p.finance,credit:e.target.checked}}))}/> Crédit porté par la SCI</label>
-    {([
-     ["contribution","Apport (€)",0,1e8],["years","Durée (ans)",1,40],["rate","Taux nominal (%)",0,25],["management_pct","Gestion / vacance (%)",0,100],
-     ["cashflow_target","Objectif cash-flow / mois (€)",0,1e6],["works","Travaux (€)",0,1e8],["property_tax","Taxe foncière / an (€)",0,1e6],
-     ["annual_charges","Copropriété / an (€)",0,1e6],["notary_pct","Notaire (%)",0,30],["market_price_m2","Prix de marché estimé / m² (€)",0,1e6],
-     ["security_note","Note sécurité secteur (/10)",0,10],["social_pct","Logements sociaux secteur (%)",0,100],
-    ] as const).map(([key,label,min,max])=><label key={key}>{label}<input type="number" step={key==="years"?1:"any"} min={min} max={max} value={form.finance[key]??""} required={!["market_price_m2","security_note","social_pct"].includes(key)} onChange={e=>setForm(p=>({...p,finance:{...p.finance,[key]:e.target.value===""?null:Number(e.target.value)}}))}/></label>)}
+    <div className="full-field"><FinancialFields finance={form.finance} onChange={finance=>setForm(p=>({...p,finance}))}/></div>
    </div></fieldset>
-   <div className="analysis-summary"><div><small>SCORE HISTORIQUE</small><strong>{analysis.score??"—"}<em>/100</em></strong></div><div><small>CASH-FLOW / MOIS</small><strong>{money(analysis.cashflow)}</strong></div><div><small>POTENTIEL NET AVANT REVENTE</small><strong>{money(analysis.upside)}</strong></div></div>
-   <p className="form-footnote">Potentiel = valeur de marché estimée − achat − notaire − travaux − provision DPE. Hors frais et fiscalité de revente. Les paramètres préremplis sont des hypothèses à vérifier.</p>
+   <div className="analysis-summary"><div><div className="field-heading"><small>SCORE HISTORIQUE NON VALIDÉ</small><IndicatorHelp name="score"/></div><strong className={`value-${metricSignal("score",analysis.score).tone}`}>{analysis.score??"—"}<em>/100</em></strong></div><div><div className="field-heading"><small>CASH-FLOW / MOIS</small><IndicatorHelp name="cashflow"/></div><strong className={`value-${metricSignal("cashflow",analysis.cashflow,form.finance.cashflow_target).tone}`}>{money(analysis.cashflow)}</strong></div><div><div className="field-heading"><small>POTENTIEL AVANT REVENTE</small><IndicatorHelp name="upside"/></div><strong className={`value-${metricSignal("upside",analysis.upside).tone}`}>{money(analysis.upside)}</strong></div></div>
+   <p className="form-footnote">Potentiel = valeur de marché estimée − achat − notaire − travaux − provision DPE. Hors frais et fiscalité de revente. Les paramètres préremplis sont des hypothèses à vérifier. Le score historique inclut encore un malus non validé lié aux logements sociaux ; il ne mesure pas la sécurité.</p>
    {!analysis.complete&&<p>Analyse à compléter : {analysis.missing.join(", ")}.</p>}
    <label className="stack-label">Notes de travail<textarea rows={3} maxLength={20000} value={form.notes} onChange={e=>field("notes",e.target.value)}/></label>
    <div className="modal-actions"><button disabled={busy} type="submit" className="primary-btn">{busy?"Traitement…":"Enregistrer"}</button></div>

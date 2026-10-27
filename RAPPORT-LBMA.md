@@ -39,3 +39,11 @@ Un export de démonstration réutilisant les composants modifiés est préparé 
 Les quatre indicateurs d’accueil sont retirés. Les fiches s’ouvrent sur une page avec **Le dossier**, **Simulation financière** et **Visites & famille**. Le nouvel onglet **Paramètres SCI** conserve séparément capital, parts, apports et réserve ; ses valeurs de financement préremplissent uniquement les nouvelles fiches. Les essais de la prévisualisation 0.2 restent conservés. Les données financières personnelles visibles dans la capture de l’utilisateur ne sont pas utilisées comme valeurs publiques par défaut.
 
 La version est publiée et les deux parcours navigateur passent contre le site public. Voir `BILAN-FONCTIONNALITES.md` pour le classement livré / en test / non livré en réel et l’explication de l’onglet de veille.
+
+## Revue financière et sectorielle 0.4
+
+Livré : couleurs des résultats avec légende et texte, aides « ? » accessibles au survol/clavier/toucher, indication explicite des exemples fictifs, tableau de provenance déclarative et catalogue des calculs/limites. Les sources enregistrées incluent la valeur rattachée : modifier le chiffre signale la source à revoir. Le PDF reprend la provenance et les limites du score. Les données locales et le barème historique sont conservés. Aucun raccordement statistique ni contrôle des sources déclarées n’est activé.
+
+L’audit du PDF joint trouve 50 lignes de secteurs sans source ni période ; aucun montant de taxe foncière n’y figure. Voir [la revue détaillée](REVUE-INDICATEURS.md) pour l’inventaire de tous les indicateurs, la fiabilité actuelle et les producteurs publics possibles. Les notices officielles ont été inaccessibles depuis le réseau de cette session : aucune valeur publique actuelle n’est présentée comme vérifiée.
+
+Validation avant publication : 20 tests de calcul/extraction/provenance, quatre parcours navigateur de prévisualisation (mobile et bureau), deux parcours Next avec transport simulé, compilation Next et TypeScript réussis. Les nouveaux tests couvrent le toucher/survol/clavier, les couleurs, le maintien du caractère fictif, la persistance des sources et la détection d’une valeur modifiée. Export PDF ouvert et texte contrôlé ; écrans vérifiés visuellement. Aucune migration supplémentaire nécessaire (métadonnées dans le JSON financier existant).

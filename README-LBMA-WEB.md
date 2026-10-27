@@ -1,4 +1,4 @@
-# SCI LBMA — Base Camp 0.3
+# SCI LBMA — Base Camp 0.4
 
 Application familiale Next.js/Supabase, développée sur `feature/lbma-web-v0-1`. L’ancienne application Streamlit est conservée. Le code local ne modifie pas automatiquement le site déjà publié.
 
@@ -106,3 +106,9 @@ Le dossier s’ouvre désormais sur une page dédiée avec les onglets **Le doss
 Pour la version Supabase connectée, appliquer également `supabase/migrations/202610270002_sci_settings.sql` après la migration initiale. La modification des paramètres communs est réservée aux administrateurs de la SCI et validée en base. Aucune migration de production n’est exécutée par la publication statique.
 
 Le bilan utilisateur complet et l’explication de la veille se trouvent dans `BILAN-FONCTIONNALITES.md`. Ne pas présenter la démonstration comme un service de collecte ou de notifications opérationnel.
+
+## Revue des indicateurs 0.4
+
+[Audit complet](REVUE-INDICATEURS.md) : inventaire, fiabilité actuelle, ancien référentiel de 50 secteurs et sources publiques à raccorder. Couleurs accompagnées de texte, aides « ? » au survol/clavier/toucher, provenance déclarative dans `finance.evidence` (source, lien HTTPS facultatif, période, périmètre et valeur rattachée). Une valeur modifiée signale la référence à revoir. Les fiches DÉMO restent fictives ; déclarer une source ne valide pas une donnée. Les métadonnées sont conservées dans le JSON financier existant et dans le PDF, sans nouvelle migration SQL.
+
+Le score historique conserve son barème, dont le malus social non validé, signalé explicitement. Le taux social reste neutre à l’affichage. Aucun raccordement statistique, score de vivabilité ni contrôle de sécurité du bâtiment n’est livré.

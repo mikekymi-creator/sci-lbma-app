@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { defaultFinance } from "./finance";
+import {evidenceSchema} from "./evidence";
 const number = (max: number) => z.number().finite().min(0).max(max);
 export const financeSchema = z.object({
   credit: z.boolean(), contribution: number(1e8), years: z.number().int().min(1).max(40),
   rate: number(25), management_pct: number(100), cashflow_target: number(1e6),
   works: number(1e8), property_tax: number(1e6), annual_charges: number(1e6), notary_pct: number(30),
   market_price_m2: number(1e6).nullable(), security_note: number(10).nullable(), social_pct: number(100).nullable(),
+  evidence:evidenceSchema.optional(),
 }).default(defaultFinance);
 export const statuses = ["À étudier", "À vérifier", "À visiter", "Visité", "Étude d’achat", "Offre faite", "Écarté"] as const;
 export const propertySchema = z.object({

@@ -43,10 +43,10 @@ test("V0.5: source quality is declared, never automatically verified",async({pag
  await page.reload();
  await page.getByText("✎ Modifier les hypothèses financières",{exact:true}).click();
  await page.getByText("Préciser les sources des hypothèses",{exact:true}).click();
- await expect(page.getByText("Valeur modifiée · source à revoir",{exact:true})).toBeVisible();
+ await expect(row.getByText("Valeur modifiée · source à revoir",{exact:true})).toBeVisible();
  await page.getByText("Documenter la source d’un indicateur",{exact:true}).click();
  await page.getByRole("combobox",{name:"Origine du chiffre",exact:true}).selectOption("ai");
- await expect(page.getByText("Estimation IA · non validée",{exact:true})).toBeVisible();
+ await expect(row.getByText("Estimation IA · non validée",{exact:true})).toBeVisible();
  await page.getByText("Automatique ou manuel : comment obtenir les données ?",{exact:true}).click();
  await expect(page.getByText("État actuel : aucun des connecteurs ci-dessous n’est actif.",{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

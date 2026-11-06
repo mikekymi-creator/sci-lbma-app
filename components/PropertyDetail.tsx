@@ -4,7 +4,7 @@ import {defaultFinance,type Finance} from "../lib/finance";
 import {propertySchema} from "../lib/model";
 import PropertyMainEditor from "./PropertyMainEditor";
 import type {Property} from "../lib/model";
-import {api} from "../lib/client";
+import {api,money} from "../lib/client";
 import {beforeVisitScore,afterVisitScore,preferredScore,scoreHighlights,originNames,reliabilityNames,type StageScore,type Provenance} from "../lib/staged-scoring";
 import {ReliabilityNotice} from "./IndicatorReview";
 import PropertyMedia from "./PropertyMedia";

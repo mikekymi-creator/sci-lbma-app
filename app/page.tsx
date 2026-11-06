@@ -422,7 +422,48 @@ export default function Home() {
         </div>
         <label>Date de visite (facultatif)<input type="date" value={form.visit} onChange={e => setForm({...form, visit:e.target.value})}/></label>
         <label>Heure de visite (facultatif)<input type="time" value={form.visitTime} onChange={e => setForm({...form, visitTime:e.target.value})}/></label>
-        <label className="full-field">Notes<textarea rows={3} value={form.notes} onChange={e => setForm({...form, notes:e.target.value})} placeholder="Travaux à prévoir, questions à poser…"/></label>
+        <div className="full-field form-divider">
+          <h3>Après visite · données à confirmer</h3>
+          <p>Ces informations alimentent le score 2. L'adresse exacte active le score affiné ; les sources publiques seront connectées dans une étape ultérieure.</p>
+        </div>
+        <label className="full-field">Adresse complète (après visite)
+          <input value={form.address} onChange={e => setForm({...form, address:e.target.value})} placeholder="Rue, numéro, code postal, commune"/>
+        </label>
+        <label className="full-field">Compte-rendu de visite / déclarations de l'agence
+          <textarea rows={3} value={form.visitNotes} onChange={e => setForm({...form, visitNotes:e.target.value})} placeholder="État du bâti, compteurs, points techniques, pièces justificatives demandées…"/>
+        </label>
+        <div className="full-field form-divider">
+          <h3>Base financière · hypothèses à renseigner</h3>
+          <p>Laissez le champ vide si le montant est inconnu ; saisissez 0 uniquement si vous retenez explicitement cette hypothèse. Sans tous les postes, le cash-flow reste non calculable.</p>
+        </div>
+        <label>Travaux prévus (€)<input type="number" min="0" value={form.works} onChange={e => setForm({...form, works:e.target.value})} placeholder="Inconnu"/></label>
+        <label>Frais d'acquisition (€)<input type="number" min="0" value={form.fees} onChange={e => setForm({...form, fees:e.target.value})} placeholder="Inconnu"/></label>
+        <label>Apport SCI (€)<input type="number" min="0" value={form.contribution} onChange={e => setForm({...form, contribution:e.target.value})} placeholder="Inconnu"/></label>
+        <label>Taux d'emprunt (%)<input type="number" min="0" step="0.01" value={form.interest} onChange={e => setForm({...form, interest:e.target.value})} placeholder="Inconnu"/></label>
+        <label>Durée du prêt (années)<input type="number" min="1" step="1" value={form.years} onChange={e => setForm({...form, years:e.target.value})} placeholder="Inconnue"/></label>
+        <label>Taxe foncière (€/an)<input type="number" min="0" value={form.annualTax} onChange={e => setForm({...form, annualTax:e.target.value})} placeholder="Inconnue"/></label>
+        <label>Charges non récupérables (€/mois)<input type="number" min="0" value={form.monthlyCharges} onChange={e => setForm({...form, monthlyCharges:e.target.value})} placeholder="Inconnues"/></label>
+        <label>Assurances (€/an)<input type="number" min="0" value={form.annualInsurance} onChange={e => setForm({...form, annualInsurance:e.target.value})} placeholder="Inconnues"/></label>
+        <label>Vacance locative (%)<input type="number" min="0" max="100" step="0.5" value={form.vacancy} onChange={e => setForm({...form, vacancy:e.target.value})} placeholder="Inconnue"/></label>
+        <label className="full-field">Notes libres<textarea rows={3} value={form.notes} onChange={e => setForm({...form, notes:e.target.value})} placeholder="Éléments de l'annonce, questions à poser…"/></label>
+        <div className="full-field form-divider">
+          <h3>Origine et fiabilité de chaque donnée</h3>
+          <p>Une valeur « déclarée » ne signifie pas qu'elle a été vérifiée. Les informations issues de l'annonce, de l'agence ou de la famille restent distinctes des données publiques non encore connectées.</p>
+          <div className="evidence-editor-grid">
+            {provenanceFields.map(([key, label]) => {
+              const source = evidence[key] ?? evidenceDefault(key);
+              return <div key={key} className="evidence-editor-row">
+                <strong>{label}</strong>
+                <select aria-label={"Origine de " + label} value={source.origin} onChange={e => updateEvidence(key, { origin: e.target.value as Origin })}>
+                  {originOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <select aria-label={"Fiabilité de " + label} value={source.reliability} onChange={e => updateEvidence(key, { reliability: e.target.value as Reliability })}>
+                  {reliabilityOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>;
+            })}
+          </div>
+        </div>
       </div><div className="modal-actions">{editing && <button type="button" className="secondary-btn" onClick={deleteProperty}>Supprimer</button>}<button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Annuler</button><button className="primary-btn" type="submit">Enregistrer le bien ↗</button></div><p className="form-footnote">Les biens sont sauvegardés dans votre base Supabase privée.</p></form></section></div>}
     </main>
   );

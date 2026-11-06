@@ -14,7 +14,7 @@ export default defineConfig({root,base,publicDir:false,
   if(id.includes("node_modules")||!/[.]tsx?$/.test(id))return;
   return code.replace(/^["\']use client["\'];?\s*/, "").replace(/(["'])\/(logo[.]svg|sw[.]js)\1/g,(_,q,name)=>JSON.stringify(base+name))
    .replace(/window[.]history[.]replaceState\(\{\},\s*"",\s*"\/"\)/g,`window.history.replaceState({},"",${JSON.stringify(base)})`);
- },transformIndexHtml(html){return deployment.connected?html.replace("LBMA — Prévisualisation 0.4.2","LBMA — SCI familiale"):html;},generateBundle(){
+ },transformIndexHtml(html){return deployment.connected?html.replace("LBMA — Prévisualisation 0.5.0","LBMA — SCI familiale"):html;},generateBundle(){
   for(const name of ["logo.svg","icon-192.png","icon-512.png"])this.emitFile({type:"asset",fileName:name,source:readFileSync(resolve(root,"../public",name))});
   this.emitFile({type:"asset",fileName:"manifest.webmanifest",source:JSON.stringify({name:deployment.connected?"LBMA — SCI familiale":"LBMA — Prévisualisation",short_name:deployment.connected?"LBMA":"LBMA Test",start_url:"./",scope:"./",display:"standalone",background_color:"#141910",theme_color:"#141910",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})});
   this.emitFile({type:"asset",fileName:"sw.js",source:"self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));"});

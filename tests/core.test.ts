@@ -1,6 +1,7 @@
 import test from "node:test";
 import "./sci-imports";
 import "./indicators.test";
+import "./staged.test";
 import "./deployment.test";
 import assert from "node:assert/strict";
 import {analyse,defaultFinance} from "../lib/finance";

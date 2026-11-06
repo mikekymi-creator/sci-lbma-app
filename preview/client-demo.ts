@@ -11,7 +11,7 @@ export async function api(path:string,_method="GET",body?:any):Promise<Response>
   const parsed=propertySchema.safeParse(body);if(!parsed.success)throw new Error("Vérifiez les champs de la fiche avant de l’enregistrer.");const input=parsed.data,existing=state.properties.find(p=>p.id===body.id),analysis=analyse(input);
   const row={...existing,...input,id:existing?.id??crypto.randomUUID(),owner_id:USER,created_at:existing?.created_at??new Date().toISOString(),updated_at:new Date().toISOString(),photo_paths:existing?.photo_paths??[],listing_images:body.listing_images??[],analysis_ready:analysis.complete&&Boolean(input.city&&input.description)};
   state.properties=[row,...state.properties.filter(p=>p.id!==row.id)];
-  if(row.analysis_ready&&!existing?.analysis_ready)event(state,row,"property_ready",`Score : ${analysis.score}/100. Potentiel de test : ${money(analysis.upside)}.`);
+  if(row.analysis_ready&&!existing?.analysis_ready)event(state,row,"property_ready",`Dossier prêt à vérifier : ${input.title}. Les scores d’analyse restent indicatifs.`);
   else if(existing&&row.status!==existing.status)event(state,row,"status_changed","Nouveau statut de test : "+row.status);
   write(state);return Response.json(row);
  }

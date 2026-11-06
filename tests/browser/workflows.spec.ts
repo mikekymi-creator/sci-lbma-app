@@ -29,7 +29,7 @@ test("mobile family workflow with mocked Supabase transport",async({page})=>{
  await expect(dialog).not.toBeVisible();
  await expect(page.getByRole("heading",{name:"Appartement Beauvais",exact:true})).toBeVisible();
  expect(properties[0].rent_estimate).toBeNull();
- await page.getByRole("tab",{name:"Visites & famille",exact:true}).click();
+ await page.getByText("Visites, photos et échanges familiaux",{exact:true}).click();
  await page.getByLabel("Votre commentaire",{exact:true}).fill("À appeler demain");await page.getByRole("button",{name:"Publier le commentaire"}).click();
  await expect(page.getByText("À appeler demain",{exact:true})).toBeVisible();
  await page.getByLabel("Date et heure",{exact:true}).fill("2030-11-01T10:30");await page.getByRole("button",{name:"Planifier la visite"}).click();

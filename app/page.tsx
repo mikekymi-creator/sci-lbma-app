@@ -3,17 +3,53 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import PropertyReview from "./components/PropertyReview";
+import { displayedScore, financials, scoreInsights, parseRecord, encodeRecord, emptyReview, evidenceFor } from "../lib/lbma-analysis";
+import type { Evidence, Origin, Reliability, ReviewData } from "../lib/lbma-analysis";
 
 type Property = {
   id: string; name: string; city: string; price: number; surface: number;
   rent: number; score: number; cashflow: number; status: string; dpe: string;
-  url: string; visit: string; visitTime: string; notes: string;
+  url: string; visit: string; visitTime: string; notes: string; review: ReviewData;
 };
 
 const initialProperties: Property[] = [];
 
 const money = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-const blank = { name: "", city: "Valenciennes", price: "80000", surface: "50", rent: "600", dpe: "E", status: "À étudier", url: "", visit: "", visitTime: "", notes: "" };
+const blank = {
+  name: "", city: "Valenciennes", price: "", surface: "", rent: "",
+  dpe: "Inconnu", status: "À étudier", url: "", visit: "", visitTime: "", notes: "",
+  ...emptyReview()
+};
+const toProperty = (row: any): Property => {
+  const stored = parseRecord(row.notes ?? "");
+  return {
+    id: row.id, name: row.title, city: row.city ?? "",
+    price: Number(row.price ?? 0), surface: Number(row.surface ?? 0),
+    rent: Number(row.rent_estimate ?? 0), score: Number(row.score ?? 0),
+    cashflow: Number(row.cashflow ?? 0), status: row.status ?? "À étudier",
+    dpe: row.dpe ?? "Inconnu", url: row.listing_url ?? "",
+    visit: row.visit_date ?? "", visitTime: row.visit_time ?? "",
+    notes: stored.text, review: stored.review
+  };
+};
+const scoreText = (p: Property) => displayedScore(p).score.value ?? "—";
+const originOptions: { value: Origin; label: string }[] = [
+  { value: "annonce", label: "Annonce" }, { value: "manuel", label: "Saisie famille" },
+  { value: "agence", label: "Agence / propriétaire" }, { value: "visite", label: "Visite" },
+  { value: "document", label: "Document contrôlé" }
+];
+const reliabilityOptions: { value: Reliability; label: string }[] = [
+  { value: "inconnu", label: "Non vérifié" }, { value: "estime", label: "Estimation" },
+  { value: "declare", label: "Déclaré" }, { value: "confirme", label: "Vérifié sur pièce" }
+];
+const provenanceFields: [string, string][] = [
+  ["price", "Prix de vente"], ["surface", "Surface"], ["rent", "Loyer"], ["dpe", "DPE"],
+  ["address", "Adresse"], ["works", "Travaux"], ["annualTax", "Taxe foncière"],
+  ["fees", "Frais d'acquisition"], ["contribution", "Apport SCI"],
+  ["interest", "Taux d'emprunt"], ["years", "Durée d'emprunt"],
+  ["monthlyCharges", "Charges"], ["annualInsurance", "Assurances"], ["vacancy", "Vacance locative"]
+];
 
 export default function Home() {
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -34,6 +70,19 @@ export default function Home() {
   const [importBusy, setImportBusy] = useState(false);
   const [importMessage, setImportMessage] = useState("");
   const [listingText, setListingText] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
+  const selectedProperty = properties.find(p => p.id === selectedId) ?? null;
+  const evidenceDefault = (key: string): Evidence => evidenceFor({
+    id: "", name: form.name, city: form.city, price: Number(form.price),
+    surface: Number(form.surface), rent: Number(form.rent), score: 0, cashflow: 0,
+    status: form.status, dpe: form.dpe, url: form.url, visit: form.visit,
+    visitTime: form.visitTime, notes: form.notes, review: emptyReview()
+  }, key);
+  const updateEvidence = (key: string, change: Partial<Evidence>) => {
+    setEvidence(previous => ({ ...previous, [key]: { ...evidenceDefault(key), ...previous[key], ...change } }));
+  };
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [selectedId]);
 
   useEffect(() => {
     let active = true;
@@ -66,14 +115,7 @@ export default function Home() {
         setNotice("Erreur de chargement des biens. Vérifiez la configuration Supabase.");
         return;
       }
-      setProperties((data ?? []).map((row: any) => ({
-        id: row.id, name: row.title, city: row.city ?? "",
-        price: Number(row.price ?? 0), surface: Number(row.surface ?? 0),
-        rent: Number(row.rent_estimate ?? 0), score: Number(row.score ?? 0),
-        cashflow: Number(row.cashflow ?? 0), status: row.status ?? "À étudier",
-        dpe: row.dpe ?? "Inconnu", url: row.listing_url ?? "",
-        visit: row.visit_date ?? "", visitTime: row.visit_time ?? "", notes: row.notes ?? ""
-      })));
+      setProperties((data ?? []).map(toProperty));
       setNotice("Biens synchronisés avec Supabase.");
     };
     void loadProperties();
@@ -86,7 +128,7 @@ export default function Home() {
     (statusFilter === "Tous les statuts" || p.status === statusFilter)
   ), [properties, query, statusFilter]);
 
-  const openNew = () => { setEditing(null); setForm(blank); setImportMessage(""); setListingText(""); setShowForm(true); };
+  const openNew = () => { setEditing(null); setForm(blank); setEvidence({}); setImportMessage(""); setListingText(""); setShowForm(true); };
 
   const importListing = async () => {
     if (!form.url.trim()) {
@@ -158,7 +200,12 @@ export default function Home() {
 
   const openEdit = (p: Property) => {
     setEditing(p.id);
-    setForm({ name: p.name, city: p.city, price: String(p.price), surface: String(p.surface), rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url, visit: p.visit, visitTime: p.visitTime, notes: p.notes });
+    setForm({
+      name: p.name, city: p.city, price: String(p.price), surface: String(p.surface),
+      rent: String(p.rent), dpe: p.dpe, status: p.status, url: p.url,
+      visit: p.visit, visitTime: p.visitTime, notes: p.notes, ...p.review
+    });
+    setEvidence(p.review.evidence);
     setShowForm(true);
   };
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -166,13 +213,25 @@ export default function Home() {
     if (!user) return;
     const price = Number(form.price), surface = Number(form.surface), rent = Number(form.rent);
     if (!form.name.trim() || !form.city.trim() || price <= 0 || surface <= 0 || rent < 0) return;
-    const score = Math.max(0, Math.min(100, Math.round((rent * 12 / price) * 9 + (form.dpe === "F" || form.dpe === "G" ? -10 : 12))));
-    const cashflow = Math.round(rent - (price * 0.0065) - 95);
+    const review: ReviewData = {
+      address: form.address, visitNotes: form.visitNotes, works: form.works,
+      fees: form.fees, contribution: form.contribution, interest: form.interest,
+      years: form.years, annualTax: form.annualTax, monthlyCharges: form.monthlyCharges,
+      annualInsurance: form.annualInsurance, vacancy: form.vacancy, evidence
+    };
+    const preview: Property = {
+      id: editing ?? "", name: form.name, city: form.city, price, surface, rent,
+      score: 0, cashflow: 0, status: form.status, dpe: form.dpe, url: form.url,
+      visit: form.visit, visitTime: form.visitTime, notes: form.notes, review
+    };
+    const score = displayedScore(preview).score.value ?? 0;
+    const c = financials(preview).monthlyCashflow;
+    const cashflow = c === null ? 0 : Math.round(c);
     const status = editing ? form.status : "À étudier";
     const row = {
       owner_id: user.id, title: form.name.trim(), city: form.city.trim(), price, surface,
       rent_estimate: rent, score, cashflow, status, dpe: form.dpe,
-      listing_url: form.url || null, visit_date: form.visit || null, visit_time: form.visitTime || null, notes: form.notes
+      listing_url: form.url || null, visit_date: form.visit || null, visit_time: form.visitTime || null, notes: encodeRecord(form.notes, review)
     };
     const result = editing
       ? await supabase.from("properties").update(row).eq("id", editing).select().single()
@@ -182,13 +241,7 @@ export default function Home() {
       return;
     }
     const data = result.data;
-    const saved: Property = {
-      id: data.id, name: data.title, city: data.city ?? "", price: Number(data.price ?? 0),
-      surface: Number(data.surface ?? 0), rent: Number(data.rent_estimate ?? 0),
-      score: Number(data.score ?? 0), cashflow: Number(data.cashflow ?? 0),
-      status: data.status ?? "À étudier", dpe: data.dpe ?? "Inconnu",
-      url: data.listing_url ?? "", visit: data.visit_date ?? "", visitTime: data.visit_time ?? "", notes: data.notes ?? ""
-    };
+    const saved = toProperty(data);
     setProperties(prev => editing ? prev.map(p => p.id === editing ? saved : p) : [saved, ...prev]);
     setShowForm(false);
     setNotice("Bien sauvegardé dans Supabase.");
@@ -202,11 +255,13 @@ export default function Home() {
     setProperties(prev => prev.filter(p => p.id !== editing));
     setShowForm(false);
     setEditing(null);
+    setSelectedId(null);
     setNotice("Bien supprimé.");
   };
 
   const total = properties.length;
-  const averageScore = total ? Math.round(properties.reduce((sum, p) => sum + p.score, 0) / total) : 0;
+  const scores = properties.map(p => displayedScore(p).score.value).filter((value): value is number => value !== null);
+  const averageScore = scores.length ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length) : null;
   const expectedRent = properties.reduce((sum, p) => sum + p.rent, 0);
 
 
@@ -272,7 +327,7 @@ export default function Home() {
         <div className="workspace-label">ESPACE FAMILIAL</div>
         <nav>
           {["Vue d’ensemble", "Portefeuille", "Calendrier des visites", "Notes des biens"].map((item, i) =>
-            <button key={item} className={activeNav === item ? "nav-item active" : "nav-item"} onClick={() => { setActiveNav(item); setNotice(item === "Calendrier des visites" ? "Dates de visite enregistrées sur vos biens." : item === "Notes des biens" ? "Notes enregistrées sur chaque fiche de bien." : "Biens synchronisés avec Supabase."); }}>
+            <button key={item} className={activeNav === item ? "nav-item active" : "nav-item"} onClick={() => { setSelectedId(null); setActiveNav(item); setNotice(item === "Calendrier des visites" ? "Dates de visite enregistrées sur vos biens." : item === "Notes des biens" ? "Notes enregistrées sur chaque fiche de bien." : "Biens synchronisés avec Supabase."); }}>
               <span className="nav-icon">{["▦", "⌂", "▣", "▤"][i]}</span>{item}{item === "Calendrier des visites" && <span className="nav-count">{properties.filter(p => p.visit).length}</span>}
             </button>
           )}
@@ -286,25 +341,28 @@ export default function Home() {
       <section className="main-panel">
         <header className="topbar"><div className="breadcrumb">LBMA <span>/</span> <b>{activeNav}</b></div><div className="top-actions"><span className="today">⌁&nbsp; {user.email}</span><button className="secondary-btn" onClick={() => supabase.auth.signOut()}>Déconnexion</button><div className="profile">F</div></div></header>
         <div className="content">
+          {selectedProperty ? (
+            <PropertyReview property={selectedProperty} onBack={() => setSelectedId(null)} onEdit={() => openEdit(selectedProperty)} />
+          ) : (<>
           <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"></span> TABLEAU DE BORD / 001</div><h1>Chasse aux opportunités<span>.</span></h1><p>Repérez, comparez et suivez les biens à potentiel autour de Valenciennes.</p></div><button className="primary-btn" onClick={openNew}><span>＋</span> Ajouter un bien</button></div>
           <div className="notice"><span className="notice-icon">i</span><span>{notice}</span><button onClick={() => setNotice("Biens synchronisés avec Supabase.")} aria-label="Fermer">×</button></div>
           {activeNav === "Calendrier des visites" ? (
             <section className="empty-state" style={{ marginTop: 24 }}>
               <h2>Calendrier des visites</h2>
               <p>Les visites enregistrées dans les fiches de biens apparaissent ici.</p>
-              {properties.filter(p => p.visit).length === 0 ? <p>Aucune visite planifiée pour le moment. Ouvrez une fiche et renseignez une date de visite.</p> : <div className="property-grid" style={{ marginTop: 20 }}>{[...properties].filter(p => p.visit).sort((a,b) => a.visit.localeCompare(b.visit)).map((p, index) => <article key={p.id} className="property-card"><div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">VISITE PLANIFIÉE</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{p.score}</b><small>/100</small></span></div><div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div><div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Prix au m² indisponible"}</span></div><div className="card-metrics"><div><small>DATE ET HEURE DE VISITE</small><b>{new Date(p.visit + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}{p.visitTime ? " · " + p.visitTime : " · Heure à préciser"}</b></div><div><small>LOYER ESTIMÉ</small><b>{money(p.rent)}<i>/mois</i></b></div></div><div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => openEdit(p)}>Voir la fiche <span>↗</span></button></div></div></article>)}</div>}
+              {properties.filter(p => p.visit).length === 0 ? <p>Aucune visite planifiée pour le moment. Ouvrez une fiche et renseignez une date de visite.</p> : <div className="property-grid" style={{ marginTop: 20 }}>{[...properties].filter(p => p.visit).sort((a,b) => a.visit.localeCompare(b.visit)).map((p, index) => <article key={p.id} className="property-card"><div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">VISITE PLANIFIÉE</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{scoreText(p)}</b><small>/100 · P{displayedScore(p).stage}</small></span></div><div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div><div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Prix au m² indisponible"}</span></div><div className="card-metrics"><div><small>DATE ET HEURE DE VISITE</small><b>{new Date(p.visit + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}{p.visitTime ? " · " + p.visitTime : " · Heure à préciser"}</b></div><div><small>LOYER ESTIMÉ</small><b>{money(p.rent)}<i>/mois</i></b></div></div><div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => setSelectedId(p.id)}>Voir la fiche <span>↗</span></button></div></div></article>)}</div>}
             </section>
           ) : activeNav === "Notes des biens" ? (
             <section className="empty-state" style={{ marginTop: 24 }}>
               <h2>Notes des biens</h2>
               <p>Les notes sont conservées dans chaque fiche de bien. Pour l’instant, elles sont privées à ton compte : le partage familial sera ajouté séparément.</p>
-              {properties.filter(p => p.notes.trim()).length === 0 ? <p>Aucune note enregistrée. Ajoute des notes depuis une fiche de bien.</p> : <div className="property-grid" style={{ marginTop: 20 }}>{properties.filter(p => p.notes.trim()).map((p, index) => <article key={p.id} className="property-card"><div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">NOTES DU BIEN</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{p.score}</b><small>/100</small></span></div><div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div><div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Prix au m² indisponible"}</span></div><div style={{ margin: "14px 0", padding: 14, borderRadius: 8, background: "rgba(127, 148, 130, 0.08)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{p.notes}</div><div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => openEdit(p)}>Modifier les notes <span>↗</span></button></div></div></article>)}</div>}
+              {properties.filter(p => p.notes.trim()).length === 0 ? <p>Aucune note enregistrée. Ajoute des notes depuis une fiche de bien.</p> : <div className="property-grid" style={{ marginTop: 20 }}>{properties.filter(p => p.notes.trim()).map((p, index) => <article key={p.id} className="property-card"><div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">NOTES DU BIEN</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{scoreText(p)}</b><small>/100 · P{displayedScore(p).stage}</small></span></div><div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div><div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Prix au m² indisponible"}</span></div><div style={{ margin: "14px 0", padding: 14, borderRadius: 8, background: "rgba(127, 148, 130, 0.08)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{p.notes}</div><div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => openEdit(p)}>Modifier les notes <span>↗</span></button></div></div></article>)}</div>}
             </section>
           ) : (
           <>
           <section className="stats-grid">
             <article className="stat-card"><div className="stat-top"><span>BIENS SUIVIS</span><span className="stat-icon">⌂</span></div><div className="stat-value">{String(total).padStart(2, "0")}<small> biens</small></div><div className="stat-foot"><span className="tiny-dot teal"></span> Dans votre portefeuille</div></article>
-            <article className="stat-card"><div className="stat-top"><span>SCORE MOYEN</span><span className="stat-icon">◈</span></div><div className="stat-value">{averageScore}<small>/100</small></div><div className="stat-foot"><span className="tiny-dot orange"></span> Indicateur provisoire</div></article>
+            <article className="stat-card"><div className="stat-top"><span>SCORE MOYEN</span><span className="stat-icon">◈</span></div><div className="stat-value">{averageScore === null ? "—" : averageScore}<small>/100</small></div><div className="stat-foot"><span className="tiny-dot orange"></span> Indicateur provisoire</div></article>
             <article className="stat-card"><div className="stat-top"><span>LOYERS ESTIMÉS</span><span className="stat-icon">€</span></div><div className="stat-value">{money(expectedRent)}<small>/mois</small></div><div className="stat-foot"><span className="tiny-dot teal"></span> Estimations à confirmer</div></article>
             <article className="stat-card accent-card"><div className="stat-top"><span>ZONE PRIORITAIRE</span><span className="stat-icon">⌖</span></div><div className="zone-value">Valenciennes<span> & alentours</span></div><div className="stat-foot">Budget cible : <b>moins de 100 000 €</b></div></article>
           </section>
@@ -315,17 +373,30 @@ export default function Home() {
           {filtered.length === 0 ? <div className="empty-state"><div>⌂</div><h3>Aucun bien trouvé</h3><p>Essayez un autre filtre ou ajoutez une nouvelle annonce.</p><button className="primary-btn" onClick={openNew}>＋ Ajouter un bien</button></div> :
           <div className="property-grid">{filtered.map((p, index) =>
             <article className="property-card" key={p.id}>
-              <div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">SCI / REPÉRAGE</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{p.score}</b><small>/100</small></span></div>
+              <div className={"property-visual visual-" + (index % 3)}><div className="visual-grid"></div><span className="image-tag">SCI / REPÉRAGE</span><span className="building-symbol">{["▥", "⌂", "▦"][index % 3]}</span><span className="city-label">⌖ {p.city}</span><span className="score-badge"><b>{scoreText(p)}</b><small>/100 · P{displayedScore(p).stage}</small></span></div>
               <div className="property-body"><div className="property-title-row"><div><h3>{p.name}</h3><p>{p.surface} m² · DPE {p.dpe}</p></div><button className="more-btn" onClick={() => openEdit(p)} aria-label={"Modifier " + p.name}>···</button></div>
-                <div className="price-row"><strong>{money(p.price)}</strong><span>{Math.round(p.price / p.surface).toLocaleString("fr-FR")} €/m²</span></div>
-                <div className="card-metrics"><div><small>LOYER ESTIMÉ</small><b>{money(p.rent)}<i>/mois</i></b></div><div><small>CASH-FLOW INDICATIF</small><b className={p.cashflow >= 0 ? "positive" : "negative"}>{p.cashflow > 0 ? "+" : ""}{money(p.cashflow)}<i>/mois</i></b></div></div>
-                <div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => openEdit(p)}>Voir la fiche <span>↗</span></button></div>
+                <div className="price-row"><strong>{money(p.price)}</strong><span>{p.surface > 0 ? Math.round(p.price / p.surface).toLocaleString("fr-FR") + " €/m²" : "Surface à vérifier"}</span></div>
+                <div className="card-metrics card-metrics-review">
+                  <div className="metric-stack">
+                    <small>LOYER ESTIMÉ</small><b>{p.rent > 0 ? money(p.rent) : "À renseigner"}<i>/mois</i></b>
+                    <small style={{ marginTop: 13 }}>CASH-FLOW · AVANT IS</small>
+                    <b className={financials(p).monthlyCashflow === null ? "" : financials(p).monthlyCashflow! >= 0 ? "positive" : "negative"}>
+                      {financials(p).monthlyCashflow === null ? "À calculer" : money(financials(p).monthlyCashflow!)}<i>/mois</i>
+                    </b>
+                  </div>
+                  <div className="card-insights">
+                    <div className="card-insights-group"><strong>＋ 2 points positifs</strong>{scoreInsights(p).pros.map((item, i) => <span key={i}>{item}</span>)}</div>
+                    <div className="card-insights-group caution"><strong>! 2 points de vigilance</strong>{scoreInsights(p).cons.map((item, i) => <span key={i}>{item}</span>)}</div>
+                  </div>
+                </div>
+                <div className="card-footer"><span className={"status status-" + p.status.toLowerCase().replaceAll(" ", "-")}>{p.status}</span><button onClick={() => setSelectedId(p.id)}>Voir la fiche <span>↗</span></button></div>
               </div>
             </article>
           )}</div>}
           <footer className="footer-note"><span>LBMA <b>·</b> VERSION 0.1</span><span>Les chiffres sont indicatifs et ne constituent pas un conseil financier.</span></footer>
           </>
           )}
+          </>)}
         </div>
       </section>
 

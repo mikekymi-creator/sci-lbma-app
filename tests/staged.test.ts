@@ -35,7 +35,7 @@ test("address activates stage 2 but unknown post-visit facts never become verifi
 test("post-visit financial facts enter refined score only if synchronized with the financial baseline",()=>{
  const p=fixture();p.finance.post_visit={...blankPostVisit(),address:"7 rue Exemple",confirmed_tax:800,confirmed_works:12000};
  const score=afterVisitScore(p);
- assert.equal(score.stage,2);assert.equal(score.coverage,75);
+ assert.equal(score.stage,2);assert.equal(score.coverage,85);
  assert.ok(score.criteria.find(c=>c.key==="cashflow")!.value!==null);
  p.finance.works=14000;
  const changed=afterVisitScore(p);

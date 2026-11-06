@@ -1,0 +1,22 @@
+name: LBMA interface validation
+on:
+  push:
+    branches:
+      - feature/lbma-two-stage-scores-nov26
+  pull_request:
+    branches:
+      - feature/lbma-web-v0-1
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build-validation-only

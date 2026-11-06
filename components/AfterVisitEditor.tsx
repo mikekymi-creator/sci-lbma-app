@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {api} from "../lib/client";
 import type {Property} from "../lib/model";
 import {blankPostVisit,originNames,reliabilityNames,type PostVisit,type Provenance} from "../lib/staged-scoring";
@@ -31,6 +31,7 @@ function TraceField({data,field,onChange}:{data:PostVisit;field:Field;onChange:(
 export default function AfterVisitEditor({property,onSaved}:{property:Property;onSaved:(p:Property)=>void}){
  const [draft,setDraft]=useState<PostVisit>({...blankPostVisit(),...property.finance.post_visit,provenance:{...property.finance.post_visit?.provenance}});
  const [busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ useEffect(()=>setDraft({...blankPostVisit(),...property.finance.post_visit,provenance:{...property.finance.post_visit?.provenance}}),[property.updated_at]);
  const set=(key:Field,value:PostVisit[Field])=>setDraft(prev=>({...prev,[key]:value}));
  const setTrace=(key:Field,patch:Partial<Provenance>)=>setDraft(prev=>({...prev,provenance:{...prev.provenance,[key]:{origin:"manual",reliability:"unknown",reference:"",...prev.provenance[key],...patch}}}));
  async function submit(e:React.FormEvent<HTMLFormElement>){

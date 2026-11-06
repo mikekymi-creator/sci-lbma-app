@@ -72,12 +72,9 @@ export default function PropertyReview({ property: p, onBack, onEdit }: Props) {
         <div className="eyebrow">LBMA / FICHE D'INVESTISSEMENT</div>
         <h1>{p.name}</h1>
         <p>⌖ {p.city} · {p.surface > 0 ? p.surface + " m²" : "Surface inconnue"} · {p.status}</p>
+        <p className="review-stage-caption">Score affiché sur le tableau de bord : phase {current.stage} · {current.score.value === null ? "non disponible" : current.score.value + "/100"} · couverture {current.score.coverage} %. Les deux scores détaillés figurent ci-dessous.</p>
       </div>
-      <div className="review-current-score">
-        <small>SCORE RETENU · PHASE {current.stage}</small>
-        <b>{current.score.value === null ? "—" : current.score.value}<em>/100</em></b>
-        <span>Couverture {current.score.coverage} %</span>
-      </div>
+
     </div>
     <p className="review-warning">Objectif : capitalisation et revenus locatifs à long terme. Aucune estimation de revente n'entre dans l'analyse. Les scores sont des indicateurs heuristiques, non une expertise immobilière.</p>
     <div className="review-layout">
@@ -100,7 +97,7 @@ export default function PropertyReview({ property: p, onBack, onEdit }: Props) {
             <Fact property={p} label="Loyer mensuel retenu" field="rent" value={p.rent > 0 ? euros(p.rent) : "Non renseigné"} empty={p.rent <= 0} />
             <Fact property={p} label="DPE annoncé" field="dpe" value={p.dpe} empty={!/^[A-G]$/.test(p.dpe)} />
             <Fact property={p} label="Rendement brut estimatif" field="rent" value={grossYield} empty={grossYield === "Non calculable"} />
-            <Fact property={p} label="Annonce d'origine" field="url" value={p.url ? <a href={p.url} rel="noopener noreferrer" target="_blank">Ouvrir l'annonce ↗</a> : "Non renseignée"} empty={!p.url} />
+            <Fact property={p} label="Annonce d'origine" field="url" value={/^https?:\/\//i.test(p.url) ? <a href={p.url} rel="noopener noreferrer" target="_blank">Ouvrir l'annonce ↗</a> : "Non renseignée"} empty={!/^https?:\/\//i.test(p.url)} />
             <Fact property={p} label="Notes / description" field="notes" value={p.notes ? <span className="long-fact">{p.notes}</span> : "Non renseignées"} empty={!p.notes} />
           </div>
         </details>

@@ -74,8 +74,8 @@ export default function Home() {
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
   const selectedProperty = properties.find(p => p.id === selectedId) ?? null;
   const evidenceDefault = (key: string): Evidence => evidenceFor({
-    id: "", name: form.name, city: form.city, price: Number(form.price),
-    surface: Number(form.surface), rent: Number(form.rent), score: 0, cashflow: 0,
+    name: form.name, city: form.city, price: Number(form.price),
+    surface: Number(form.surface), rent: Number(form.rent),
     status: form.status, dpe: form.dpe, url: form.url, visit: form.visit,
     visitTime: form.visitTime, notes: form.notes, review: emptyReview()
   }, key);

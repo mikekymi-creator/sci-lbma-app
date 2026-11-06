@@ -122,3 +122,61 @@
 .lbma-finance-row dt small{display:block;font-size:10px;line-height:1.35;margin-top:5px;color:#b3c0a3;overflow-wrap:anywhere}
 .lbma-finance-row dd{display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:56%;overflow-wrap:anywhere}
 .lbma-finance-row dd .lbma-quality{font-weight:400;text-align:right;font-size:9px}
+
+
+/* LBMA 0.5.1 — unified inline property and SCI financial workspace */
+.lbma-detail-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.lbma-detail-actions .back-link{margin:0}
+.lbma-save-group{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.lbma-dirty-state{font-size:11px;color:var(--muted);max-width:360px}
+.lbma-save-group .primary-btn{min-height:42px}
+.lbma-inline-editor{border:1px solid #445335;background:#1b2417;border-radius:6px;padding:17px;margin-top:16px}
+.lbma-inline-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+.lbma-inline-heading h3{font-size:18px;margin:0}
+.lbma-inline-heading p{font-size:11px;margin:6px 0 0;color:#bac8ad;line-height:1.6}
+.lbma-edit-status{font:10px var(--mono);color:#d8eab1;white-space:nowrap;border:1px solid #51683b;background:#2b3c27;border-radius:3px;padding:5px 7px}
+.lbma-inline-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 12px}
+.lbma-inline-fields label{min-width:0;display:grid;align-content:start;gap:7px;color:#e4e9db;font-size:12px;font-weight:600}
+.lbma-inline-fields input,.lbma-inline-fields select,.lbma-inline-fields textarea{width:100%;font-weight:400;padding:10px 11px;font-size:13px;min-height:42px}
+.lbma-main-full{grid-column:1/-1}
+.lbma-inline-source{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-weight:400;line-height:1.3}
+.lbma-inline-source>span:first-child{font-size:9px;color:#b1c0a6;overflow-wrap:anywhere}
+.lbma-inline-source .lbma-quality{font-size:9px;line-height:1.3;padding:3px 5px}
+.lbma-live-metrics{display:grid;grid-template-columns:1fr auto;gap:4px 11px;padding:12px;border:1px solid #3c4c32;background:#202c1e;border-radius:4px;align-items:center}
+.lbma-live-metrics>span{font-size:11px;color:#c7d5b9}
+.lbma-live-metrics>strong{font-size:13px;text-align:right;color:var(--teal)}
+.lbma-live-metrics>small{grid-column:1/-1;font-size:10px;color:var(--muted)}
+.lbma-inline-editor>a{display:inline-block;margin-top:12px;font-size:12px}
+.lbma-edit-action-row{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:15px 0}
+.lbma-edit-action-row button{min-height:40px}
+.lbma-finance-sidebar{max-height:calc(100dvh - 36px);overflow:auto}
+.lbma-finance-inline-form{display:grid;gap:13px;margin-top:17px}
+.lbma-finance-intro{font-size:11px;line-height:1.55}
+.lbma-finance-edit-heading{display:flex;justify-content:space-between;align-items:center;gap:9px}
+.lbma-finance-edit-heading h3{font-size:14px;margin:0}
+.lbma-finance-key{gap:10px}
+.lbma-finance-mini{display:grid;border-top:1px solid #405338;padding-top:10px;gap:7px}
+.lbma-finance-mini>span{font-size:11px;color:#c7d8b7;display:flex;justify-content:space-between;align-items:center;gap:9px}
+.lbma-finance-mini b{color:#e3f1d4;text-align:right;font-weight:700}
+.lbma-credit-toggle{display:flex;align-items:center;gap:9px;font-size:12px;color:#eff2e7;padding:10px 0;border-block:1px solid var(--line);cursor:pointer}
+.lbma-credit-toggle input{width:19px;height:19px;margin:0;flex:none}
+.lbma-finance-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lbma-finance-input-grid label{display:grid;gap:5px;align-content:start;font-size:11px;color:#e0e9d4;min-width:0}
+.lbma-finance-input-grid label>span:first-child{font-size:11px;line-height:1.4}
+.lbma-finance-input-grid label>span:first-child small{font-size:9px;color:#b1c39d}
+.lbma-finance-input-grid input{padding:9px 10px;font-size:13px;min-height:42px;width:100%}
+.lbma-finance-muted{opacity:.5}
+.lbma-finance-advanced{border-top:1px solid var(--line);padding-top:12px}
+.lbma-finance-advanced>summary{cursor:pointer;color:var(--teal);font-size:11px;line-height:1.5}
+.lbma-finance-advanced p{font-size:10px;line-height:1.55;margin:10px 0}
+.lbma-finance-advanced .lbma-finance-input-grid{margin-top:10px}
+.lbma-finance-provenance{margin-top:0}
+.lbma-finance-provenance .indicator-review{border:0;background:transparent;padding:10px 0}
+.lbma-finance-provenance .table-scroll{max-width:100%}
+.lbma-finance-provenance .public-source-grid{grid-template-columns:1fr}
+.lbma-save-hint{font-size:10px;line-height:1.5;color:#b5c4a6;text-align:center;display:block}
+.lbma-finance-inline-form .stage-finance-disclaimer{margin:0}
+@media(max-width:1150px){.lbma-finance-input-grid{grid-template-columns:1fr 1fr}.lbma-finance-edit-heading{flex-wrap:wrap}}
+@media(max-width:1030px){.lbma-finance-sidebar{max-height:none;overflow:visible}.lbma-finance-input-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.lbma-detail-actions{align-items:flex-start}.lbma-save-group{width:100%;justify-content:flex-start}.lbma-inline-editor{padding:12px}.lbma-inline-fields{gap:10px}.lbma-inline-fields input,.lbma-inline-fields select{padding:10px}.lbma-finance-input-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lbma-finance-inline-form{gap:12px}}
+@media(max-width:420px){.lbma-inline-fields{grid-template-columns:1fr}.lbma-main-full{grid-column:1}.lbma-inline-heading{flex-wrap:wrap}.lbma-edit-action-row .primary-btn{width:100%}.lbma-finance-key strong{font-size:24px}}

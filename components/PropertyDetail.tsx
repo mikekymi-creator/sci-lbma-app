@@ -1,14 +1,13 @@
 "use client";
-import {useRef,useState} from "react";
+import {useEffect,useRef,useState} from "react";
+import {defaultFinance,type Finance} from "../lib/finance";
+import {propertySchema} from "../lib/model";
+import PropertyMainEditor from "./PropertyMainEditor";
 import type {Property} from "../lib/model";
-import {statuses} from "../lib/model";
 import {api,money} from "../lib/client";
-import {evidenceOrigin,evidenceState,type EvidenceKey} from "../lib/evidence";
 import {beforeVisitScore,afterVisitScore,preferredScore,scoreHighlights,originNames,reliabilityNames,type StageScore,type Provenance} from "../lib/staged-scoring";
 import {ReliabilityNotice} from "./IndicatorReview";
 import PropertyMedia from "./PropertyMedia";
-import Photo from "./Photo";
-import PropertyArtwork from "./PropertyArtwork";
 import CollaborationPanel from "./CollaborationPanel";
 import FinanceSidebar from "./FinanceSidebar";
 import AfterVisitEditor from "./AfterVisitEditor";
@@ -37,39 +36,55 @@ function Fact({label,value,source,quality,kind="unknown"}:{label:string;value:Re
   <div className="lbma-source"><span>{source}</span><span className={"lbma-quality lbma-quality-"+kind}>{quality}</span></div>
  </div>;
 }
-function ListingFact({property:p,label,value,field,empty=false}:{property:Property;label:string;value:React.ReactNode;field?:EvidenceKey;empty?:boolean}){
- const e=field?p.finance.evidence?.[field]:undefined;
- const direct=["price","surface","rent_estimate","dpe"];
- const current=field?(direct.includes(field)?(p as unknown as Record<string,unknown>)[field]:(p.finance as unknown as Record<string,unknown>)[field]):null;
- const q=field?evidenceState(current as number|string|null,e):null;
- const quality=empty?"Non renseigné":q?.label??"Non contrôlé";
- const kind=empty?"unknown":e?.source&&q?.tone==="neutral"?"declared":e?.kind==="ai"?"estimated":"unknown";
- return <Fact label={label} value={value} source={e?.source?(evidenceOrigin(e)+" · "+e.source):(p.listing_url?"Annonce / saisie":"Saisie famille")} quality={quality} kind={kind}/>;
-}
 function VisitFact({label,value,trace,missing}:{label:string;value:React.ReactNode;trace?:Provenance;missing:boolean}){
  return <Fact label={label} value={value} source={missing?"Aucune source":originNames[trace?.origin??"manual"]+(trace?.reference?" · "+trace.reference:"")} quality={missing?"Non renseigné":reliabilityNames[trace?.reliability??"unknown"]} kind={missing?"unknown":trace?.reliability??"unknown"}/>;
 }
 export default function PropertyDetail({property:p,userId,onBack,onEdit,onSaved,onChanged}:{property:Property;userId:string;onBack:()=>void;onEdit:()=>void;onSaved:(p:Property)=>void;onChanged:()=>void}){
  const [focusVisit,setFocusVisit]=useState(0),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ const [draft,setDraft]=useState<Property>(()=>({...p,finance:{...defaultFinance,...p.finance}}));
+ const [dirty,setDirty]=useState(false),[saveMessage,setSaveMessage]=useState("");
  const visitRef=useRef<HTMLDetailsElement>(null);
- const pre=beforeVisitScore(p),post=afterVisitScore(p),chosen=preferredScore(p),highlights=scoreHighlights(p);
- const visit=p.finance.post_visit;
+ // A refresh from Supabase should not silently erase local, unsaved input.
+ useEffect(()=>{if(!dirty)setDraft({...p,finance:{...defaultFinance,...p.finance}});},[p.updated_at,dirty]);
+ const change=<K extends keyof Property>(key:K,value:Property[K])=>{setDraft(current=>({...current,[key]:value}));setDirty(true);setSaveMessage("");};
+ const changeFinance=(finance:Finance)=>{setDraft(current=>({...current,finance}));setDirty(true);setSaveMessage("");};
+ const validation=propertySchema.safeParse(draft);
+ const acceptSaved=(saved:Property)=>{setDraft({...saved,finance:{...defaultFinance,...saved.finance}});setDirty(false);onSaved(saved);};
+ const discard=()=>{setDraft({...p,finance:{...defaultFinance,...p.finance}});setDirty(false);setSaveMessage("Modifications non enregistrées annulées.");};
+ async function saveAll(){
+  if(!validation.success){setSaveMessage("Corrige les champs du bien ou les hypothèses financières avant l'enregistrement.");return;}
+  setBusy(true);setSaveMessage("");
+  try{
+   const response=await api("/api/properties","POST",{...draft,finance:validation.data.finance});
+   const saved=await response.json() as Property;
+   acceptSaved(saved);setSaveMessage("Modifications du bien et de la base financière enregistrées.");
+  }catch(error){setSaveMessage(error instanceof Error?error.message:"Enregistrement impossible. Les changements sont conservés dans les champs.");}
+  finally{setBusy(false);}
+ }
+ const pre=beforeVisitScore(draft),post=afterVisitScore(draft),chosen=preferredScore(draft),highlights=scoreHighlights(draft);
+ const visit=draft.finance.post_visit;
  const hasAddress=Boolean(visit?.address?.trim());
- const gross=p.price&&p.rent_estimate!==null? (p.rent_estimate*1200/p.price).toFixed(2)+" %":"À renseigner";
  async function pdf(){setBusy(true);setMessage("");
   try{const response=await api("/api/properties/"+p.id+"/pdf");const url=URL.createObjectURL(await response.blob());const link=document.createElement("a");link.href=url;link.download="dossier-lbma.pdf";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   catch(error){setMessage(error instanceof Error?error.message:"Export impossible.");}finally{setBusy(false);}
  }
  function planVisit(){if(visitRef.current){visitRef.current.open=true;visitRef.current.querySelector("summary")?.focus();}setFocusVisit(n=>n+1);}
  return <section className="property-detail">
-  <button className="back-link" onClick={onBack}>← Retour aux biens repérés</button>
+  <div className="lbma-detail-actions">
+   <button className="back-link" onClick={onBack}>← Retour aux biens repérés</button>
+   <div className="lbma-save-group">
+    <span className="lbma-dirty-state" role="status">{dirty?"● Modifications non enregistrées":saveMessage||"Données à jour"}</span>
+    {dirty&&<button type="button" className="secondary-btn" disabled={busy} onClick={discard}>Annuler</button>}
+    <button type="button" className="primary-btn" disabled={!dirty||busy||!validation.success} onClick={()=>void saveAll()}>{busy?"Enregistrement…":"Enregistrer les modifications"}</button>
+   </div>
+  </div>
   <header className="detail-heading">
-   <div><div className="eyebrow">{p.title.startsWith("DÉMO")?"EXEMPLE FICTIF · TEST LOCAL":"DOSSIER IMMOBILIER · INVESTISSEMENT LONG TERME"}</div>
-    <h1>{p.title}</h1><p>⌖ {p.city||"Ville à préciser"} · {p.surface??"?"} m² · DPE {p.dpe}</p>
+   <div><div className="eyebrow">{draft.title.startsWith("DÉMO")?"EXEMPLE FICTIF · TEST LOCAL":"DOSSIER IMMOBILIER · INVESTISSEMENT LONG TERME"}</div>
+    <h1>{draft.title}</h1><p>⌖ {draft.city||"Ville à préciser"} · {draft.surface??"?"} m² · DPE {draft.dpe}</p>
     <p className="lbma-selected-stage">Score retenu sur le tableau de bord : phase {chosen.stage} · {chosen.value??"—"}/100 · couverture {chosen.coverage} %.</p>
    </div><button className="primary-btn" onClick={planVisit}>▣ Planifier une visite</button>
   </header>
-  <ReliabilityNotice property={p}/>
+  <ReliabilityNotice property={draft}/>
   <p className="lbma-long-term">Stratégie SCI : revenus locatifs et capitalisation à long terme. Aucune valeur de revente future n'entre dans les deux scores.</p>
   <div className="lbma-review-grid">
    <div className="lbma-review-main">
@@ -82,20 +97,13 @@ export default function PropertyDetail({property:p,userId,onBack,onEdit,onSaved,
      <div className="lbma-score-content">
       <Rubric score={pre}/>
       <h2>Informations connues avant visite</h2>
-      <div className="lbma-facts">
-       <ListingFact property={p} label="Commune" value={p.city||"Non renseignée"} empty={!p.city}/>
-       <ListingFact property={p} label="Prix demandé" value={money(p.price)} field="price" empty={p.price===null}/>
-       <ListingFact property={p} label="Surface annoncée" value={p.surface===null?"Inconnue":p.surface+" m²"} field="surface" empty={p.surface===null}/>
-       <ListingFact property={p} label="Loyer mensuel estimé" value={money(p.rent_estimate)} field="rent_estimate" empty={p.rent_estimate===null}/>
-       <ListingFact property={p} label="DPE annoncé" value={p.dpe} field="dpe" empty={p.dpe==="Inconnu"}/>
-       <ListingFact property={p} label="Rendement brut théorique" value={gross} empty={gross==="À renseigner"}/>
-       <ListingFact property={p} label="Source de l'annonce" value={p.listing_url&&/^https?:\/\//.test(p.listing_url)?<a href={p.listing_url} target="_blank" rel="noreferrer">Ouvrir l’annonce ↗</a>:"Non renseignée"} empty={!p.listing_url}/>
+      <PropertyMainEditor property={draft} onChange={change} busy={busy}/>
+      <div className="lbma-edit-action-row">
+       <button type="button" className="primary-btn" disabled={!dirty||busy||!validation.success} onClick={()=>void saveAll()}>{busy?"Enregistrement…":"Enregistrer bien + financement"}</button>
+       <button type="button" className="text-btn" onClick={onEdit}>Options avancées / supprimer le bien</button>
       </div>
-      <h3>Description de l'annonce</h3>
-      <p className="preserve-lines">{p.description||"Description à compléter."}</p>
-      {p.notes&&<><h3>Notes familiales</h3><p className="preserve-lines">{p.notes}</p></>}
-      <button className="text-btn" onClick={onEdit}>✎ Corriger les informations de l'annonce</button>
-      <PropertyMedia property={p} onSaved={onSaved}/>
+      {saveMessage&&<p className="form-message" role="status">{saveMessage}</p>}
+      <PropertyMedia property={draft} onSaved={acceptSaved}/>
      </div>
     </details>
     <details className="lbma-score-accordion">
@@ -112,7 +120,7 @@ export default function PropertyDetail({property:p,userId,onBack,onEdit,onSaved,
       </div>
       <h3>Enrichissement public — prochaine phase</h3>
       <div className="lbma-public-pending">{["DVF · ventes comparables","ADEME · DPE officiel","Géorisques · risques à l’adresse"].map(name=><div key={name}><strong>{name}</strong><span className="lbma-quality lbma-quality-unknown">Non raccordé</span></div>)}</div>
-      <AfterVisitEditor property={p} onSaved={onSaved}/>
+      <AfterVisitEditor property={draft} onSaved={acceptSaved}/>
      </div>
     </details>
     <details className="lbma-score-accordion" ref={visitRef}>
@@ -121,12 +129,17 @@ export default function PropertyDetail({property:p,userId,onBack,onEdit,onSaved,
     </details>
    </div>
    <div className="lbma-review-right">
-    <FinanceSidebar property={p} onSaved={onSaved}/>
+    <FinanceSidebar property={draft} onChange={changeFinance} onSave={()=>void saveAll()} dirty={dirty} busy={busy} error={validation.success?"": "Certaines données doivent être corrigées."}/>
     <section className="panel lbma-contact-panel">
-     <div className="eyebrow">LE BON INTERLOCUTEUR</div><h2>{p.agency_name||"Contact à renseigner"}</h2>
-     <div className="contact-actions">{p.agency_phone&&<a href={"tel:"+p.agency_phone}>Appeler {p.agency_phone} ↗</a>}{p.agency_email&&<a href={"mailto:"+p.agency_email}>Contacter l'agence ↗</a>}{p.listing_url&&/^https?:/.test(p.listing_url)&&<a target="_blank" rel="noreferrer" href={p.listing_url}>Annonce ↗</a>}</div>
-     <label className="stack-label">Statut du dossier<select disabled={busy} value={p.status} onChange={async e=>{setBusy(true);setMessage("");try{const response=await api("/api/properties","POST",{...p,status:e.target.value});onSaved(await response.json());setMessage("Statut enregistré.");}catch(error){setMessage(error instanceof Error?error.message:"Modification impossible.");}finally{setBusy(false);}}}>{statuses.map(s=><option key={s}>{s}</option>)}</select></label>
-     <button className="secondary-btn full-width" disabled={busy} onClick={()=>void pdf()}>Télécharger le dossier PDF</button>
+     <div className="eyebrow">CONTACT ET SUIVI</div><h2>{draft.agency_name||"Interlocuteur à renseigner"}</h2>
+     <div className="contact-actions">
+      {draft.agency_phone&&<a href={"tel:"+draft.agency_phone}>Appeler {draft.agency_phone} ↗</a>}
+      {draft.agency_email&&<a href={"mailto:"+draft.agency_email}>Écrire à l'agence ↗</a>}
+      {draft.listing_url&&/^https?:/.test(draft.listing_url)&&<a target="_blank" rel="noreferrer" href={draft.listing_url}>Annonce ↗</a>}
+     </div>
+     <p>Statut : <strong>{draft.status}</strong> · À modifier dans les informations principales.</p>
+     <button className="secondary-btn full-width" disabled={busy||dirty} onClick={()=>void pdf()}>Télécharger le dossier PDF</button>
+     {dirty&&<p className="form-message">Enregistre les modifications avant d'exporter le dossier PDF.</p>}
      <p className="form-message" role="status">{message}</p>
     </section>
    </div>

@@ -5,6 +5,7 @@ export function validPushEndpoint(raw: string) {
       ["fcm.googleapis.com", "updates.push.services.mozilla.com", "web.push.apple.com"].includes(u.hostname);
   } catch { return false; }
 }
-export function notificationBody(a: { score: number | null; upside: number | null }) {
-  return `Score : ${a.score ?? "à compléter"}/100 · Potentiel net estimé avant revente : ${a.upside === null ? "à renseigner" : Math.round(a.upside).toLocaleString("fr-FR") + " €"}.`;
+export function notificationBody(a: { score: number | null; upside?: number | null; cashflow?: number | null }) {
+  const cashflow=a.cashflow??null;
+  return `Score indicatif : ${a.score??"à compléter"}/100 · Cash-flow SCI estimé : ${cashflow===null?"à renseigner":Math.round(cashflow).toLocaleString("fr-FR")+" €/mois"}. Informations à vérifier avant décision.`;
 }

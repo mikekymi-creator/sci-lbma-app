@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {analyse,defaultFinance,type Finance} from "../lib/finance";
 import {financeSchema,type Property} from "../lib/model";
 import {api,money} from "../lib/client";
@@ -11,6 +11,7 @@ const numberFormat=(n:number|null)=>n===null?"À compléter":money(n);
 export default function FinanceSidebar({property,onSaved}:{property:Property;onSaved:(p:Property)=>void}){
  const [draft,setDraft]=useState<Finance>({...defaultFinance,...property.finance});
  const [busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ useEffect(()=>setDraft({...defaultFinance,...property.finance}),[property.updated_at]);
  const parsed=financeSchema.safeParse(draft);
  const a=analyse({...property,finance:parsed.success?parsed.data:property.finance});
  const rows:[string,string][]=[

@@ -6,6 +6,9 @@ import {api,money} from "../lib/client";
 import {metricSignal} from "../lib/indicators";
 import FinancialFields from "./FinancialFields";
 import IndicatorReview from "./IndicatorReview";
+import {evidenceState,evidenceOrigin,isFictitiousProperty,type EvidenceKey} from "../lib/evidence";
+import {originNames,reliabilityNames} from "../lib/staged-scoring";
+import {isDemo} from "../lib/supabase";
 
 const numberFormat=(n:number|null)=>n===null?"À compléter":money(n);
 export default function FinanceSidebar({property,onSaved}:{property:Property;onSaved:(p:Property)=>void}){
@@ -14,14 +17,26 @@ export default function FinanceSidebar({property,onSaved}:{property:Property;onS
  useEffect(()=>setDraft({...defaultFinance,...property.finance}),[property.updated_at]);
  const parsed=financeSchema.safeParse(draft);
  const a=analyse({...property,finance:parsed.success?parsed.data:property.finance});
- const rows:[string,string][]=[
-  ["Prix affiché",numberFormat(property.price)],["Loyer / mois",numberFormat(property.rent_estimate)],
-  ["Travaux",numberFormat(draft.works)],["Frais d'acquisition",draft.notary_pct+" % (hypothèse)"],
-  ["Taxe foncière / an",numberFormat(draft.property_tax)],["Charges de copropriété / an",numberFormat(draft.annual_charges)],
-  ["Gestion et vacance",draft.management_pct+" %"],["Apport SCI",numberFormat(draft.contribution)],
-  ["Emprunt SCI",numberFormat(a.loan)],["Mensualité du prêt",numberFormat(a.monthly_payment)],
-  ["IS simulé / an",numberFormat(a.tax)]
+ const rows:[string,string,EvidenceKey|null][]=[
+  ["Prix affiché",numberFormat(property.price),"price"],["Loyer / mois",numberFormat(property.rent_estimate),"rent_estimate"],
+  ["Travaux",numberFormat(draft.works),"works"],["Frais d'acquisition",draft.notary_pct+" % (hypothèse)",null],
+  ["Taxe foncière / an",numberFormat(draft.property_tax),"property_tax"],["Charges de copropriété / an",numberFormat(draft.annual_charges),"annual_charges"],
+  ["Gestion et vacance",draft.management_pct+" %",null],["Apport SCI",numberFormat(draft.contribution),null],
+  ["Emprunt SCI",numberFormat(a.loan),null],["Mensualité du prêt",numberFormat(a.monthly_payment),null],
+  ["IS simulé / an",numberFormat(a.tax),null]
  ];
+ const provenance=(key:EvidenceKey|null)=>{
+  if(key===null)return {origin:"Hypothèse / calcul LBMA",quality:"Estimation non vérifiée",tone:"estimated" as const};
+  const recorded=draft.evidence?.[key];
+  const raw=key==="price"||key==="surface"||key==="rent_estimate"||key==="dpe"?property[key]:draft[key];
+  const quality=evidenceState(raw,recorded,isFictitiousProperty(property.id,isDemo));
+  const visit=property.finance.post_visit;
+  const trace=key==="works"?visit?.provenance.confirmed_works:key==="property_tax"?visit?.provenance.confirmed_tax:undefined;
+  const linked=key==="works"?visit?.confirmed_works===draft.works:key==="property_tax"?visit?.confirmed_tax===draft.property_tax:false;
+  if(trace&&linked&&trace.reference.trim())return {origin:originNames[trace.origin],quality:reliabilityNames[trace.reliability],tone:trace.reliability};
+  return {origin:recorded?.source?evidenceOrigin(recorded):property.listing_url&&["price","rent_estimate"].includes(key)?"Annonce (à confirmer)":"Saisie / hypothèse",
+   quality:quality.label,tone:quality.tone==="neutral"?"declared":recorded?.kind==="ai"?"estimated":"unknown"};
+ };
  async function save(event:React.FormEvent<HTMLFormElement>){
   event.preventDefault();
   if(!parsed.success){setMessage("Une donnée financière ou une source n'est pas valide.");return;}
@@ -40,7 +55,7 @@ export default function FinanceSidebar({property,onSaved}:{property:Property;onS
    <strong className={"value-"+metricSignal("cashflow",a.cashflow,draft.cashflow_target).tone}>{money(a.cashflow)}</strong>
    <span>Rendement brut : {a.gross_yield===null?"À renseigner":a.gross_yield+" %"}</span>
   </div>
-  <dl className="lbma-finance-table">{rows.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+  <dl className="lbma-finance-table">{rows.map(([label,value,key])=>{const source=provenance(key);return <div className="lbma-finance-row" key={label}><dt>{label}<small>{source.origin}</small></dt><dd>{value}<small className={"lbma-quality lbma-quality-"+source.tone}>{source.quality}</small></dd></div>;})}</dl>
   <p className="stage-finance-disclaimer">Montants issus du scénario saisi, dont des valeurs initiales provisoires. Assurance emprunteur et autres frais éventuels non intégrés. L'IS est simplifié : résultat non contractuel.</p>
   <details className="lbma-finance-editor">
    <summary>✎ Modifier les hypothèses financières</summary>

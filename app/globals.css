@@ -117,3 +117,8 @@
 @media(max-width:1030px){.lbma-review-grid{grid-template-columns:1fr}.lbma-finance-sidebar{position:static;max-height:none}.lbma-card-metrics{grid-template-columns:minmax(100px,.75fr) minmax(0,1.25fr)}.lbma-card-pros-cons{border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px}}
 @media(max-width:760px){.lbma-highlights{gap:9px}.lbma-highlights>div{padding:12px}.lbma-highlights strong{font-size:12px}.lbma-highlights p{font-size:11px}.lbma-score-line{gap:9px;padding:12px;min-height:76px}.lbma-step{width:34px;height:34px;font-size:14px}.lbma-score-label strong{font-size:13px}.lbma-score-label small{font-size:10px}.lbma-score-number{font-size:21px}.lbma-score-number small{font-size:10px}.lbma-score-content{padding:13px}.lbma-fact{align-items:flex-start;flex-direction:column;gap:8px}.lbma-source{max-width:100%;flex-direction:row;align-items:center;text-align:left;flex-wrap:wrap}.lbma-finance-sidebar{padding:14px}.stage-visit-numbers{grid-template-columns:1fr}.stage-source-editor{grid-template-columns:1fr}.stage-source-editor .full-field{grid-column:auto}}
 @media(max-width:410px){.lbma-card-metrics{grid-template-columns:1fr}.lbma-card-pros-cons{border-left:0;border-top:1px solid var(--line);padding:10px 0 0}}
+
+
+.lbma-finance-row dt small{display:block;font-size:10px;line-height:1.35;margin-top:5px;color:#b3c0a3;overflow-wrap:anywhere}
+.lbma-finance-row dd{display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:56%;overflow-wrap:anywhere}
+.lbma-finance-row dd .lbma-quality{font-weight:400;text-align:right;font-size:9px}

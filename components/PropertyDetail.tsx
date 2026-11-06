@@ -39,8 +39,8 @@ function Fact({label,value,source,quality,kind="unknown"}:{label:string;value:Re
 }
 function ListingFact({property:p,label,value,field,empty=false}:{property:Property;label:string;value:React.ReactNode;field?:EvidenceKey;empty?:boolean}){
  const e=field?p.finance.evidence?.[field]:undefined;
- const original=field? p[field==="works"||field==="property_tax"||field==="annual_charges"||field==="market_price_m2"||field==="security_note"||field==="social_pct"? "finance":"direct"]:null;
- const current=field&&original==="finance"?p.finance[field as keyof typeof p.finance]:field?p[field as keyof Property]:null;
+ const direct=["price","surface","rent_estimate","dpe"];
+ const current=field?(direct.includes(field)?(p as unknown as Record<string,unknown>)[field]:(p.finance as unknown as Record<string,unknown>)[field]):null;
  const q=field?evidenceState(current as number|string|null,e):null;
  const quality=empty?"Non renseigné":q?.label??"Non contrôlé";
  const kind=empty?"unknown":e?.source&&q?.tone==="neutral"?"declared":e?.kind==="ai"?"estimated":"unknown";

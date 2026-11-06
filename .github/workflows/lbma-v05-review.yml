@@ -1,7 +1,7 @@
 name: LBMA 0.5 — Review checks
 on:
   push:
-    branches: [feature/lbma-v0-5-two-stage-review]
+    branches: [feature/lbma-v0-5-two-stage-review, feature/lbma-v0-5-1-inline-edit]
   workflow_dispatch:
 permissions:
   contents: read

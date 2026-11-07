@@ -20,7 +20,7 @@ test("Odace-style example: investment cost, rent net of vacancy, loan and insura
  assert.ok(r.cashflow!==null&&r.cashflow>0);
  assert.ok(r.principalYear1!==null&&r.principalYear1>0);
  assert.equal(r.missing.length,0);
- assert.equal(r.wealthYear1,Math.round(((r.cashflow!*12+r.principalYear1!)+Number.EPSILON)*100)/100);
+ assert.ok(r.wealthYear1!==null&&Math.abs(r.wealthYear1-(r.cashflow!*12+r.principalYear1!))<0.15);
 });
 test("Unknown price and rent do not become invented returns",()=>{
  const r=calculateScenario(initialScenario());

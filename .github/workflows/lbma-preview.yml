@@ -33,7 +33,7 @@ jobs:
           ref: feature/lbma-reboot-v0
           path: reboot-worktree
           persist-credentials: false
-      - name: Build LBMA 2.0 V0.1 separately
+      - name: Build LBMA 2.0 V0.2 separately
         env:
           LBMA_DEPLOYMENT_MODE: demo
           LBMA_REBOOT_BASE: /sci-lbma-app/reboot/

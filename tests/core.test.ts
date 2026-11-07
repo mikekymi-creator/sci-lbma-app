@@ -93,3 +93,5 @@ test("bank dossier is a readable multipage PDF even with long Unicode descriptio
 });
 
 import "./reboot-finance.test";
+
+import "./reboot-comparison.test";

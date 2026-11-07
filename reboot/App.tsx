@@ -7,6 +7,8 @@ import {calculateScenario,type RebootScenario} from "../lib/reboot-finance";
 import {defaultSciSettings,sciSettingsSchema,type SciSettings} from "../lib/sci";
 import {fromProperty,initialProperty,updateScenario,withDefaults} from "./property-adapter";
 import Calculator from "./Calculator";
+import PropertyComparison from "./Comparison";
+import {riskKeys,riskLabels,riskLevelLabels,blankComparisonRisks,type ComparisonRisks,type RiskKey,type RiskLevel} from "../lib/reboot-comparison";
 import Photo from "../components/Photo";
 import PropertyMedia from "../components/PropertyMedia";
 import CollaborationPanel from "../components/CollaborationPanel";
@@ -80,7 +82,7 @@ function SciEditor({household,admin,initial,onSaved}:{household:string;admin:boo
     <button className="rb-btn rb-btn-outline" disabled={!admin||isDemo}>Ajouter à la SCI</button>
    </form>
    <div className="rb-divider"/>
-   <h3>Règles de la V0.1</h3>
+   <h3>Règles de la V0.2</h3>
    <p>Calculs manuels, sans score automatique, sans données DVF, DPE ADEME, surveillance d'annonces ni valeur de revente.</p>
   </aside>
  </div>;
@@ -99,6 +101,7 @@ export default function RebootApp(){
  const [scenario,setScenario]=useState<RebootScenario>(withDefaults(null)),[freeName,setFreeName]=useState(""),[freeCity,setFreeCity]=useState("");
  const [search,setSearch]=useState(""),[filter,setFilter]=useState("Tous"),[focusVisit,setFocusVisit]=useState(0);
  const [mobileMenu,setMobileMenu]=useState(false);
+ const [compareIds,setCompareIds]=useState<string[]>([]),[comparing,setComparing]=useState(false);
  const selectedSaved=properties.find(p=>p.id===selected)??null;
  useEffect(()=>{
   if(!configured){setReady(true);return;}
@@ -119,7 +122,7 @@ export default function RebootApp(){
   const family=families.find(x=>x.household_id===household),parsed=sciSettingsSchema.safeParse(family?.households?.sci_settings);
   const settings=parsed.success?parsed.data:defaultSciSettings();
   setSci(settings);setRole(family?.role??"");setScenario(withDefaults(settings));
-  setSelected(null);setPropertyDraft(null);setDraftId(null);
+  setSelected(null);setPropertyDraft(null);setDraftId(null);setCompareIds([]);setComparing(false);
  },[household,families]);
  const reload=useCallback(async()=>{
   if(!user||!household)return;
@@ -131,19 +134,32 @@ export default function RebootApp(){
   setProperties(p.data??[]);setVisits(v.data??[]);
  },[user?.id,household]);
  useEffect(()=>{void reload();},[reload]);
- const go=(p:Page)=>{setPage(p);setSelected(null);setPropertyDraft(null);setDraftId(null);setDirty(false);setFeedback("");setMobileMenu(false);window.scrollTo(0,0);};
+ const go=(p:Page)=>{setPage(p);setSelected(null);setPropertyDraft(null);setDraftId(null);setDirty(false);setFeedback("");setMobileMenu(false);setComparing(false);if(p!=="properties")setCompareIds([]);window.scrollTo(0,0);};
+ const toggleCompare=(id:string,checked:boolean)=>setCompareIds(prev=>checked?(prev.includes(id)||prev.length>=2?prev:[...prev,id]):prev.filter(x=>x!==id));
+ const startComparison=()=>{if(compareIds.length!==2)return;setSelected(null);setComparing(true);setMobileMenu(false);window.scrollTo(0,0);};
+ const replaceCompared=(position:0|1)=>{setCompareIds(prev=>prev.filter((_,i)=>i!==position));setComparing(false);window.scrollTo(0,0);};
  function openProperty(p:Property){
-  setPage("properties");setSelected(p.id);setDraftId(p.id);
+  setPage("properties");setComparing(false);setSelected(p.id);setDraftId(p.id);
   setPropertyDraft({...p,finance:{...p.finance}});
   setDirty(false);setFeedback("");setMobileMenu(false);window.scrollTo(0,0);
  }
  function newProperty(){
   if(!household)return;
-  setPage("properties");setSelected("new");setDraftId(null);setPropertyDraft(initialProperty(household,sci));
+  setPage("properties");setComparing(false);setSelected("new");setDraftId(null);setPropertyDraft(initialProperty(household,sci));
   setDirty(false);setFeedback("");setMobileMenu(false);window.scrollTo(0,0);
  }
  function editProperty<K extends keyof PropertyInput>(key:K,value:PropertyInput[K]){
   setPropertyDraft(p=>p?{...p,[key]:value}:p);setDirty(true);setFeedback("");
+ }
+ function changeRiskInProperty(key:RiskKey,field:"level"|"comment",value:string){
+  setPropertyDraft(current=>{
+   if(!current)return current;
+   const risks=current.finance.comparison_risks??blankComparisonRisks();
+   return {...current,finance:{...current.finance,comparison_risks:{
+    ...risks,[key]:{...risks[key],[field]:field==="level"?value as RiskLevel:value}
+   }}};
+  });
+  setDirty(true);setFeedback("");
  }
  function changePropertyScenario(value:RebootScenario){
   setPropertyDraft(p=>p?updateScenario(p,value):p);setDirty(true);setFeedback("");
@@ -170,10 +186,11 @@ export default function RebootApp(){
   setSaving(true);try{
    const {error}=await db.from("properties").delete().eq("id",selectedSaved.id).eq("household_id",household);
    if(error)throw Error("Suppression refusée.");
-   setProperties(old=>old.filter(p=>p.id!==selectedSaved.id));setSelected(null);setPropertyDraft(null);setFeedback("Dossier supprimé.");
+   setProperties(old=>old.filter(p=>p.id!==selectedSaved.id));setCompareIds(old=>old.filter(id=>id!==selectedSaved.id));setSelected(null);setPropertyDraft(null);setFeedback("Dossier supprimé.");
   }catch(error){setFeedback(error instanceof Error?error.message:"Suppression impossible.");}
   finally{setSaving(false);}
  }
+ const selectedForComparison=compareIds.map(id=>properties.find(p=>p.id===id)).filter((p):p is Property=>Boolean(p));
  const filtered=useMemo(()=>properties.filter(p=>(p.title+" "+p.city).toLocaleLowerCase("fr-FR").includes(search.toLocaleLowerCase("fr-FR"))&&(filter==="Tous"||p.status===filter)),[properties,search,filter]);
  const pendingVisits=visits.filter(v=>new Date(v.starts_at).getTime()>=Date.now()).slice(0,5);
  const underStudy=properties.filter(p=>p.status==="À étudier"||p.status==="À vérifier").length;
@@ -183,6 +200,16 @@ export default function RebootApp(){
   .map(p=>calculateScenario(fromProperty(p)).cashflow).filter((v):v is number=>v!==null).reduce((a,b)=>a+b,0);
  const canSave=!!propertyDraft&&propertySchema.safeParse(propertyDraft).success&&dirty;
  const currentScenario=propertyDraft?propertyDraft.finance.reboot??(draftId?fromProperty(selectedSaved??propertyDraft as Property):withDefaults(sci)):withDefaults(sci);
+ async function saveRiskAssessment(property:Property,risks:ComparisonRisks):Promise<Property>{
+  const current=properties.find(p=>p.id===property.id);
+  if(!current)throw new Error("Ce bien n'existe plus dans votre SCI.");
+  const validated=propertySchema.safeParse({...current,finance:{...current.finance,comparison_risks:risks}});
+  if(!validated.success)throw new Error("Les données de risque ne sont pas valides.");
+  const response=await api("/api/properties","POST",{...validated.data,id:current.id,...(current.listing_images?{listing_images:current.listing_images}:{})});
+  const updated=await response.json() as Property;
+  setProperties(old=>old.map(item=>item.id===updated.id?updated:item));
+  return updated;
+ }
  async function signout(){try{await db.auth.signOut();}catch{setNotice("Déconnexion impossible.");}}
  function localBackup(){
   try{
@@ -219,13 +246,13 @@ export default function RebootApp(){
      <span>{n.symbol}</span>{n.title}
     </button>)}
    </nav>
-   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>Version 0.1 · reconstruction</small></div>
+   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>Version 0.2 · comparateur</small></div>
     {isDemo?<span className="rb-demo-chip">Démonstration locale</span>:<button type="button" onClick={()=>void signout()}>Déconnexion</button>}
    </div>
   </aside>
   <main className="rb-main">
    <header className="rb-topbar">
-    <div className="rb-crumb">LBMA <span>/</span> {selected?"Fiche bien":navigation.find(n=>n.id===page)?.title}</div>
+    <div className="rb-crumb">LBMA <span>/</span> {comparing?"Comparer deux biens":selected?"Fiche bien":navigation.find(n=>n.id===page)?.title}</div>
     <div className="rb-top-right">
      {families.length>1&&<select aria-label="Choisir SCI" value={household} onChange={e=>setHousehold(e.target.value)}>{families.map(f=><option key={f.household_id} value={f.household_id}>{f.households?.name??"SCI"}</option>)}</select>}
      <span>{isDemo?"Mode démo":user.email}</span>
@@ -233,7 +260,7 @@ export default function RebootApp(){
     </div>
    </header>
    <nav className={"rb-mobile-nav "+(mobileMenu?"open":"")} aria-label="Navigation mobile">{navigation.map(n=><button className={page===n.id?"active":""} key={n.id} onClick={()=>go(n.id)}>{n.title}</button>)}</nav>
-   {isDemo&&<div className="rb-demo-banner"><strong>V0.1 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
+   {isDemo&&<div className="rb-demo-banner"><strong>V0.2 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
     <button onClick={localBackup}>Sauvegarder mes essais</button>
    </div>}
    <div className="rb-content">
@@ -263,21 +290,31 @@ export default function RebootApp(){
       </section>
      </div></div>
     </>}
-    {!selected&&page==="properties"&&<>
+    {!selected&&page==="properties"&&!comparing&&<>
      <div className="rb-heading"><div><span className="rb-eyebrow">PORTEFEUILLE DE RECHERCHE</span><h1>Mes biens</h1><p>Comparez vos opportunités et ouvrez leur dossier en un clic.</p></div><button className="rb-btn rb-btn-primary" onClick={newProperty}>+ Ajouter un bien</button></div>
+     <div className="rb-compare-toolbar"><div><strong>Sélection : {compareIds.length} / 2</strong><small>Coche deux biens pour comparer leurs finances et leurs risques.</small></div><div><button className="rb-btn rb-btn-outline" disabled={compareIds.length===0} onClick={()=>setCompareIds([])}>Effacer</button><button className="rb-btn rb-btn-primary" disabled={compareIds.length!==2} onClick={startComparison}>Comparer ({compareIds.length}/2)</button></div></div>
      <div className="rb-filterbar"><label><span>Rechercher</span><input aria-label="Rechercher un bien" placeholder="Ville ou nom du bien" value={search} onChange={e=>setSearch(e.target.value)}/></label>
       <label><span>Statut</span><select aria-label="Filtrer les biens" value={filter} onChange={e=>setFilter(e.target.value)}><option>Tous</option>{statuses.map(s=><option key={s}>{s}</option>)}</select></label></div>
      <div className="rb-property-list">{filtered.length===0?<section className="rb-panel rb-empty">Aucun bien correspondant. <button className="rb-btn rb-btn-primary" onClick={newProperty}>Créer un dossier</button></section>:filtered.map(p=>{
       const result=calculateScenario(fromProperty(p));
-      return <button className="rb-list-property" key={p.id} onClick={()=>openProperty(p)}>
+      return <div className={"rb-compare-select-row"+(compareIds.includes(p.id)?" is-selected":"")} key={p.id}>
+       <label className="rb-list-select"><input type="checkbox" aria-label={"Sélectionner "+p.title}
+        checked={compareIds.includes(p.id)} disabled={!compareIds.includes(p.id)&&compareIds.length>=2}
+        onChange={e=>toggleCompare(p.id,e.target.checked)}/></label>
+       <button className="rb-list-property" onClick={()=>openProperty(p)}>
        <div className="rb-property-thumb">{p.photo_paths?.length?<Photo path={p.photo_paths[0]} alt={p.title}/>:<span>⌂</span>}</div>
        <div className="rb-property-title"><strong>{p.title}</strong><small>{p.city||"Ville à préciser"} · {p.surface?p.surface+" m²":"Surface inconnue"}</small></div>
        <div><span>Prix</span><strong>{eur(p.price)}</strong></div><div><span>Rendement brut</span><strong>{result.grossYield===null?"—":result.grossYield.toFixed(2)+" %"}</strong></div>
        <div><span>Cash-flow avant IS</span><strong className={result.cashflow!==null&&result.cashflow<0?"rb-negative":""}>{eur(result.cashflow)}</strong></div>
        <div className="rb-status">{p.status}</div><span className="rb-chevron">›</span>
-      </button>;
+      </button></div>;
      })}</div>
     </>}
+    {!selected&&page==="properties"&&comparing&&selectedForComparison.length===2&&
+     <PropertyComparison key={compareIds.join(":")} left={selectedForComparison[0]} right={selectedForComparison[1]}
+      financeDefaults={sci.finance_defaults} onBack={()=>{setComparing(false);window.scrollTo(0,0);}}
+      onReplace={replaceCompared} onSaveRisk={saveRiskAssessment}/>
+    }
     {!selected&&page==="calculator"&&<>
      <div className="rb-heading"><div><span className="rb-eyebrow">SIMULATION LIBRE</span><h1>Calculateur</h1><p>Modifiez une valeur, visualisez immédiatement son impact.</p></div><button className="rb-btn rb-btn-outline" onClick={()=>setScenario(withDefaults(sci))}>Réinitialiser</button></div>
      <Calculator scenario={scenario} onChange={setScenario}/>
@@ -316,6 +353,25 @@ export default function RebootApp(){
      </section>
      <div className="rb-heading rb-inline-heading"><div><span className="rb-eyebrow">ÉTUDE FINANCIÈRE</span><h2>Calculateur du bien</h2></div></div>
      <Calculator scenario={currentScenario} onChange={changePropertyScenario}/>
+     <details className="rb-panel rb-property-risk-editor">
+      <summary>Risques et contraintes — saisir manuellement</summary>
+      <p>Ces évaluations sont enregistrées dans la fiche et apparaissent dans le comparateur. Chaque risque reste « Inconnu » tant qu'il n'a pas été évalué.</p>
+      <div className="rb-property-risk-grid">
+       {riskKeys.map(key=>{
+        const risk=(propertyDraft.finance.comparison_risks??blankComparisonRisks())[key];
+        return <div className="rb-single-risk" key={key}>
+         <strong>{riskLabels[key]}</strong>
+         <select aria-label={"Niveau de risque — "+riskLabels[key]} value={risk.level}
+          onChange={e=>changeRiskInProperty(key,"level",e.target.value)}>
+          {Object.entries(riskLevelLabels).map(([value,label])=><option value={value} key={value}>{label}</option>)}
+         </select>
+         <textarea aria-label={"Note de risque — "+riskLabels[key]} rows={2} maxLength={1200}
+          placeholder="Constat ou vérification à faire" value={risk.comment}
+          onChange={e=>changeRiskInProperty(key,"comment",e.target.value)}/>
+        </div>;
+       })}
+      </div>
+     </details>
      <div className="rb-property-extra">
       <section className="rb-panel"><h2>Notes et contact</h2>
        <label>Notes familiales<textarea aria-label="Notes familiales" maxLength={20000} rows={5} value={propertyDraft.notes} onChange={e=>editProperty("notes",e.target.value)}/></label>
@@ -340,7 +396,7 @@ export default function RebootApp(){
     </>}
     </>}
    </div>
-   <footer className="rb-footer"><span>LBMA 2.0 · V0.1</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
+   <footer className="rb-footer"><span>LBMA 2.0 · V0.2</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
   </main>
  </div>;
 }

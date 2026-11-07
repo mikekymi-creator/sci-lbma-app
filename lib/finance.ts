@@ -1,5 +1,6 @@
 import type {EvidenceMap} from "./evidence";
 import type {PostVisit} from "./staged-scoring";
+import type {RebootScenario} from "./reboot-finance";
 /** Same indicative first-year SCI/IS assumptions as the original Streamlit app. */
 export const defaultFinance = {
   credit: true, contribution: 0, years: 20, rate: 4.2, management_pct: 8,
@@ -7,7 +8,7 @@ export const defaultFinance = {
   notary_pct: 8, market_price_m2: null as number | null,
   security_note: null as number | null, social_pct: null as number | null,
 };
-export type Finance = typeof defaultFinance & {evidence?:EvidenceMap;post_visit?:PostVisit};
+export type Finance = typeof defaultFinance & {evidence?:EvidenceMap;post_visit?:PostVisit;reboot?:RebootScenario};
 export type FinancialProperty = { price: number | null; surface: number | null; rent_estimate: number | null; dpe: string; finance: Partial<Finance> };
 const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 export function analyse(p: FinancialProperty) {

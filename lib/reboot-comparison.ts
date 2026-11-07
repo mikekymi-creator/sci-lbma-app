@@ -83,6 +83,6 @@ export function financialComparison(p:Property,shared:SharedAssumptions|null):Co
  const capitalUsed=result.errors.length||result.totalCost===null?null:
   s.credit?s.downPayment:result.totalCost;
  const cashOnCash=capitalUsed!==null&&capitalUsed>0&&result.cashflow!==null
-  ?Math.round(result.cashflow*1200/capitalUsed*100)/100:null;
+  ?Math.round((result.cashflow*12/capitalUsed*100)*100)/100:null;
  return {scenario:s,result,capitalUsed,cashOnCash};
 }

@@ -21,7 +21,7 @@ export default defineConfig({root,base,publicDir:false,
   },
   generateBundle(){
    for(const name of ["logo.svg","icon-192.png","icon-512.png"])this.emitFile({type:"asset",fileName:name,source:readFileSync(resolve(root,"../public",name))});
-   this.emitFile({type:"asset",fileName:"manifest.webmanifest",source:JSON.stringify({name:"LBMA 2.0 — V0.1",short_name:"LBMA V0",start_url:"./",scope:"./",display:"standalone",background_color:"#111217",theme_color:"#111217",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})});
+   this.emitFile({type:"asset",fileName:"manifest.webmanifest",source:JSON.stringify({name:"LBMA 2.0 — V0.2",short_name:"LBMA V0",start_url:"./",scope:"./",display:"standalone",background_color:"#111217",theme_color:"#111217",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})});
   }
  }],build:{outDir:resolve(root,"../reboot-dist"),emptyOutDir:true}
 });

@@ -26,6 +26,26 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run preview:build
+      # Testable next-generation interface: separate URL, demo-only.
+      # Do not replace the current LBMA root or access private SCI data.
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/lbma-reboot-v0
+          path: reboot-worktree
+          persist-credentials: false
+      - name: Build LBMA 2.0 V0.1 separately
+        env:
+          LBMA_DEPLOYMENT_MODE: demo
+          LBMA_REBOOT_BASE: /sci-lbma-app/reboot/
+          NEXT_PUBLIC_SUPABASE_URL: ""
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ""
+        run: |
+          cd reboot-worktree
+          npm ci --no-audit --no-fund
+          npm run reboot:build
+          cd ..
+          mkdir -p preview-dist/reboot
+          cp -R reboot-worktree/reboot-dist/. preview-dist/reboot/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

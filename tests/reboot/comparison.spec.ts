@@ -29,7 +29,7 @@ test("V0.2 desktop: exactly two properties, same-basis calculations and restored
  await expect(page.locator(".rb-compare-summary")).toHaveText(snapshot);
  await page.getByRole("button",{name:"Remplacer le bien B"}).click();
  await expect(page.getByRole("button",{name:"Comparer (1/2)"})).toBeDisabled();
- await page.getByRole("checkbox",{name:"Sélectionner DÉMO · Appartement Beauvais"}).toBeChecked();
+ await expect(page.getByRole("checkbox",{name:"Sélectionner DÉMO · Appartement Beauvais"})).toBeChecked();
  expect(backend).toEqual([]);
 });
 test("V0.2 mobile: risk editing, no horizontal overflow, persistence and same-basis remains temporary",async({page})=>{

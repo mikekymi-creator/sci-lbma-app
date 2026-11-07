@@ -72,6 +72,7 @@ test("Reboot mobile: property updates and per-lot rent stay after reload",async(
 
 test("Demo is isolated from legacy preview storage; settings remain editable",async({page})=>{
  await page.goto("./");
+ await expect(page.getByRole("heading",{name:"Tableau de bord"})).toBeVisible();
  const both=await page.evaluate(()=>({old:localStorage.getItem("lbma-preview-v02"),new:localStorage.getItem("lbma-reboot-v01")}));
  expect(both.old).toBeNull();expect(both.new).not.toBeNull();
  await page.getByRole("navigation",{name:"Navigation principale"}).getByRole("button",{name:/Paramètres SCI/}).click();

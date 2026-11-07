@@ -22,7 +22,7 @@ test("V0.2 desktop: exactly two properties, same-basis calculations and restored
  await page.getByLabel("Commun : Durée du prêt").fill("25");
  await page.getByLabel("Commun : Vacance locative").fill("1.5");
  await page.getByRole("radio",{name:"Pourcentage du coût (%)"}).check();
- await page.getByLabel("Apport commun").fill("25");
+ await page.getByRole("spinbutton",{name:"Apport commun",exact:true}).fill("25");
  await expect(page.locator(".rb-compare-summary")).not.toHaveText(snapshot);
  await expect(page.getByText("Le pourcentage d'apport", {exact:false})).toHaveCount(0);
  await page.getByRole("button",{name:"Conditions propres"}).click();

@@ -26,7 +26,7 @@ test("V0.2 desktop: exactly two properties, same-basis calculations and restored
  await expect(page.locator(".rb-compare-summary")).not.toHaveText(snapshot);
  await expect(page.getByText("Le pourcentage d'apport", {exact:false})).toHaveCount(0);
  await page.getByRole("button",{name:"Conditions propres"}).click();
- await expect(page.locator(".rb-compare-summary")).toHaveText(snapshot);
+ expect(await page.locator(".rb-compare-summary").innerText()).toBe(snapshot);
  await page.getByRole("button",{name:"Remplacer le bien B"}).click();
  await expect(page.getByRole("button",{name:"Comparer (1/2)"})).toBeDisabled();
  await expect(page.getByRole("checkbox",{name:"Sélectionner DÉMO · Appartement Beauvais"})).toBeChecked();

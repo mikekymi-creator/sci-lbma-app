@@ -91,3 +91,7 @@ test("bank dossier is a readable multipage PDF even with long Unicode descriptio
  const bytes=await propertyPdf({...p,id:"id",household_id:"h",owner_id:"u",created_at:"",updated_at:"",title:"Étude à Beauvais 🏠",city:"Beauvais",description:"Description du bien et travaux. ".repeat(300),notes:"Question à poser",status:"Étude d’achat",agency_name:"Agence",agency_email:"contact@example.test",agency_phone:"0123456789",listing_url:"https://example.test/"+"a".repeat(200),photo_paths:[],analysis_ready:true} as Property);
  const pdf=await PDFDocument.load(bytes);assert.ok(pdf.getPageCount()>1);assert.match(pdf.getTitle()!,/Beauvais/);
 });
+
+import "./reboot-finance.test";
+
+import "./reboot-comparison.test";

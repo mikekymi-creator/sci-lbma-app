@@ -8,7 +8,7 @@ import {defaultSciSettings,sciSettingsSchema,type SciSettings} from "../lib/sci"
 import {fromProperty,initialProperty,updateScenario,withDefaults} from "./property-adapter";
 import Calculator from "./Calculator";
 import PropertyComparison from "./Comparison";
-import {type ComparisonRisks} from "../lib/reboot-comparison";
+import {riskKeys,riskLabels,riskLevelLabels,blankComparisonRisks,type ComparisonRisks,type RiskKey,type RiskLevel} from "../lib/reboot-comparison";
 import Photo from "../components/Photo";
 import PropertyMedia from "../components/PropertyMedia";
 import CollaborationPanel from "../components/CollaborationPanel";
@@ -150,6 +150,16 @@ export default function RebootApp(){
  }
  function editProperty<K extends keyof PropertyInput>(key:K,value:PropertyInput[K]){
   setPropertyDraft(p=>p?{...p,[key]:value}:p);setDirty(true);setFeedback("");
+ }
+ function changeRiskInProperty(key:RiskKey,field:"level"|"comment",value:string){
+  setPropertyDraft(current=>{
+   if(!current)return current;
+   const risks=current.finance.comparison_risks??blankComparisonRisks();
+   return {...current,finance:{...current.finance,comparison_risks:{
+    ...risks,[key]:{...risks[key],[field]:field==="level"?value as RiskLevel:value}
+   }}};
+  });
+  setDirty(true);setFeedback("");
  }
  function changePropertyScenario(value:RebootScenario){
   setPropertyDraft(p=>p?updateScenario(p,value):p);setDirty(true);setFeedback("");
@@ -343,6 +353,25 @@ export default function RebootApp(){
      </section>
      <div className="rb-heading rb-inline-heading"><div><span className="rb-eyebrow">ÉTUDE FINANCIÈRE</span><h2>Calculateur du bien</h2></div></div>
      <Calculator scenario={currentScenario} onChange={changePropertyScenario}/>
+     <details className="rb-panel rb-property-risk-editor">
+      <summary>Risques et contraintes — saisir manuellement</summary>
+      <p>Ces évaluations sont enregistrées dans la fiche et apparaissent dans le comparateur. Chaque risque reste « Inconnu » tant qu'il n'a pas été évalué.</p>
+      <div className="rb-property-risk-grid">
+       {riskKeys.map(key=>{
+        const risk=(propertyDraft.finance.comparison_risks??blankComparisonRisks())[key];
+        return <div className="rb-single-risk" key={key}>
+         <strong>{riskLabels[key]}</strong>
+         <select aria-label={"Niveau de risque — "+riskLabels[key]} value={risk.level}
+          onChange={e=>changeRiskInProperty(key,"level",e.target.value)}>
+          {Object.entries(riskLevelLabels).map(([value,label])=><option value={value} key={value}>{label}</option>)}
+         </select>
+         <textarea aria-label={"Note de risque — "+riskLabels[key]} rows={2} maxLength={1200}
+          placeholder="Constat ou vérification à faire" value={risk.comment}
+          onChange={e=>changeRiskInProperty(key,"comment",e.target.value)}/>
+        </div>;
+       })}
+      </div>
+     </details>
      <div className="rb-property-extra">
       <section className="rb-panel"><h2>Notes et contact</h2>
        <label>Notes familiales<textarea aria-label="Notes familiales" maxLength={20000} rows={5} value={propertyDraft.notes} onChange={e=>editProperty("notes",e.target.value)}/></label>

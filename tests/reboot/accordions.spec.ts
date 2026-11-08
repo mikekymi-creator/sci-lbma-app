@@ -24,7 +24,7 @@ test("V0.4.1 dossier: accordions, live completion counters and explicit zero per
   await expect(section(page,id)).toHaveAttribute("open","");
  }
  await page.getByLabel("Loyer mensuel hors charges").fill("900");
- await expect(section(page,"operation").locator(".rb-section-count")).toHaveText("1 / 7");
+ await expect(section(page,"operation").locator(".rb-section-count")).toHaveText("2 / 7");
  await page.getByLabel("Notes familiales").fill("Visite à organiser.");
  await expect(section(page,"contact").locator(".rb-section-count")).toHaveText("1 / 4");
  await page.getByRole("combobox",{name:"Niveau de risque — État du bâtiment"}).selectOption("moderate");
@@ -62,7 +62,7 @@ test("V0.4.1 smartphone: all subsection controls remain usable without horizonta
  await expect(section(page,"contact")).toHaveAttribute("open","");
  await expect(section(page,"collaboration")).toHaveAttribute("open","");
  await page.getByLabel("Notes familiales").fill("Compte-rendu depuis mobile");
- await expect(section(page,"contact").locator(".rb-section-count")).toContainText("1 / 4");
+ await expect(section(page,"contact").locator(".rb-section-count")).toContainText("2 / 4");
  await page.getByRole("button",{name:"Tout fermer"}).click();
  await expect(section(page,"collaboration")).not.toHaveAttribute("open","");
  await expect(page.locator(".rb-results-column")).toBeVisible();

@@ -26,7 +26,7 @@ export default function ResultAccordion({
   <summary onClick={toggle}
    aria-label={title+" — "+count.filled+" indicateurs calculés sur "+count.total}>
    <span className="rb-result-accordion-title">
-    <strong>{title}</strong>
+    <h2>{title}</h2>
     <small>{subtitle}</small>
    </span>
    <span className="rb-result-accordion-meta">

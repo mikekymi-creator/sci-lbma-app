@@ -47,3 +47,9 @@ npm run reboot:build
 npm run reboot:serve
 npm run reboot:test
 \`\`\`
+
+## V0.4.1 — Rubriques repliables dans la fiche d'un bien
+
+Chaque section éditable de la fiche est un accordéon avec progression à droite : informations principales, projet, financement, exploitation, SCI à l'IS, risques, notes et contacts, photos/visites/commentaires. « Tout ouvrir » et « Tout fermer » agissent sur l'ensemble des rubriques. Les résultats du calculateur et les actions d'enregistrement restent visibles. Par défaut, seules « Informations principales » et « Le projet » sont ouvertes.
+
+Les compteurs indiquent les champs présents dans chaque rubrique, pas une validation ni une certification de leurs montants. Les zéros initialisés par défaut ne sont pas considérés remplis tant que l'utilisateur ne les saisit ou ne les confirme explicitement ; les valeurs anciennes non nulles restent reconnues. Les valeurs saisies à zéro explicitement sont mémorisées dans `finance.reboot.reviewedFields`, sans migration SQL. Pour les six risques, seul un niveau différent d'« Inconnu » ou un commentaire compte. Les photos, visites et commentaires comptent comme trois groupes distincts.

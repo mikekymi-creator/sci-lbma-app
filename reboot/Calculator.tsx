@@ -1,9 +1,13 @@
+import type * as React from "react";
 import type {RebootScenario,RebootResult} from "../lib/reboot-finance";
 import {calculateScenario} from "../lib/reboot-finance";
 import {SCIIsInputs,SCIIsResults} from "./SCIIsPanel";
+import SectionAccordion from "./SectionAccordion";
+import {countProject,countFinancing,countOperation,type SectionId} from "./section-completion";
 
-type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void;compact?:boolean};
-type NumericKey=Exclude<keyof RebootScenario,"credit"|"units"|"advanced">;
+type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void;compact?:boolean;
+ sections?:{open:readonly SectionId[];onToggle:(id:SectionId,open:boolean)=>void}};
+type NumericKey=Exclude<keyof RebootScenario,"credit"|"units"|"advanced"|"reviewedFields">;
 const eur=(n:number|null)=>n===null?"—":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
 const percent=(n:number|null)=>n===null?"—":n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" %";
 const precise=(n:number|null)=>n===null?"—":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
@@ -13,14 +17,17 @@ function GraphBar({label,value,max,kind}:{label:string;value:number|null;max:num
   <div className="rb-graph-track"><div className={"rb-bar rb-bar-"+kind+(value!==null&&value<0?" rb-bar-negative":"")} style={{width:(value===null?0:Math.min(100,Math.abs(value)/Math.max(max,1)*100))+"%"}}/></div>
  </div>;
 }
-export default function Calculator({scenario:s,onChange}:Props){
+export default function Calculator({scenario:s,onChange,sections}:Props){
  const result:RebootResult=calculateScenario(s);
  const update=(key:NumericKey,value:number|null)=>{
   // Changing an old 0 estimate revokes any previous "verified zero" declaration.
   const advanced=s.advanced&&s.advanced.zeroVerified.includes(key as never)
    ?{...s.advanced,zeroVerified:s.advanced.zeroVerified.filter(x=>x!==key)}
    :s.advanced;
-  onChange({...s,[key]:value,advanced});
+  const reviewedFields=value===null
+   ?(s.reviewedFields??[]).filter(field=>field!==key)
+   :[...new Set([...(s.reviewedFields??[]),key])];
+  onChange({...s,[key]:value,advanced,reviewedFields});
  };
  const field=(key:NumericKey,label:string,unit:string,min=0,max=1e9,step="any",disabled=false)=>{
   const value=s[key] as number|null;
@@ -34,47 +41,59 @@ export default function Calculator({scenario:s,onChange}:Props){
  const loanPayment=result.monthlyPayment;
  const monthlyCharges=result.monthlyCharges;
  const rentMax=Math.max(1,Math.abs(monthlyReceived??0),Math.abs(loanPayment??0),Math.abs(monthlyCharges??0),Math.abs(result.cashflow??0));
- return <div className="rb-calculator">
+ const section=(id:"project"|"financing"|"operation",title:string,number:string,content:React.ReactNode)=>{
+  if(sections){
+   const counts=id==="project"?countProject(s):id==="financing"?countFinancing(s):countOperation(s);
+   return <SectionAccordion id={id} title={title} number={number} count={counts}
+    open={sections.open.includes(id)} onToggle={sections.onToggle}>{content}</SectionAccordion>;
+  }
+  return <><div className="rb-section-head"><h2>{title}</h2><span>{number}</span></div>{content}</>;
+ };
+ return <div className={"rb-calculator"+(sections?" rb-calculator-property":"")}>
   <div className="rb-input-card">
-   <div className="rb-section-head"><h2>Le projet</h2><span>01</span></div>
-   <div className="rb-input-grid">
+   {section("project","Le projet","01",<div className="rb-input-grid">
     {field("price","Prix d'achat","€",0.01)}
     {field("notaryPct","Frais de notaire","% ",0,30)}
     {field("agencyFees","Frais d'agence","€")}
     {field("works","Travaux","€")}
     {field("furnishing","Mobilier / équipement","€")}
     {field("otherPurchase","Autres frais d'acquisition","€")}
-   </div>
-   <div className="rb-section-head"><h2>Le financement</h2><span>02</span></div>
-   <label className="rb-check"><input type="checkbox" checked={s.credit} onChange={e=>onChange({...s,credit:e.target.checked})}/> Crédit SCI activé</label>
-   <div className="rb-input-grid">
-    {field("downPayment","Apport","€")}
-    {field("years","Durée du crédit","ans",1,40,"1",!s.credit)}
-    {field("rate","Taux nominal","%",0,25,"any",!s.credit)}
-    {field("insurancePct","Assurance emprunteur","% / an",0,10,"any",!s.credit)}
-   </div>
-   <div className="rb-section-head"><h2>L'exploitation</h2><span>03</span></div>
-   {s.units.length>0&&<div className="rb-unit-panel">
-    <div className="rb-unit-heading"><strong>Logements / lots</strong><button type="button" onClick={()=>onChange({...s,units:[]})}>Revenir au loyer global</button></div>
-    {s.units.map((u,index)=><div className="rb-unit" key={u.id}>
-     <input aria-label={"Nom du lot "+(index+1)} value={u.name} maxLength={100} onChange={e=>onChange({...s,units:s.units.map(x=>x.id===u.id?{...x,name:e.target.value}:x)})}/>
-     <input type="number" aria-label={"Loyer du lot "+(index+1)} min="0" max="10000000" value={u.monthlyRent} onChange={e=>onChange({...s,units:s.units.map(x=>x.id===u.id?{...x,monthlyRent:Math.max(0,Number(e.target.value))}:x)})}/>
-     <button type="button" aria-label={"Retirer le lot "+(index+1)} onClick={()=>onChange({...s,units:s.units.filter(x=>x.id!==u.id)})}>×</button>
-    </div>)}
-    <button type="button" className="rb-add-unit" disabled={s.units.length>=50} onClick={()=>onChange({...s,units:[...s.units,{id:crypto.randomUUID(),name:"Lot "+(s.units.length+1),monthlyRent:0}]})}>+ Ajouter un lot</button>
-    <p>Loyers mensuels cumulés : {eur(s.units.reduce((sum,x)=>sum+x.monthlyRent,0))}</p>
-   </div>}
-   <div className="rb-input-grid">
-    {s.units.length===0?field("rentMonthly","Loyer mensuel hors charges","€"): <div className="rb-total-rent"><small>Loyers mensuels totaux</small><strong>{eur(s.units.reduce((sum,x)=>sum+x.monthlyRent,0))}</strong></div>}
-    {field("vacancyMonths","Vacance locative","mois/an",0,12)}
-    {field("propertyTax","Taxe foncière","€/an")}
-    {field("condoCharges","Charges non récupérables","€/an")}
-    {field("pno","Assurance PNO","€/an")}
-    {field("managementPct","Gestion locative","% des loyers",0,100)}
-    {field("otherAnnual","Autres charges","€/an")}
-   </div>
-   {s.units.length===0&&<button type="button" className="rb-link-button" onClick={()=>onChange({...s,units:[{id:crypto.randomUUID(),name:"Lot 1",monthlyRent:s.rentMonthly??0}]})}>+ Détailler les loyers par logement</button>}
-   <SCIIsInputs scenario={s} onChange={onChange}/>
+   </div>)}
+   {section("financing","Le financement","02",<>
+    <label className="rb-check"><input type="checkbox" checked={s.credit} onChange={e=>onChange({...s,credit:e.target.checked})}/> Crédit SCI activé</label>
+    <div className="rb-input-grid">
+     {field("downPayment","Apport","€")}
+     {field("years","Durée du crédit","ans",1,40,"1",!s.credit)}
+     {field("rate","Taux nominal","%",0,25,"any",!s.credit)}
+     {field("insurancePct","Assurance emprunteur","% / an",0,10,"any",!s.credit)}
+    </div>
+   </>)}
+   {section("operation","L'exploitation","03",<>
+    {s.units.length>0&&<div className="rb-unit-panel">
+     <div className="rb-unit-heading"><strong>Logements / lots</strong><button type="button" onClick={()=>onChange({...s,units:[]})}>Revenir au loyer global</button></div>
+     {s.units.map((u,index)=><div className="rb-unit" key={u.id}>
+      <input aria-label={"Nom du lot "+(index+1)} value={u.name} maxLength={100}
+       onChange={e=>onChange({...s,units:s.units.map(x=>x.id===u.id?{...x,name:e.target.value}:x)})}/>
+      <input type="number" aria-label={"Loyer du lot "+(index+1)} min="0" max="10000000" value={u.monthlyRent}
+       onChange={e=>onChange({...s,reviewedFields:[...new Set([...(s.reviewedFields??[]),"rentMonthly" as const])],
+        units:s.units.map(x=>x.id===u.id?{...x,monthlyRent:Math.max(0,Number(e.target.value))}:x)})}/>
+      <button type="button" aria-label={"Retirer le lot "+(index+1)} onClick={()=>onChange({...s,units:s.units.filter(x=>x.id!==u.id)})}>×</button>
+     </div>)}
+     <button type="button" className="rb-add-unit" disabled={s.units.length>=50} onClick={()=>onChange({...s,units:[...s.units,{id:crypto.randomUUID(),name:"Lot "+(s.units.length+1),monthlyRent:0}]})}>+ Ajouter un lot</button>
+     <p>Loyers mensuels cumulés : {eur(s.units.reduce((sum,x)=>sum+x.monthlyRent,0))}</p>
+    </div>}
+    <div className="rb-input-grid">
+     {s.units.length===0?field("rentMonthly","Loyer mensuel hors charges","€"): <div className="rb-total-rent"><small>Loyers mensuels totaux</small><strong>{eur(s.units.reduce((sum,x)=>sum+x.monthlyRent,0))}</strong></div>}
+     {field("vacancyMonths","Vacance locative","mois/an",0,12)}
+     {field("propertyTax","Taxe foncière","€/an")}
+     {field("condoCharges","Charges non récupérables","€/an")}
+     {field("pno","Assurance PNO","€/an")}
+     {field("managementPct","Gestion locative","% des loyers",0,100)}
+     {field("otherAnnual","Autres charges","€/an")}
+    </div>
+    {s.units.length===0&&<button type="button" className="rb-link-button" onClick={()=>onChange({...s,units:[{id:crypto.randomUUID(),name:"Lot 1",monthlyRent:s.rentMonthly??0}]})}>+ Détailler les loyers par logement</button>}
+   </>)}
+   <SCIIsInputs scenario={s} onChange={onChange} sections={sections}/>
   </div>
   <div className="rb-results-column" aria-label="Résultats de la simulation">
    <div className="rb-kpis">

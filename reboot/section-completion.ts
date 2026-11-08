@@ -1,11 +1,13 @@
 import type {PropertyInput} from "../lib/model";
-import type {RebootScenario} from "../lib/reboot-finance";
+import type {RebootScenario,RebootResult} from "../lib/reboot-finance";
+import type {SCIFirstYear} from "../lib/reboot-is-finance";
 import {riskKeys,blankComparisonRisks} from "../lib/reboot-comparison";
 
-export type SectionId="main"|"project"|"financing"|"operation"|"sci"|"risks"|"contact"|"collaboration";
+export type SectionId="main"|"project"|"financing"|"operation"|"sci"|"risks"|"contact"|"collaboration"|"operation-results"|"is-results";
 export type SectionCount={filled:number;total:number};
 export const propertySections:SectionId[]=[
- "main","project","financing","operation","sci","risks","contact","collaboration"
+ "main","project","financing","operation","sci","risks","contact","collaboration",
+ "operation-results","is-results"
 ];
 export const initialOpenSections:SectionId[]=["main","project"];
 export const scenarioCountFields=[
@@ -74,4 +76,26 @@ export function countContact(p:PropertyInput):SectionCount{
 }
 export function countCollaboration(photoCount:number,visitCount:number,commentCount:number):SectionCount{
  return {filled:Number(photoCount>0)+Number(visitCount>0)+Number(commentCount>0),total:3};
+}
+
+/**
+ * Right column is a read-only result, so progress counts calculable metrics,
+ * NOT user-input fields. Computed zero is a valid result; null is missing.
+ */
+export function countOperationResults(r:RebootResult):SectionCount{
+ const values=[
+  r.totalCost,r.notaryFees,r.loan,r.monthlyMortgage,r.monthlyInsurance,
+  r.monthlyPayment,r.annualGrossRent,r.annualReceivedRent,r.annualCharges,
+  r.principalYear1,r.wealthYear1
+ ];
+ return {filled:values.filter(value=>value!==null&&Number.isFinite(value)).length,total:values.length};
+}
+export function countISResults(r:SCIFirstYear):SectionCount{
+ const values=[
+  r.base.annualReceivedRent,r.recoveredChargesNet,r.annualInterest,
+  r.annualBorrowerInsurance,r.buildingDepreciation,r.worksDepreciation,
+  r.projectTaxableResult,r.incrementalIS,r.annualCashflowBeforeIS,
+  r.monthlyCashflowAfterIS
+ ];
+ return {filled:values.filter(value=>value!==null&&Number.isFinite(value)).length,total:values.length};
 }

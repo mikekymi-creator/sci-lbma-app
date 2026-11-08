@@ -29,6 +29,7 @@ test("SCI IS remains unknown until costs, depreciation and tax eligibility are d
  v.advanced.zeroVerified=[];
  const unchecked=calculateSCIFirstYear(v);
  assert.equal(unchecked.monthlyCashflowAfterIS,null);
+ assert.equal(unchecked.projectTaxableResult,null);
  assert.ok(unchecked.missing.some(m=>m.includes("zéro non confirmé")));
  const verified=calculateSCIFirstYear(validScenario());
  assert.ok(verified.monthlyCashflowAfterIS!==null);

@@ -12,6 +12,7 @@ L'interface familiale, une fois explicitement activée, est disponible sur `/sci
 3. Dans Supabase → Authentication → URL Configuration, renseigner l'adresse exacte `https://mikekymi-creator.github.io/sci-lbma-app/famille/` parmi les URL de redirection autorisées ; confirmer les paramètres de sécurité et les e-mails.
 4. Dans GitHub → dépôt `sci-lbma-app` → Settings → Secrets and variables → Actions → **Variables**, renseigner uniquement :
    - `LBMA_FAMILY_ENABLED=true`
+   - `LBMA_FAMILY_RLS_CONFIRMED=true` **uniquement après** vérification manuelle des migrations et des accès RLS en production
    - `LBMA_FAMILY_SUPABASE_URL=https://<identifiant>.supabase.co`
    - `LBMA_FAMILY_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...` (ou clé anon publique)
 5. Déclencher un nouveau déploiement de la branche `feature/lbma-basecamp-v0-2`. Le build familial **échoue** si une clé de serveur est fournie. Le mode démo ne bascule jamais silencieusement en connecté.

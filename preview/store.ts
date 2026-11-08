@@ -2,7 +2,7 @@ import {defaultFinance,analyse} from "../lib/finance";
 import {defaultSciSettings} from "../lib/sci";
 export const USER="20000000-0000-4000-8000-000000000001",HOUSEHOLD="10000000-0000-4000-8000-000000000001";
 export type State={households:any[];properties:any[];comments:any[];visits:any[];events:any[];watch_sources:any[];sector_references:any[];uploads:Record<string,string>};
-const key="lbma-preview-v02";
+const key=typeof window!=="undefined"&&window.location.pathname.includes("/reboot/")?"lbma-reboot-v01":"lbma-preview-v02";
 function seed():State{
  const now=new Date().toISOString();
  const properties=[

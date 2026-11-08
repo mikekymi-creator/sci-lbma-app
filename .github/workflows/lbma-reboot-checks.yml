@@ -1,0 +1,28 @@
+name: LBMA 2.0 · V0.2 — validation
+on:
+  push:
+    branches: [feature/lbma-reboot-v0, feature/lbma-reboot-v0-2-comparator, feature/lbma-reboot-v0-2-pwa-install, feature/lbma-reboot-v0-3-family-sync, feature/lbma-reboot-v0-4-is-finance, feature/lbma-v0-4-1-property-accordions, feature/lbma-v0-4-2-result-accordions, feature/lbma-v0-4-3-collapse-all-default]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reboot:
+    runs-on: ubuntu-latest
+    env:
+      LBMA_DEPLOYMENT_MODE: demo
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_example
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run reboot:build
+      - run: npm run build
+      - run: npx playwright install chromium
+      - run: npm run reboot:test
+      - run: npx playwright test --config playwright.reboot-family.config.ts

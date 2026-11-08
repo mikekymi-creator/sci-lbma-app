@@ -1,0 +1,91 @@
+/* LBMA V0.4.1 — compact, accessible dossier subsections */
+.rb-accordion-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 14px;flex-wrap:wrap}
+.rb-accordion-toolbar>span{font-size:11px;color:var(--rb-muted)}
+.rb-accordion-toolbar>div{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rb-accordion-toolbar .rb-btn{min-height:35px;font-size:11px;padding:7px 12px}
+.rb-property-accordion{display:block;min-width:0;background:var(--rb-panel);border:1px solid var(--rb-stroke);border-radius:10px;margin:0 0 13px;overflow:visible}
+.rb-property-accordion>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 21px;min-height:62px;border-radius:10px;color:var(--rb-text);user-select:none}
+.rb-property-accordion>summary::-webkit-details-marker{display:none}
+.rb-property-accordion>summary:hover{background:#252731}
+.rb-property-accordion>summary:focus-visible{outline:2px solid var(--rb-orange);outline-offset:-3px}
+.rb-property-section-heading{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.rb-property-section-heading strong{font-size:16px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.rb-property-section-heading>small{color:var(--rb-muted);font-size:10px;line-height:1.35}
+.rb-property-step{display:grid;place-items:center;flex:none;border-radius:5px;background:#2d2b30;border:1px solid #453f41;color:var(--rb-orange-soft);font-size:10px;letter-spacing:.5px;font-weight:750;width:28px;height:28px}
+.rb-property-section-aside{display:flex;gap:11px;align-items:center;flex:none;margin-left:auto}
+.rb-section-count{min-width:49px;display:inline-flex;justify-content:center;align-items:center;border-radius:5px;border:1px solid #49434c;background:#292832;color:#cfcbd2;font-size:11px;font-weight:700;line-height:1.4;padding:5px 9px;white-space:nowrap}
+.rb-accordion-chevron{display:inline-flex;justify-content:center;align-items:center;width:16px;color:var(--rb-orange-soft);font-size:19px;transform:rotate(-90deg);transition:transform .15s}
+.rb-property-accordion[open] .rb-accordion-chevron{transform:rotate(0deg)}
+.rb-property-accordion[open]>summary{border-bottom:1px solid var(--rb-stroke);border-radius:10px 10px 0 0}
+.rb-property-accordion-body{padding:19px 21px 21px}
+.rb-property-accordion-body .rb-basic-fields{gap:14px}
+.rb-calculator-property .rb-input-card{padding:0;background:transparent;border:0;border-radius:0}
+.rb-calculator-property .rb-input-card>.rb-property-accordion:last-child{margin-bottom:0}
+.rb-calculator-property .rb-property-accordion .rb-input-grid{gap:13px 12px}
+.rb-calculator-property .rb-property-accordion .rb-check{margin:2px 0 15px}
+.rb-sci-accordion .rb-sci-input-body{padding:0}
+.rb-sci-accordion .rb-sci-input-body h3{margin-top:16px}
+.rb-sci-accordion .rb-property-accordion-body{padding-top:15px}
+.rb-contact-inputs{display:grid;gap:17px}
+.rb-contact-inputs>label{display:grid;gap:8px;font-weight:600;font-size:12px}
+.rb-contact-inputs .rb-basic-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rb-contact-inputs>a{color:var(--rb-orange-soft);font-size:12px;justify-self:start}
+.rb-dossier-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:13px 0}
+.rb-dossier-actions h2{margin-right:auto}
+.rb-dossier-actions p{flex-basis:100%;margin:0}
+.rb-dossier-actions .rb-btn-danger{margin-left:auto}
+.rb-property-accordion .rb-property-risk-grid{padding-top:5px}
+.rb-property-accordion .rb-property-accordion-body>p{font-size:11px;color:var(--rb-muted);margin:0 0 14px}
+.rb-property-accordion .rb-collaboration{margin:0}
+.rb-property-accordion .rb-collaboration .panel{margin-bottom:13px}
+@media(max-width:750px){
+ .rb-property-accordion>summary{padding:15px 15px;min-height:58px;gap:8px}
+ .rb-property-accordion-body{padding:15px}
+ .rb-property-section-heading strong{font-size:14px}
+ .rb-property-section-heading>small{display:none}
+ .rb-section-count{font-size:10px;min-width:46px}
+ .rb-dossier-actions{align-items:stretch}
+ .rb-dossier-actions .rb-btn-danger{margin-left:0}
+}
+@media(max-width:460px){
+ .rb-accordion-toolbar{align-items:flex-start}
+ .rb-accordion-toolbar>div{width:100%}
+ .rb-accordion-toolbar .rb-btn{flex:1}
+ .rb-property-accordion>summary{padding:13px 12px}
+ .rb-property-section-heading{gap:7px}
+ .rb-property-step{width:24px;height:24px}
+ .rb-property-section-heading strong{font-size:13px}
+ .rb-property-section-aside{gap:6px}
+ .rb-property-accordion-body{padding:12px}
+ .rb-contact-inputs .rb-basic-fields{grid-template-columns:1fr}
+ .rb-property-accordion .rb-input-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){.rb-accordion-chevron{transition:none}}
+
+/* V0.4.2: the read-only financial results use the same visual language as property sections. */
+.rb-result-accordion{padding:0;overflow:hidden}
+.rb-result-accordion>summary{display:flex;align-items:center;justify-content:space-between;
+ gap:12px;cursor:pointer;list-style:none;padding:19px 21px;min-height:62px;user-select:none}
+.rb-result-accordion>summary::-webkit-details-marker{display:none}
+.rb-result-accordion>summary:hover{background:#252731}
+.rb-result-accordion>summary:focus-visible{outline:2px solid var(--rb-orange);outline-offset:-3px}
+.rb-result-accordion-title{display:flex;flex-direction:column;gap:5px;min-width:0}
+.rb-result-accordion-title h2{margin:0;font-size:16px;font-weight:750;line-height:1.3;color:#f5f4f6;overflow-wrap:anywhere}
+.rb-result-accordion-title small{font-size:10px;color:var(--rb-muted);line-height:1.3}
+.rb-result-accordion-meta{display:flex;align-items:center;gap:10px;flex:none;margin-left:auto}
+.rb-result-accordion[open] .rb-accordion-chevron{transform:rotate(0deg)}
+.rb-result-accordion[open]>summary{border-bottom:1px solid var(--rb-stroke)}
+.rb-result-accordion-body{padding:15px 21px 21px;min-width:0}
+.rb-result-accordion-body>.rb-line-item:first-child{padding-top:0}
+.rb-result-accordion-body .rb-sci-main-kpi{margin-top:0}
+@media(max-width:750px){
+ .rb-result-accordion>summary{padding:15px;min-height:58px}
+ .rb-result-accordion-title h2{font-size:14px}
+ .rb-result-accordion-body{padding:15px}
+}
+@media(max-width:460px){
+ .rb-result-accordion>summary{padding:13px 12px;gap:8px}
+ .rb-result-accordion-title h2{font-size:13px}
+ .rb-result-accordion-meta{gap:6px}
+ .rb-result-accordion-body{padding:12px}
+}

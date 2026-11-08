@@ -1,0 +1,174 @@
+/* LBMA V0.2 — manual two-property comparison. */
+.rb-compare-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:15px 17px;margin:0 0 16px;background:var(--rb-panel);border:1px solid var(--rb-stroke);border-radius:9px}
+.rb-compare-toolbar>div:first-child{display:grid;gap:4px}
+.rb-compare-toolbar strong{font-size:13px}
+.rb-compare-toolbar small{font-size:11px;color:var(--rb-muted)}
+.rb-compare-toolbar>div:last-child{display:flex;align-items:center;gap:9px}
+.rb-compare-select-row{display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:stretch}
+.rb-compare-select-row>.rb-list-select{display:grid;place-items:center;border:1px solid var(--rb-stroke);border-radius:8px;background:var(--rb-panel);cursor:pointer}
+.rb-compare-select-row>.rb-list-select input{width:18px;height:18px;accent-color:var(--rb-orange);cursor:pointer}
+.rb-compare-select-row>.rb-list-select:has(input:disabled){opacity:.55;cursor:not-allowed}
+.rb-compare-select-row .rb-list-property{width:100%;min-width:0}
+.rb-compare-select-row.is-selected>.rb-list-select,.rb-compare-select-row.is-selected .rb-list-property{border-color:var(--rb-orange)}
+.rb-comparison-screen{display:grid;gap:17px;min-width:0}
+.rb-compare-back{display:flex;justify-content:space-between;align-items:center;color:var(--rb-muted);font-size:11px}
+.rb-comparison-screen .rb-heading{margin:0}
+.rb-compare-property-heads,.rb-summary-head,.rb-compare-line,.rb-risk-row,.rb-risk-actions{display:grid;grid-template-columns:minmax(165px,.86fr) repeat(2,minmax(0,1fr));gap:12px}
+.rb-compare-property-heads{align-items:stretch}
+.rb-comparison-property{display:flex;gap:12px;min-width:0;border:1px solid var(--rb-stroke);border-radius:9px;background:var(--rb-panel);padding:13px}
+.rb-compare-photo{width:92px;flex:none;min-height:99px;background:#34343d;border-radius:7px;display:grid;place-items:center;color:var(--rb-orange);font-size:32px;overflow:hidden}
+.rb-compare-photo img{width:100%;height:100%;object-fit:cover}
+.rb-comparison-property-info{flex:1;min-width:0}
+.rb-comparison-property-info>small{font-size:10px;color:var(--rb-orange-soft);letter-spacing:1.2px;font-weight:700}
+.rb-comparison-property-info h3{font-size:14px;margin:3px 0 5px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.rb-comparison-property-info p{margin:3px 0;font-size:10px;color:var(--rb-muted)}
+.rb-comparison-property-info p strong{color:var(--rb-text)}
+.rb-comparison-property-info .rb-link-button{padding:5px 0;font-size:10px;text-decoration:underline;text-underline-offset:3px}
+.rb-compare-mode-box{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:15px 18px;background:#24232b;border:1px solid var(--rb-stroke);border-radius:9px}
+.rb-compare-mode-box>div:first-child{display:grid;gap:4px}
+.rb-compare-mode-box strong{font-size:13px}
+.rb-compare-mode-box small{font-size:11px;color:var(--rb-muted)}
+.rb-mode-controls{display:flex;gap:4px;background:#16171d;padding:4px;border:1px solid #41424b;border-radius:8px}
+.rb-mode-controls button{padding:10px 13px;font-size:11px;font-weight:700;border:0;border-radius:5px;background:transparent;color:#bcbac6}
+.rb-mode-controls button.active{background:var(--rb-orange);color:#171117}
+.rb-common-assumptions{display:grid;gap:15px}
+.rb-common-assumptions .rb-panel-heading{margin-bottom:0}
+.rb-common-assumptions>p,.rb-capital-settings p{margin:0;font-size:11px;color:var(--rb-muted);line-height:1.5}
+.rb-common-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.rb-common-fields label,.rb-common-capital-input{display:grid;gap:6px;font-size:11px;min-width:0}
+.rb-common-fields label span,.rb-common-capital-input>span{color:var(--rb-orange-soft);font-weight:700}
+.rb-common-fields small{color:var(--rb-muted);font-size:9px;font-weight:400}
+.rb-common-fields input,.rb-common-capital-input input{width:100%}
+.rb-capital-settings{display:grid;gap:10px;border-top:1px solid var(--rb-stroke);padding-top:14px}
+.rb-capital-settings>strong{font-size:12px}
+.rb-capital-options{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.rb-capital-options label{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--rb-text)}
+.rb-capital-options input{accent-color:var(--rb-orange);width:16px;height:16px}
+.rb-common-capital-input{max-width:280px}
+.rb-compare-summary .rb-panel-heading,.rb-compare-table .rb-panel-heading{margin-bottom:17px}
+.rb-summary-head{padding:7px 0 12px;border-bottom:1px solid var(--rb-stroke);align-items:center}
+.rb-summary-head span,.rb-summary-head b{font-size:10px;color:#8d8d9a;letter-spacing:.6px}
+.rb-summary-head b{text-align:right}
+.rb-compare-line{padding:10px 0;border-bottom:1px solid #33343d;align-items:center}
+.rb-compare-line:last-child{border-bottom:0}
+.rb-compare-label{font-size:12px;color:#c6c4ce;overflow-wrap:anywhere}
+.rb-compare-value{text-align:right;min-width:0;overflow-wrap:anywhere}
+.rb-compare-value strong{font-size:12px;font-weight:650;color:var(--rb-text)}
+.rb-compare-value .rb-relative{display:inline-block;margin-left:6px;font-size:9px;white-space:nowrap;color:var(--rb-green);font-weight:500}
+.rb-compare-emphasis .rb-compare-label{font-weight:750;color:#ece9eb}
+.rb-compare-emphasis .rb-compare-value strong{font-size:14px;color:var(--rb-orange-soft);font-weight:800}
+.rb-comparison-section{border-bottom:1px solid var(--rb-stroke)}
+.rb-comparison-section>summary{display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer;font-size:13px;font-weight:750;padding:15px 0;color:#f1eef1}
+.rb-comparison-section>summary::-webkit-details-marker{display:none}
+.rb-comparison-section>summary span{font-size:17px;color:var(--rb-orange-soft)}
+.rb-comparison-section:not([open])>summary span{transform:rotate(90deg)}
+.rb-compare-graphs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px}
+.rb-compare-graphs-grid h3{font-size:12px;color:var(--rb-orange-soft);letter-spacing:.5px;margin:0 0 14px}
+.rb-compare-bar-row{margin:15px 0}
+.rb-compare-bar-row>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:7px;font-size:11px;color:#c2c0c7}
+.rb-compare-bar-row strong{color:var(--rb-text);font-size:11px}
+.rb-comparison-bar{display:block;height:100%;border-radius:3px}
+.rb-comparison-bar-income{background:var(--rb-green)}
+.rb-comparison-bar-loan{background:#ff7467}
+.rb-comparison-bar-charges{background:#f1a24c}
+.rb-comparison-bar-cash{background:var(--rb-orange)}
+.rb-comparison-bar.negative{background:#f26c80}
+.rb-compare-warnings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.rb-compare-warnings>div{background:#28252a;border:1px solid #49404a;border-radius:8px;padding:14px}
+.rb-compare-warnings strong{font-size:11px;color:#eec0aa}
+.rb-compare-warnings p{font-size:10px;color:var(--rb-muted);line-height:1.5;margin:7px 0 0}
+.rb-compare-risk-panel>p{color:var(--rb-muted);font-size:11px;margin-top:-7px}
+.rb-risk-row{align-items:start;border-bottom:1px solid var(--rb-stroke);padding:14px 0}
+.rb-risk-title{font-size:12px;align-self:start;padding-top:9px}
+.rb-risk-cell{display:grid;gap:7px;min-width:0}
+.rb-risk-cell select{min-height:41px;font-weight:700}
+.rb-risk-cell select.rb-risk-level-unknown{color:#bdbac4}
+.rb-risk-cell select.rb-risk-level-low{color:var(--rb-green)}
+.rb-risk-cell select.rb-risk-level-moderate{color:#f5c376}
+.rb-risk-cell select.rb-risk-level-high{color:#ff7979}
+.rb-risk-cell textarea{font-size:11px!important;min-height:60px}
+.rb-risk-cell small{color:var(--rb-muted);font-size:10px}
+.rb-risk-actions{padding-top:18px;align-items:end}
+.rb-risk-actions>div:not(:first-child){display:grid;gap:8px;min-width:0}
+.rb-risk-actions .rb-btn{width:100%}
+.rb-risk-actions p{font-size:10px;color:var(--rb-green);margin:0;overflow-wrap:anywhere}
+.rb-property-risk-editor{margin-top:18px}
+.rb-property-risk-editor>summary{font-size:17px;font-weight:750;cursor:pointer}
+.rb-property-risk-editor>p{margin:13px 0}
+.rb-property-risk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;padding-top:10px}
+.rb-single-risk{display:grid;gap:7px;border:1px solid var(--rb-stroke);padding:13px;border-radius:7px;background:#24252d}
+.rb-single-risk strong{font-size:12px}
+.rb-single-risk select,.rb-single-risk textarea{width:100%;font-size:12px}
+@media(max-width:1450px){
+ .rb-comparison-property{flex-direction:column}
+ .rb-compare-photo{width:100%;height:110px}
+}
+@media(max-width:990px){
+ .rb-compare-property-heads,.rb-summary-head,.rb-compare-line,.rb-risk-row,.rb-risk-actions{grid-template-columns:minmax(120px,.72fr) repeat(2,minmax(0,1fr));gap:9px}
+ .rb-compare-value strong{font-size:11px}
+ .rb-common-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:750px){
+ .rb-compare-property-heads{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .rb-compare-photo-spacer{display:none}
+ .rb-comparison-property{padding:10px}
+ .rb-compare-photo{height:90px}
+ .rb-comparison-property-info h3{font-size:12px}
+ .rb-comparison-property-info p{font-size:10px}
+ .rb-summary-head{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .rb-summary-head>span{display:none}
+ .rb-summary-head>b{text-align:left}
+ .rb-compare-line{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:11px 0}
+ .rb-compare-label{grid-column:1/-1;font-size:11px;font-weight:600}
+ .rb-compare-value{text-align:left}
+ .rb-compare-value strong{font-size:12px}
+ .rb-compare-emphasis .rb-compare-value strong{font-size:14px}
+ .rb-risk-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .rb-risk-title{grid-column:1/-1;padding:0}
+ .rb-risk-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .rb-risk-actions>div:first-child{display:none}
+ .rb-compare-graphs-grid{gap:15px}
+ .rb-compare-warnings{gap:10px}
+ .rb-mode-controls{width:100%}
+ .rb-mode-controls button{flex:1}
+ .rb-common-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:450px){
+ .rb-compare-toolbar>div:last-child{width:100%}
+ .rb-compare-toolbar .rb-btn{flex:1}
+ .rb-compare-select-row{grid-template-columns:32px minmax(0,1fr);gap:7px}
+ .rb-compare-mode-box{padding:12px}
+ .rb-compare-graphs-grid{grid-template-columns:1fr}
+ .rb-property-risk-grid{grid-template-columns:1fr}
+ .rb-common-fields{grid-template-columns:1fr 1fr}
+ .rb-risk-cell textarea{min-height:74px}
+ .rb-risk-actions .rb-btn{min-height:52px;padding:7px;font-size:10px}
+ .rb-comparison-screen>.rb-panel{padding:15px}
+}
+
+/* Progressive Web App install affordance: shown only on phones in the preview. */
+.rb-install-widget{position:relative;display:none;min-width:0}
+.rb-demo-banner .rb-install-widget>.rb-install-btn{margin:0;border-radius:6px;border:1px solid #e17b54;background:#fa663f;color:#1b1310;padding:8px 11px;font-size:11px;font-weight:750;white-space:normal}
+.rb-install-help{position:absolute;right:0;top:calc(100% + 7px);width:min(315px,calc(100vw - 30px));background:#24242b;border:1px solid #d07455;border-radius:8px;padding:13px 34px 13px 13px;box-shadow:0 10px 25px #0009;z-index:11;color:#fff0e7;font-size:11px;line-height:1.55}
+.rb-install-help button{position:absolute;top:2px;right:5px;margin:0!important;font-size:18px!important;padding:1px 6px!important;border:0!important;background:transparent!important;color:white!important}
+@media(max-width:750px){.rb-install-widget{display:block}.rb-demo-banner .rb-install-widget{margin-left:0}}
+
+
+/* V0.3 family sync status and explicit legacy demo transfer. */
+.rb-sync-button{background:#292b33;color:#f5f1f4;border:1px solid #484b54;border-radius:6px;font-size:11px;padding:8px 12px;white-space:nowrap}
+.rb-sync-button:hover{border-color:#f1855f}
+.rb-sync-button:disabled{opacity:.6}
+.rb-family-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 15px;padding:10px clamp(18px,3vw,48px);background:#1c2a29;border-bottom:1px solid #31534d;color:#c2eee0;font-size:11px}
+.rb-family-banner strong{font-size:11px;color:#6ae3b7;white-space:nowrap}
+.rb-family-banner strong span{font-size:9px}
+.rb-family-banner small{color:#9bc8b8;font-size:10px;white-space:nowrap}
+.rb-backup-import{margin-top:17px;display:grid;gap:13px}
+.rb-backup-import h2{margin:0}
+.rb-backup-import>p{margin:0;line-height:1.65}
+.rb-backup-import input[type=file]{padding:11px!important;max-width:100%;font-size:11px!important;min-height:42px}
+.rb-backup-review{display:grid;gap:10px;padding:14px;background:#262832;border:1px solid var(--rb-stroke);border-radius:8px}
+.rb-backup-review>p{margin:0;color:var(--rb-muted);font-size:11px}
+.rb-backup-review .rb-check{border-bottom:1px solid var(--rb-stroke);margin:0;padding-bottom:9px;flex-wrap:wrap}
+.rb-backup-review .rb-check small{color:var(--rb-muted);font-size:10px}
+.rb-backup-review .rb-btn{justify-self:start}
+@media(max-width:750px){.rb-family-banner{padding:10px 16px}.rb-sync-button{font-size:10px;padding:7px}.rb-top-right>span{max-width:135px}}

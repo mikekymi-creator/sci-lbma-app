@@ -46,6 +46,32 @@ jobs:
           cd ..
           mkdir -p preview-dist/reboot
           cp -R reboot-worktree/reboot-dist/. preview-dist/reboot/
+      # Optional, separately authenticated SCI application. GitHub Pages still
+      # hosts only static assets; Supabase RLS protects all family records.
+      # Both activation flags must be explicitly enabled by the maintainer.
+      - name: Verify family activation variables
+        if: ${{ vars.LBMA_FAMILY_ENABLED == 'true' && vars.LBMA_FAMILY_RLS_CONFIRMED == 'true' }}
+        env:
+          FAMILY_URL: ${{ vars.LBMA_FAMILY_SUPABASE_URL }}
+          FAMILY_PUBLIC_KEY: ${{ vars.LBMA_FAMILY_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$FAMILY_URL" ] || [ -z "$FAMILY_PUBLIC_KEY" ]; then
+            echo "Family PWA activation requires the project URL and a PUBLIC Supabase key."
+            exit 1
+          fi
+      - name: Build LBMA 2.0 V0.3 authenticated family PWA
+        if: ${{ vars.LBMA_FAMILY_ENABLED == 'true' && vars.LBMA_FAMILY_RLS_CONFIRMED == 'true' }}
+        env:
+          LBMA_DEPLOYMENT_MODE: connected
+          LBMA_REBOOT_BASE: /sci-lbma-app/famille/
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.LBMA_FAMILY_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.LBMA_FAMILY_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          cd reboot-worktree
+          npm run reboot:build
+          cd ..
+          mkdir -p preview-dist/famille
+          cp -R reboot-worktree/reboot-dist/. preview-dist/famille/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

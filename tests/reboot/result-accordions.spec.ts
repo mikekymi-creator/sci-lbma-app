@@ -1,0 +1,53 @@
+import {test,expect} from "@playwright/test";
+
+const result=(page:any,id:"operation-results"|"is-results")=>
+ page.locator('[data-result-section="'+id+'"]');
+test("Right side calculator: detail and first-year SCI independently expand with live computed counters",async({page})=>{
+ await page.setViewportSize({width:1365,height:900});
+ await page.goto("./");
+ await page.getByRole("navigation",{name:"Navigation principale"}).getByRole("button",{name:"Calculateur"}).click();
+ const detail=result(page,"operation-results"),tax=result(page,"is-results");
+ await expect(detail).not.toHaveAttribute("open","");
+ await expect(tax).not.toHaveAttribute("open","");
+ await expect(detail.locator(".rb-section-count")).toHaveText("0 / 11");
+ await expect(tax.locator(".rb-section-count")).toContainText("/ 10");
+ await expect(page.locator(".rb-kpis")).toBeVisible();
+ await detail.locator("summary").click();
+ await expect(detail).toHaveAttribute("open","");
+ await expect(detail.getByText("Montant emprunté")).toBeVisible();
+ await expect(tax).not.toHaveAttribute("open","");
+ await page.getByLabel("Prix d'achat",{exact:true}).fill("100000");
+ await page.getByLabel("Loyer mensuel hors charges",{exact:true}).fill("850");
+ await expect(detail.locator(".rb-section-count")).toHaveText("11 / 11");
+ await expect(detail.getByText("Coût total d'acquisition et travaux")).toBeVisible();
+ await tax.locator("summary").click();
+ await expect(tax).toHaveAttribute("open","");
+ await expect(tax.getByText("Cash-flow mensuel après IS estimé")).toBeVisible();
+ await expect(tax.getByText("Résultat fiscal estimé du bien")).toBeVisible();
+ await tax.locator("summary").click();
+ await expect(tax).not.toHaveAttribute("open","");
+ await expect(detail).toHaveAttribute("open","");
+});
+test("Dossier open-all and close-all include both right-side result panels, also on smartphone",async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto("./");
+ await page.getByRole("button",{name:"Ouvrir le menu"}).click();
+ await page.getByRole("navigation",{name:"Navigation mobile"}).getByRole("button",{name:"Mes biens"}).click();
+ await page.getByRole("button",{name:/DÉMO · Appartement Beauvais/}).click();
+ const detail=result(page,"operation-results"),tax=result(page,"is-results");
+ await expect(detail).not.toHaveAttribute("open","");
+ await expect(tax).not.toHaveAttribute("open","");
+ await page.getByRole("button",{name:"Tout ouvrir"}).click();
+ await expect(detail).toHaveAttribute("open","");
+ await expect(tax).toHaveAttribute("open","");
+ await expect(detail.locator(".rb-section-count")).toContainText("/ 11");
+ await expect(tax.locator(".rb-section-count")).toContainText("/ 10");
+ await page.getByRole("button",{name:"Tout fermer"}).click();
+ await expect(detail).not.toHaveAttribute("open","");
+ await expect(tax).not.toHaveAttribute("open","");
+ await detail.locator("summary").click();
+ await expect(detail).toHaveAttribute("open","");
+ await expect(tax).not.toHaveAttribute("open","");
+ await expect(page.locator(".rb-kpis")).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});

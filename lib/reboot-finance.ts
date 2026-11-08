@@ -51,6 +51,12 @@ export const rebootScenarioSchema=z.object({
  rentMonthly:money.nullable(), vacancyMonths:limited(12),
  propertyTax:money, condoCharges:money, pno:money, otherAnnual:money, managementPct:limited(100),
  units:z.array(rentalUnitSchema).max(50).default([]),
+ /** Explicit fields reviewed/typed by the user. Keeps default zeros distinct from real zeros. */
+ reviewedFields:z.array(z.enum([
+  "price","notaryPct","agencyFees","works","furnishing","otherPurchase",
+  "downPayment","years","rate","insurancePct","rentMonthly","vacancyMonths",
+  "propertyTax","condoCharges","pno","managementPct","otherAnnual"
+ ])).optional(),
  advanced:advancedSciSchema.optional(),
 });
 export type RebootScenario=z.infer<typeof rebootScenarioSchema>;

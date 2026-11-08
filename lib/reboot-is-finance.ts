@@ -114,9 +114,10 @@ export function calculateSCIFirstYear(s:RebootScenario):SCIFirstYear{
  const fullCosts=base.annualCharges!==null&&rec&&accountant&&cfe&&maintenance
   ?base.annualCharges+a.recoverableChargesAnnual!+a.accountingAnnual!+a.cfeAnnual!+a.maintenanceAnnual!
   :null;
- const annualCashflowBeforeIS=base.annualReceivedRent!==null&&tenant&&fullCosts!==null&&base.monthlyPayment!==null&&errors.length===0&&missing.filter(x=>x.includes("zéro non confirmé")).length===0
+ const zeroUnverified=missing.some(x=>x.includes("zéro non confirmé"));
+ const annualCashflowBeforeIS=base.annualReceivedRent!==null&&tenant&&fullCosts!==null&&base.monthlyPayment!==null&&errors.length===0&&!zeroUnverified
   ?two(base.annualReceivedRent+a.tenantRecoveriesAnnual!-fullCosts-base.monthlyPayment*12):null;
- const projectTaxableResult=base.annualReceivedRent!==null&&tenant&&fullCosts!==null&&debt.interest!==null&&debt.insurance!==null&&depreciationTotal!==null&&errors.length===0
+ const projectTaxableResult=base.annualReceivedRent!==null&&tenant&&fullCosts!==null&&debt.interest!==null&&debt.insurance!==null&&depreciationTotal!==null&&errors.length===0&&!zeroUnverified
   ?two(base.annualReceivedRent+a.tenantRecoveriesAnnual!-fullCosts-debt.interest-debt.insurance-depreciationTotal):null;
  const companyTaxableBeforeLosses=projectTaxableResult!==null&&other?two(projectTaxableResult+a.otherCompanyResult!):null;
  let companyISBeforeProject:number|null=null,companyISWithProject:number|null=null,incrementalIS:number|null=null;

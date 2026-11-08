@@ -1,9 +1,9 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
 import {supabase} from "../lib/supabase";
-export default function CollaborationPanel({propertyId,userId,focusVisit,onChanged}:{propertyId:string;userId:string;focusVisit:number;onChanged:()=>void}){
+export default function CollaborationPanel({propertyId,userId,focusVisit,onChanged,onCounts}:{propertyId:string;userId:string;focusVisit:number;onChanged:()=>void;onCounts?:(visits:number,comments:number)=>void}){
  const [comments,setComments]=useState<any[]>([]),[visits,setVisits]=useState<any[]>([]),[body,setBody]=useState(""),[date,setDate]=useState(""),[notes,setNotes]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);const visitInput=useRef<HTMLInputElement>(null),db=supabase!;
- async function load(){const [c,v]=await Promise.all([db.from("comments").select("*").eq("property_id",propertyId).order("created_at"),db.from("visits").select("*").eq("property_id",propertyId).order("starts_at")]);if(c.error||v.error)setMessage("Les échanges n’ont pas pu être chargés.");else{setComments(c.data??[]);setVisits(v.data??[]);}}
+ async function load(){const [c,v]=await Promise.all([db.from("comments").select("*").eq("property_id",propertyId).order("created_at"),db.from("visits").select("*").eq("property_id",propertyId).order("starts_at")]);if(c.error||v.error)setMessage("Les échanges n’ont pas pu être chargés.");else{setComments(c.data??[]);setVisits(v.data??[]);onCounts?.((v.data??[]).length,(c.data??[]).length);}}
  useEffect(()=>{void load();const timer=setInterval(()=>void load(),15000);return()=>clearInterval(timer);},[propertyId]);
  useEffect(()=>{if(focusVisit){visitInput.current?.scrollIntoView({behavior:"smooth",block:"center"});visitInput.current?.focus();}},[focusVisit]);
  async function run(action:()=>Promise<void>){setBusy(true);setMessage("");try{await action();await load();onChanged();}catch(e){setMessage(e instanceof Error?e.message:"Opération impossible.");}finally{setBusy(false);}}

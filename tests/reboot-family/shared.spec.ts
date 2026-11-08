@@ -33,7 +33,7 @@ async function login(page:Page,person:ReturnType<typeof user>){
  await page.getByLabel("Mot de passe").fill("password-test");
  await page.getByRole("button",{name:"Se connecter"}).click();
  await expect(page.getByRole("heading",{name:"Tableau de bord"})).toBeVisible();
- await expect(page.getByText("SCI partagée")).toBeVisible();
+ await expect(page.locator(".rb-family-banner")).toContainText("SCI partagée");
 }
 test("Family users share property and stale edits do not overwrite the latest version",async({browser})=>{
  const state:State={properties:[],version:0};

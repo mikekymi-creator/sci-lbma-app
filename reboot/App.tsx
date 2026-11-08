@@ -274,7 +274,7 @@ export default function RebootApp(){
      <span>{n.symbol}</span>{n.title}
     </button>)}
    </nav>
-   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>{isDemo?"Version 0.2 · démo":"Version 0.4 · SCI partagée"}</small></div>
+   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>{isDemo?"Version 0.4.1 · démo":"Version 0.4.1 · SCI partagée"}</small></div>
     {isDemo?<span className="rb-demo-chip">Démonstration locale</span>:<button type="button" onClick={()=>void signout()}>Déconnexion</button>}
    </div>
   </aside>
@@ -289,7 +289,7 @@ export default function RebootApp(){
     </div>
    </header>
    <nav className={"rb-mobile-nav "+(mobileMenu?"open":"")} aria-label="Navigation mobile">{navigation.map(n=><button className={page===n.id?"active":""} key={n.id} onClick={()=>go(n.id)}>{n.title}</button>)}</nav>
-   {isDemo&&<div className="rb-demo-banner"><strong>V0.4 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
+   {isDemo&&<div className="rb-demo-banner"><strong>V0.4.1 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
     <button onClick={localBackup}>Sauvegarder mes essais</button>
     <InstallApp/>
    </div>}
@@ -448,7 +448,7 @@ export default function RebootApp(){
     </>}
     </>}
    </div>
-   <footer className="rb-footer"><span>LBMA 2.0 · {isDemo?"V0.4 · Démo":"V0.4 · SCI partagée"}</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
+   <footer className="rb-footer"><span>LBMA 2.0 · {isDemo?"V0.4.1 · Démo":"V0.4.1 · SCI partagée"}</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
   </main>
  </div>;
 }

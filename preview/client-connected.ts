@@ -14,7 +14,6 @@ export async function api(path:string,method="GET",body?:unknown):Promise<Respon
   const {id,expected_updated_at,...input}=parsed.data,a=analyse(input);
   const row={...input,listing_url:input.listing_url?canonicalListingUrl(input.listing_url):null,analysis_ready:a.complete&&Boolean(input.city.trim()&&input.description.trim()),score:a.score??0,cashflow:a.cashflow??0};
   // Optimistic concurrency: a second device must not silently overwrite the first.
-  if(id&&!expected_updated_at)throw new Error("Recharge la fiche avant de l’enregistrer : sa version n’est pas connue.");
   const result=id
    ?await (expected_updated_at
     ?db.from("properties").update(row).eq("id",id).eq("household_id",input.household_id).eq("updated_at",expected_updated_at).select().maybeSingle()

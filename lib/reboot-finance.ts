@@ -11,6 +11,38 @@ export const rentalUnitSchema=z.object({
  name:z.string().trim().min(1).max(100),
  monthlyRent:limited(1e7),
 });
+/**
+ * Optional first-year SCI à l'IS forecast. All nullable amounts are unknown
+ * until entered. A numeric zero is explicit; old zero-filled basic fields are
+ * NOT treated as checked zero without zeroVerified.
+ * Rates and depreciation durations must be verified by a professional.
+ */
+export const zeroVerifiedKeys=[
+ "works","propertyTax","condoCharges","pno","otherAnnual","managementPct","insurancePct"
+] as const;
+export const advancedSciSchema=z.object({
+ landSharePct:limited(100).nullable(),
+ buildingLifeYears:z.number().int().min(1).max(100).nullable(),
+ capitalizedWorks:money.nullable(),
+ worksLifeYears:z.number().int().min(1).max(100).nullable(),
+ recoverableChargesAnnual:money.nullable(),
+ tenantRecoveriesAnnual:money.nullable(),
+ accountingAnnual:money.nullable(),
+ cfeAnnual:money.nullable(),
+ maintenanceAnnual:money.nullable(),
+ otherCompanyResult:z.number().finite().min(-1e9).max(1e9).nullable(),
+ lossesCarried:money.nullable(),
+ reducedRateEligible:z.boolean().nullable(),
+ zeroVerified:z.array(z.enum(zeroVerifiedKeys)).default([])
+});
+export type AdvancedSci=z.infer<typeof advancedSciSchema>;
+export const initialAdvancedSci=():AdvancedSci=>({
+ landSharePct:null,buildingLifeYears:null,capitalizedWorks:null,worksLifeYears:null,
+ recoverableChargesAnnual:null,tenantRecoveriesAnnual:null,
+ accountingAnnual:null,cfeAnnual:null,maintenanceAnnual:null,
+ otherCompanyResult:null,lossesCarried:null,reducedRateEligible:null,zeroVerified:[]
+});
+
 export const rebootScenarioSchema=z.object({
  price:money.nullable(),
  notaryPct:limited(30), agencyFees:money, works:money, furnishing:money, otherPurchase:money,
@@ -19,6 +51,7 @@ export const rebootScenarioSchema=z.object({
  rentMonthly:money.nullable(), vacancyMonths:limited(12),
  propertyTax:money, condoCharges:money, pno:money, otherAnnual:money, managementPct:limited(100),
  units:z.array(rentalUnitSchema).max(50).default([]),
+ advanced:advancedSciSchema.optional(),
 });
 export type RebootScenario=z.infer<typeof rebootScenarioSchema>;
 

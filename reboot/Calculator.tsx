@@ -1,8 +1,9 @@
 import type {RebootScenario,RebootResult} from "../lib/reboot-finance";
 import {calculateScenario} from "../lib/reboot-finance";
+import {SCIIsInputs,SCIIsResults} from "./SCIIsPanel";
 
 type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void;compact?:boolean};
-type NumericKey=Exclude<keyof RebootScenario,"credit"|"units">;
+type NumericKey=Exclude<keyof RebootScenario,"credit"|"units"|"advanced">;
 const eur=(n:number|null)=>n===null?"—":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
 const percent=(n:number|null)=>n===null?"—":n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" %";
 const precise=(n:number|null)=>n===null?"—":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
@@ -14,7 +15,13 @@ function GraphBar({label,value,max,kind}:{label:string;value:number|null;max:num
 }
 export default function Calculator({scenario:s,onChange}:Props){
  const result:RebootResult=calculateScenario(s);
- const update=(key:NumericKey,value:number|null)=>onChange({...s,[key]:value});
+ const update=(key:NumericKey,value:number|null)=>{
+  // Changing an old 0 estimate revokes any previous "verified zero" declaration.
+  const advanced=s.advanced&&s.advanced.zeroVerified.includes(key as never)
+   ?{...s.advanced,zeroVerified:s.advanced.zeroVerified.filter(x=>x!==key)}
+   :s.advanced;
+  onChange({...s,[key]:value,advanced});
+ };
  const field=(key:NumericKey,label:string,unit:string,min=0,max=1e9,step="any",disabled=false)=>{
   const value=s[key] as number|null;
   return <label className="rb-form-field" key={key}><span>{label} <em>{unit}</em></span>
@@ -67,6 +74,7 @@ export default function Calculator({scenario:s,onChange}:Props){
     {field("otherAnnual","Autres charges","€/an")}
    </div>
    {s.units.length===0&&<button type="button" className="rb-link-button" onClick={()=>onChange({...s,units:[{id:crypto.randomUUID(),name:"Lot 1",monthlyRent:s.rentMonthly??0}]})}>+ Détailler les loyers par logement</button>}
+   <SCIIsInputs scenario={s} onChange={onChange}/>
   </div>
   <div className="rb-results-column" aria-label="Résultats de la simulation">
    <div className="rb-kpis">
@@ -95,6 +103,7 @@ export default function Calculator({scenario:s,onChange}:Props){
     <GraphBar label="Charges et gestion" kind="cost" value={monthlyCharges} max={rentMax}/>
     <GraphBar label="Cash-flow avant IS" kind="cash" value={result.cashflow} max={rentMax}/>
    </section>
+   <SCIIsResults scenario={s}/>
    <p className="rb-disclaimer">Simulation indicative avant impôt sur les sociétés, hors impôt personnel et coûts non saisis. La vacance est lissée sur 12 mois. Les zéros affichés sont des hypothèses manuelles à vérifier. Pas de prévision de revente.</p>
   </div>
  </div>;

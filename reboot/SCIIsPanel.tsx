@@ -2,7 +2,8 @@ import type {RebootScenario,AdvancedSci} from "../lib/reboot-finance";
 import {initialAdvancedSci,zeroVerifiedKeys} from "../lib/reboot-finance";
 import {calculateSCIFirstYear,ZERO_CHECK_LABELS} from "../lib/reboot-is-finance";
 import SectionAccordion from "./SectionAccordion";
-import {countSCI,type SectionId} from "./section-completion";
+import ResultAccordion from "./ResultAccordion";
+import {countSCI,countISResults,type SectionId} from "./section-completion";
 
 type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void;
  sections?:{open:readonly SectionId[];onToggle:(id:SectionId,open:boolean)=>void}};
@@ -76,11 +77,15 @@ export function SCIIsInputs({scenario,onChange,sections}:Props){
 function Line({label,value,emphasis=false}:{label:string;value:string;emphasis?:boolean}){
  return <div className={"rb-line-item"+(emphasis?" rb-emphasis":"")}><span>{label}</span><strong>{value}</strong></div>;
 }
-export function SCIIsResults({scenario}:Pick<Props,"scenario">){
+export function SCIIsResults({scenario,open,onToggle}:{
+ scenario:RebootScenario;open:boolean;
+ onToggle:(id:"operation-results"|"is-results",open:boolean)=>void
+}){
  const r=calculateSCIFirstYear(scenario);
  const missing=r.missing.length>0,issues=r.errors.length>0;
- return <section className="rb-result-card rb-sci-results" aria-label="Analyse de la SCI à l'IS">
-  <div className="rb-card-title"><h2>SCI à l'IS · Année 1</h2><span>Estimation, pas une liasse fiscale</span></div>
+ return <ResultAccordion id="is-results" title="SCI à l'IS · Année 1"
+  subtitle="Estimation, pas une liasse fiscale" count={countISResults(r)}
+  open={open} onToggle={onToggle} className="rb-sci-results">
   <div className="rb-sci-main-kpi"><small>Cash-flow mensuel après IS estimé</small><strong className={r.monthlyCashflowAfterIS!==null&&r.monthlyCashflowAfterIS<0?"rb-negative":""}>{fmt(r.monthlyCashflowAfterIS)}</strong></div>
   <Line label="Loyers hors charges après vacance" value={fmt(r.base.annualReceivedRent)}/>
   <Line label="Charges récupérables : encaissements moins dépenses" value={fmt(r.recoveredChargesNet)}/>
@@ -98,5 +103,5 @@ export function SCIIsResults({scenario}:Pick<Props,"scenario">){
   {issues&&<div className="rb-callout rb-error" role="alert">{r.errors.join(" · ")}</div>}
   <details className="rb-sci-notes"><summary>Limites du calcul et traitement comptable</summary><ul>{r.notes.map(t=><li key={t}>{t}</li>)}</ul></details>
   <p className="rb-disclaimer">Le résultat fiscal n'est pas le cash-flow. L'IS peut être nul malgré une trésorerie positive. Un déficit comptable ne crée pas automatiquement un remboursement d'IS ; une réduction d'IS dépend des autres résultats de la SCI.</p>
- </section>;
+ </ResultAccordion>;
 }

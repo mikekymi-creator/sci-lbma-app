@@ -61,3 +61,31 @@
  .rb-property-accordion .rb-input-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){.rb-accordion-chevron{transition:none}}
+
+/* V0.4.2: the read-only financial results use the same visual language as property sections. */
+.rb-result-accordion{padding:0;overflow:hidden}
+.rb-result-accordion>summary{display:flex;align-items:center;justify-content:space-between;
+ gap:12px;cursor:pointer;list-style:none;padding:19px 21px;min-height:62px;user-select:none}
+.rb-result-accordion>summary::-webkit-details-marker{display:none}
+.rb-result-accordion>summary:hover{background:#252731}
+.rb-result-accordion>summary:focus-visible{outline:2px solid var(--rb-orange);outline-offset:-3px}
+.rb-result-accordion-title{display:flex;flex-direction:column;gap:5px;min-width:0}
+.rb-result-accordion-title h2{margin:0;font-size:16px;font-weight:750;line-height:1.3;color:#f5f4f6;overflow-wrap:anywhere}
+.rb-result-accordion-title small{font-size:10px;color:var(--rb-muted);line-height:1.3}
+.rb-result-accordion-meta{display:flex;align-items:center;gap:10px;flex:none;margin-left:auto}
+.rb-result-accordion[open] .rb-accordion-chevron{transform:rotate(0deg)}
+.rb-result-accordion[open]>summary{border-bottom:1px solid var(--rb-stroke)}
+.rb-result-accordion-body{padding:15px 21px 21px;min-width:0}
+.rb-result-accordion-body>.rb-line-item:first-child{padding-top:0}
+.rb-result-accordion-body .rb-sci-main-kpi{margin-top:0}
+@media(max-width:750px){
+ .rb-result-accordion>summary{padding:15px;min-height:58px}
+ .rb-result-accordion-title h2{font-size:14px}
+ .rb-result-accordion-body{padding:15px}
+}
+@media(max-width:460px){
+ .rb-result-accordion>summary{padding:13px 12px;gap:8px}
+ .rb-result-accordion-title h2{font-size:13px}
+ .rb-result-accordion-meta{gap:6px}
+ .rb-result-accordion-body{padding:12px}
+}

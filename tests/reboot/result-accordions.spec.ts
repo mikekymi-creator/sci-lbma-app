@@ -12,7 +12,7 @@ test("Right side calculator: detail and first-year SCI independently expand with
  await expect(detail.locator(".rb-section-count")).toHaveText("0 / 11");
  await expect(tax.locator(".rb-section-count")).toContainText("/ 10");
  await expect(page.locator(".rb-kpis")).toBeVisible();
- await detail.locator("summary").click();
+ await detail.locator(":scope > summary").click();
  await expect(detail).toHaveAttribute("open","");
  await expect(detail.getByText("Montant emprunté")).toBeVisible();
  await expect(tax).not.toHaveAttribute("open","");
@@ -20,11 +20,11 @@ test("Right side calculator: detail and first-year SCI independently expand with
  await page.getByLabel("Loyer mensuel hors charges",{exact:true}).fill("850");
  await expect(detail.locator(".rb-section-count")).toHaveText("11 / 11");
  await expect(detail.getByText("Coût total d'acquisition et travaux")).toBeVisible();
- await tax.locator("summary").click();
+ await tax.locator(":scope > summary").click();
  await expect(tax).toHaveAttribute("open","");
  await expect(tax.getByText("Cash-flow mensuel après IS estimé")).toBeVisible();
  await expect(tax.getByText("Résultat fiscal estimé du bien")).toBeVisible();
- await tax.locator("summary").click();
+ await tax.locator(":scope > summary").click();
  await expect(tax).not.toHaveAttribute("open","");
  await expect(detail).toHaveAttribute("open","");
 });
@@ -45,7 +45,7 @@ test("Dossier open-all and close-all include both right-side result panels, also
  await page.getByRole("button",{name:"Tout fermer"}).click();
  await expect(detail).not.toHaveAttribute("open","");
  await expect(tax).not.toHaveAttribute("open","");
- await detail.locator("summary").click();
+ await detail.locator(":scope > summary").click();
  await expect(detail).toHaveAttribute("open","");
  await expect(tax).not.toHaveAttribute("open","");
  await expect(page.locator(".rb-kpis")).toBeVisible();

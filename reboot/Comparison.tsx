@@ -1,6 +1,7 @@
 import {useEffect,useState} from "react";
 import type {Property} from "../lib/model";
 import type {SciSettings} from "../lib/sci";
+import {calculateSCIFirstYear} from "../lib/reboot-is-finance";
 import Photo from "../components/Photo";
 import {
  riskKeys,riskLabels,riskLevelLabels,comparisonRisksSchema,readComparisonRisks,
@@ -54,6 +55,7 @@ const financialSections:Section[]=[
   {label:"Rendement brut sur coût total",get:m=>m.result.grossYield,kind:"percent",emphasis:true,order:"more"},
   {label:"Rendement net de charges",get:m=>m.result.netYield,kind:"percent",emphasis:true,order:"more"},
   {label:"Cash-flow mensuel avant IS",get:m=>m.result.cashflow,emphasis:true,order:"more"},
+  {label:"Cash-flow mensuel après IS estimé",get:m=>calculateSCIFirstYear(m.scenario).monthlyCashflowAfterIS,emphasis:true,order:"more"},
   {label:"Capital remboursé année 1",get:m=>m.result.principalYear1,order:"more"},
   {label:"Cash-flow annuel + capital remboursé",get:m=>m.result.wealthYear1,order:"more"},
   {label:"Cash-on-cash annuel avant IS",get:m=>m.cashOnCash,kind:"percent",emphasis:true,order:"more"}
@@ -211,7 +213,7 @@ export default function PropertyComparison({left,right,financeDefaults,onBack,on
     <div className="rb-summary-head"><span>INDICATEUR</span><b>BIEN A</b><b>BIEN B</b></div>
     {financialSections.flatMap(s=>s.items).filter(x=>[
       "Coût total de l'opération","Cash-flow mensuel avant IS",
-      "Rendement net de charges","Capital mobilisé","Cash-on-cash annuel avant IS"
+      "Rendement net de charges","Capital mobilisé","Cash-on-cash annuel avant IS","Cash-flow mensuel après IS estimé"
      ].includes(x.label)).map(row=><FinanceLine key={row.label} item={row} metrics={metrics}/>)}
    </section>
    <section className="rb-panel rb-compare-table">

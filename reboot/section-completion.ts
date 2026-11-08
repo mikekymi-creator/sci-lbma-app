@@ -57,8 +57,10 @@ export function countSCI(s:RebootScenario):SectionCount{
   "otherCompanyResult","lossesCarried"
  ] as const;
  const durationNeeded=a?.capitalizedWorks!==null&&a?.capitalizedWorks!==undefined&&a.capitalizedWorks>0;
- const checked=keys.filter(key=>filledNumber(a?.[key])).length;
- return {filled:checked+Number(durationNeeded&&filledNumber(a?.worksLifeYears))+
+ // Advanced SCI fields start as null; entering 0 is deliberate and therefore complete.
+ const known=(v:number|null|undefined)=>v!==null&&v!==undefined&&Number.isFinite(v);
+ const checked=keys.filter(key=>known(a?.[key])).length;
+ return {filled:checked+Number(durationNeeded&&known(a?.worksLifeYears))+
   Number(a?.reducedRateEligible!==null&&a?.reducedRateEligible!==undefined),
   total:keys.length+Number(durationNeeded)+1};
 }

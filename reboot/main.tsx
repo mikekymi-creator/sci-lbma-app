@@ -5,6 +5,7 @@ import "../app/globals.css";
 import "./styles.css";
 import "./comparison.css";
 import "./is-finance.css";
+import "./section-accordions.css";
 createRoot(document.getElementById("root")!).render(<React.StrictMode><RebootApp/></React.StrictMode>);
 
 // Confined to /reboot/; never intercepts the old LBMA or other GitHub Pages paths.

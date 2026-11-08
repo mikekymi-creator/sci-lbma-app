@@ -1,9 +1,11 @@
 import type * as React from "react";
+import {useState} from "react";
 import type {RebootScenario,RebootResult} from "../lib/reboot-finance";
 import {calculateScenario} from "../lib/reboot-finance";
 import {SCIIsInputs,SCIIsResults} from "./SCIIsPanel";
 import SectionAccordion from "./SectionAccordion";
-import {countProject,countFinancing,countOperation,type SectionId} from "./section-completion";
+import ResultAccordion from "./ResultAccordion";
+import {countProject,countFinancing,countOperation,countOperationResults,type SectionId} from "./section-completion";
 
 type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void;compact?:boolean;
  sections?:{open:readonly SectionId[];onToggle:(id:SectionId,open:boolean)=>void}};
@@ -19,6 +21,13 @@ function GraphBar({label,value,max,kind}:{label:string;value:number|null;max:num
 }
 export default function Calculator({scenario:s,onChange,sections}:Props){
  const result:RebootResult=calculateScenario(s);
+ const [localResults,setLocalResults]=useState<SectionId[]>([]);
+ const isResultOpen=(id:"operation-results"|"is-results")=>
+  sections?sections.open.includes(id):localResults.includes(id);
+ const toggleResult=(id:"operation-results"|"is-results",open:boolean)=>{
+  if(sections){sections.onToggle(id,open);return;}
+  setLocalResults(prev=>open?[...new Set([...prev,id])]:prev.filter(x=>x!==id));
+ };
  const update=(key:NumericKey,value:number|null)=>{
   // Changing an old 0 estimate revokes any previous "verified zero" declaration.
   const advanced=s.advanced&&s.advanced.zeroVerified.includes(key as never)
@@ -103,7 +112,8 @@ export default function Calculator({scenario:s,onChange,sections}:Props){
    </div>
    {result.missing.length>0&&<div className="rb-callout" role="status">Pour compléter l'analyse : {result.missing.join(" · ")}.</div>}
    {result.errors.length>0&&<div className="rb-callout rb-error" role="alert">{result.errors.join(" ")}</div>}
-   <section className="rb-result-card"><div className="rb-card-title"><h2>Détail de l'opération</h2><span>Montants simulés</span></div>
+   <ResultAccordion id="operation-results" title="Détail de l'opération" subtitle="Montants simulés"
+    count={countOperationResults(result)} open={isResultOpen("operation-results")} onToggle={toggleResult}>
     <Amount label="Coût total d'acquisition et travaux" value={eur(result.totalCost)}/>
     <Amount label="dont frais de notaire" value={eur(result.notaryFees)}/>
     <Amount label="Montant emprunté" value={eur(result.loan)}/>
@@ -115,14 +125,14 @@ export default function Calculator({scenario:s,onChange,sections}:Props){
     <Amount label="Charges d'exploitation annuelles" value={eur(result.annualCharges)}/>
     <Amount label="Capital remboursé (année 1)" value={eur(result.principalYear1)}/>
     <div className="rb-line-item rb-emphasis"><span>Cash-flow annuel + capital remboursé (avant IS)</span><strong>{eur(result.wealthYear1)}</strong></div>
-   </section>
+   </ResultAccordion>
    <section className="rb-result-card"><div className="rb-card-title"><h2>Où part le loyer chaque mois ?</h2><span>Après vacance estimée</span></div>
     <GraphBar label="Loyer encaissé" kind="income" value={monthlyReceived} max={rentMax}/>
     <GraphBar label="Crédit et assurance" kind="cost" value={loanPayment} max={rentMax}/>
     <GraphBar label="Charges et gestion" kind="cost" value={monthlyCharges} max={rentMax}/>
     <GraphBar label="Cash-flow avant IS" kind="cash" value={result.cashflow} max={rentMax}/>
    </section>
-   <SCIIsResults scenario={s}/>
+   <SCIIsResults scenario={s} open={isResultOpen("is-results")} onToggle={toggleResult}/>
    <p className="rb-disclaimer">Simulation indicative avant impôt sur les sociétés, hors impôt personnel et coûts non saisis. La vacance est lissée sur 12 mois. Les zéros affichés sont des hypothèses manuelles à vérifier. Pas de prévision de revente.</p>
   </div>
  </div>;

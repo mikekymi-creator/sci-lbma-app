@@ -1,0 +1,33 @@
+/* SCI à l'IS — first-year manual fiscal projection. */
+.rb-sci-inputs{margin-top:27px;border-top:1px solid var(--rb-stroke);padding-top:18px}
+.rb-sci-inputs>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;border-radius:8px;background:#322823;border:1px solid #6a4230;padding:14px;color:#ffb391}
+.rb-sci-inputs>summary::-webkit-details-marker{display:none}
+.rb-sci-inputs>summary>span:first-child{display:grid;gap:4px}
+.rb-sci-inputs>summary strong{font-size:14px;color:#ffd0b6}
+.rb-sci-inputs>summary small{font-size:10px;color:#c4a495}
+.rb-sci-inputs>summary>span:last-child{font-size:18px}
+.rb-sci-inputs[open]>summary>span:last-child{transform:rotate(180deg)}
+.rb-sci-input-body{padding:15px 2px 2px}
+.rb-sci-input-body>p{color:var(--rb-muted);font-size:11px;line-height:1.6;margin:8px 0 15px}
+.rb-sci-input-body h3{font-size:12px;color:var(--rb-orange-soft);text-transform:none;margin:19px 0 8px;border-top:1px solid var(--rb-stroke);padding-top:14px}
+.rb-sci-input-body h3:first-of-type{border-top:0;padding-top:0}
+.rb-sci-input-body .rb-input-grid{gap:12px 10px}
+.rb-sci-input-body .rb-form-field>span{font-size:10px}
+.rb-sci-zero-list{background:#26252d;border:1px solid var(--rb-stroke);border-radius:7px;padding:12px;display:grid;gap:8px}
+.rb-sci-zero-list>.rb-check{margin:0;color:#d3d1dc;font-size:11px;line-height:1.4}
+.rb-sci-zero-list>small{font-size:10px;color:var(--rb-muted)}
+.rb-sci-results .rb-card-title{align-items:flex-start}
+.rb-sci-results .rb-card-title span{max-width:130px;text-align:right}
+.rb-sci-main-kpi{background:#32251e;border:1px solid #67442e;border-radius:7px;padding:15px;margin:4px 0 8px;display:grid;gap:6px}
+.rb-sci-main-kpi small{color:#f4b998;font-size:11px}
+.rb-sci-main-kpi strong{color:#ff875d;font-size:29px}
+.rb-sci-results .rb-line-item span{max-width:67%}
+.rb-sci-results .rb-line-item strong{white-space:normal}
+.rb-sci-results .rb-callout{margin:14px 0}
+.rb-sci-results .rb-callout strong{font-size:11px}
+.rb-sci-results ul{padding-left:18px;margin:8px 0 0}
+.rb-sci-results li{font-size:11px;line-height:1.5;margin:4px 0}
+.rb-sci-notes{margin-top:15px;border:1px solid var(--rb-stroke);background:#25252e;padding:12px;border-radius:7px}
+.rb-sci-notes>summary{font-size:11px;color:var(--rb-orange-soft);cursor:pointer;font-weight:700}
+.rb-sci-notes li{color:#bcb7c4}
+@media(max-width:460px){.rb-sci-input-body .rb-input-grid{grid-template-columns:1fr}.rb-sci-main-kpi strong{font-size:25px}}

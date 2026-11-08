@@ -8,6 +8,7 @@ import {defaultSciSettings,sciSettingsSchema,type SciSettings} from "../lib/sci"
 import {fromProperty,initialProperty,updateScenario,withDefaults} from "./property-adapter";
 import Calculator from "./Calculator";
 import InstallApp from "./InstallApp";
+import FamilyBackupImport from "./FamilyBackupImport";
 import PropertyComparison from "./Comparison";
 import {riskKeys,riskLabels,riskLevelLabels,blankComparisonRisks,type ComparisonRisks,type RiskKey,type RiskLevel} from "../lib/reboot-comparison";
 import Photo from "../components/Photo";
@@ -102,6 +103,7 @@ export default function RebootApp(){
  const [scenario,setScenario]=useState<RebootScenario>(withDefaults(null)),[freeName,setFreeName]=useState(""),[freeCity,setFreeCity]=useState("");
  const [search,setSearch]=useState(""),[filter,setFilter]=useState("Tous"),[focusVisit,setFocusVisit]=useState(0);
  const [mobileMenu,setMobileMenu]=useState(false);
+ const [syncBusy,setSyncBusy]=useState(false),[lastSynced,setLastSynced]=useState<string|null>(null);
  const [compareIds,setCompareIds]=useState<string[]>([]),[comparing,setComparing]=useState(false);
  const selectedSaved=properties.find(p=>p.id===selected)??null;
  useEffect(()=>{
@@ -131,10 +133,26 @@ export default function RebootApp(){
    db.from("properties").select("*").eq("household_id",household).order("created_at",{ascending:false}),
    db.from("visits").select("*,properties!inner(title,household_id)").eq("properties.household_id",household).order("starts_at"),
   ]);
-  if(p.error||v.error){setNotice("Impossible de recharger les dossiers.");return;}
-  setProperties(p.data??[]);setVisits(v.data??[]);
+  if(p.error||v.error){setNotice("Impossible de recharger les dossiers. Vérifie la connexion.");return;}
+  setProperties(p.data??[]);setVisits(v.data??[]);setLastSynced(new Date().toISOString());
  },[user?.id,household]);
  useEffect(()=>{void reload();},[reload]);
+ // When returning from another device or app, refresh the shared view automatically.
+ useEffect(()=>{
+  if(isDemo)return;
+  const onResume=()=>{if(document.visibilityState==="visible")void reload();};
+  document.addEventListener("visibilitychange",onResume);
+  return()=>document.removeEventListener("visibilitychange",onResume);
+ },[reload]);
+ // A fresh fetch refreshes the open property, but never overwrites unsaved edits.
+ useEffect(()=>{
+  if(dirty||!selectedSaved||selectedSaved.id!==draftId)return;
+  setPropertyDraft({...selectedSaved,finance:{...selectedSaved.finance}});
+ },[selectedSaved?.updated_at,selectedSaved?.id,dirty,draftId]);
+ const refresh=async()=>{
+  setSyncBusy(true);
+  try{await reload();}finally{setSyncBusy(false);}
+ };
  const go=(p:Page)=>{setPage(p);setSelected(null);setPropertyDraft(null);setDraftId(null);setDirty(false);setFeedback("");setMobileMenu(false);setComparing(false);if(p!=="properties")setCompareIds([]);window.scrollTo(0,0);};
  const toggleCompare=(id:string,checked:boolean)=>setCompareIds(prev=>checked?(prev.includes(id)||prev.length>=2?prev:[...prev,id]):prev.filter(x=>x!==id));
  const startComparison=()=>{if(compareIds.length!==2)return;setSelected(null);setComparing(true);setMobileMenu(false);window.scrollTo(0,0);};
@@ -174,7 +192,7 @@ export default function RebootApp(){
   if(!valid.success){setFeedback("Vérifie le nom du bien, le prix, les contacts et les hypothèses.");return;}
   setSaving(true);setFeedback("");
   try{
-   const payload={...valid.data,...(id?{id}:{}),...(id&&selectedSaved?.listing_images?{listing_images:selectedSaved.listing_images}:{})};
+   const payload={...valid.data,...(id?{id}:{}),...(id&&selectedSaved?.updated_at?{expected_updated_at:selectedSaved.updated_at}:{}),...(id&&selectedSaved?.listing_images?{listing_images:selectedSaved.listing_images}:{})};
    const response=await api("/api/properties","POST",payload);
    const saved=await response.json() as Property;
    applySaved(saved);setFeedback("Dossier enregistré.");
@@ -206,7 +224,7 @@ export default function RebootApp(){
   if(!current)throw new Error("Ce bien n'existe plus dans votre SCI.");
   const validated=propertySchema.safeParse({...current,finance:{...current.finance,comparison_risks:risks}});
   if(!validated.success)throw new Error("Les données de risque ne sont pas valides.");
-  const response=await api("/api/properties","POST",{...validated.data,id:current.id,...(current.listing_images?{listing_images:current.listing_images}:{})});
+  const response=await api("/api/properties","POST",{...validated.data,id:current.id,expected_updated_at:current.updated_at,...(current.listing_images?{listing_images:current.listing_images}:{})});
   const updated=await response.json() as Property;
   setProperties(old=>old.map(item=>item.id===updated.id?updated:item));
   return updated;
@@ -247,7 +265,7 @@ export default function RebootApp(){
      <span>{n.symbol}</span>{n.title}
     </button>)}
    </nav>
-   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>Version 0.2 · comparateur</small></div>
+   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>{isDemo?"Version 0.2 · démo":"Version 0.3 · SCI partagée"}</small></div>
     {isDemo?<span className="rb-demo-chip">Démonstration locale</span>:<button type="button" onClick={()=>void signout()}>Déconnexion</button>}
    </div>
   </aside>
@@ -256,6 +274,7 @@ export default function RebootApp(){
     <div className="rb-crumb">LBMA <span>/</span> {comparing?"Comparer deux biens":selected?"Fiche bien":navigation.find(n=>n.id===page)?.title}</div>
     <div className="rb-top-right">
      {families.length>1&&<select aria-label="Choisir SCI" value={household} onChange={e=>setHousehold(e.target.value)}>{families.map(f=><option key={f.household_id} value={f.household_id}>{f.households?.name??"SCI"}</option>)}</select>}
+     {!isDemo&&<button type="button" className="rb-sync-button" disabled={syncBusy} onClick={()=>void refresh()} aria-label="Actualiser les données familiales">{syncBusy?"Actualisation…":"↻ Actualiser"}</button>}
      <span>{isDemo?"Mode démo":user.email}</span>
      <button className="rb-mobile-menu" aria-label="Ouvrir le menu" onClick={()=>setMobileMenu(!mobileMenu)}>☰</button>
     </div>
@@ -264,6 +283,10 @@ export default function RebootApp(){
    {isDemo&&<div className="rb-demo-banner"><strong>V0.2 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
     <button onClick={localBackup}>Sauvegarder mes essais</button>
     <InstallApp/>
+   </div>}
+   {!isDemo&&<div className="rb-family-banner" role="status"><strong><span aria-hidden="true">●</span> SCI partagée</strong>
+    <span>Biens, risques, visites et commentaires enregistrés dans votre espace familial Supabase.</span>
+    <small>{lastSynced?"Dernière actualisation : "+new Date(lastSynced).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):"Chargement des données…"}</small>
    </div>}
    <div className="rb-content">
     {notice&&<div className="rb-notice" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Fermer">×</button></div>}
@@ -330,6 +353,7 @@ export default function RebootApp(){
     {!selected&&page==="settings"&&<>
      <div className="rb-heading"><div><span className="rb-eyebrow">ADMINISTRATION</span><h1>Paramètres SCI</h1><p>Informations familiales et hypothèses des prochains projets.</p></div></div>
      <SciEditor household={household} admin={role==="admin"} initial={sci} onSaved={value=>{setSci(value);setFamilies(old=>old.map(f=>f.household_id===household?{...f,households:{...f.households,sci_settings:value}}:f));}}/>
+     {!isDemo&&<FamilyBackupImport household={household} onImported={reload}/> }
     </>}
     {selected&&propertyDraft&&<>
      <div className="rb-detail-top"><button className="rb-back" onClick={()=>{setSelected(null);setPropertyDraft(null);setDraftId(null);}}>← Mes biens</button>
@@ -398,7 +422,7 @@ export default function RebootApp(){
     </>}
     </>}
    </div>
-   <footer className="rb-footer"><span>LBMA 2.0 · V0.2</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
+   <footer className="rb-footer"><span>LBMA 2.0 · {isDemo?"V0.2 · Démo":"V0.3 · SCI partagée"}</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
   </main>
  </div>;
 }

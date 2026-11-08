@@ -41,7 +41,7 @@ test("An explicitly edited zero counts as filled and survives JSON serialization
 });
 test("Filled property fields, comments and tax fields are counted by real value",()=>{
  const p={...property(),title:"Maison A",city:"Valenciennes",surface:85,description:"T3",dpe:"D" as const,listing_url:"https://exemple.test"};
- assert.deepEqual(countMain(p),{filled:6,total:7});
+ assert.deepEqual(countMain(p),{filled:7,total:7});
  const risks=blankComparisonRisks();
  risks.building={level:"high",comment:""};
  risks.rental={level:"unknown",comment:"Vacance à vérifier"};
@@ -53,7 +53,7 @@ test("Filled property fields, comments and tax fields are counted by real value"
   recoverableChargesAnnual:0,tenantRecoveriesAnnual:0,accountingAnnual:null,cfeAnnual:null,
   maintenanceAnnual:null,otherCompanyResult:0,lossesCarried:0,reducedRateEligible:false,zeroVerified:[]
  }};
- assert.deepEqual(countSCI(s),{filled:8,total:12});
+ assert.deepEqual(countSCI(s),{filled:9,total:12});
 });
 test("Cash-only financing and grouped lots have sensible denominators",()=>{
  const s=initialScenario();

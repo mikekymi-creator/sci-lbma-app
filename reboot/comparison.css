@@ -145,3 +145,10 @@
  .rb-risk-actions .rb-btn{min-height:52px;padding:7px;font-size:10px}
  .rb-comparison-screen>.rb-panel{padding:15px}
 }
+
+/* Progressive Web App install affordance: shown only on phones in the preview. */
+.rb-install-widget{position:relative;display:none;min-width:0}
+.rb-demo-banner .rb-install-widget>.rb-install-btn{margin:0;border-radius:6px;border:1px solid #e17b54;background:#fa663f;color:#1b1310;padding:8px 11px;font-size:11px;font-weight:750;white-space:normal}
+.rb-install-help{position:absolute;right:0;top:calc(100% + 7px);width:min(315px,calc(100vw - 30px));background:#24242b;border:1px solid #d07455;border-radius:8px;padding:13px 34px 13px 13px;box-shadow:0 10px 25px #0009;z-index:11;color:#fff0e7;font-size:11px;line-height:1.55}
+.rb-install-help button{position:absolute;top:2px;right:5px;margin:0!important;font-size:18px!important;padding:1px 6px!important;border:0!important;background:transparent!important;color:white!important}
+@media(max-width:750px){.rb-install-widget{display:block}.rb-demo-banner .rb-install-widget{margin-left:0}}

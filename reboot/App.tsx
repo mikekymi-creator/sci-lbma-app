@@ -7,6 +7,7 @@ import {calculateScenario,type RebootScenario} from "../lib/reboot-finance";
 import {defaultSciSettings,sciSettingsSchema,type SciSettings} from "../lib/sci";
 import {fromProperty,initialProperty,updateScenario,withDefaults} from "./property-adapter";
 import Calculator from "./Calculator";
+import InstallApp from "./InstallApp";
 import PropertyComparison from "./Comparison";
 import {riskKeys,riskLabels,riskLevelLabels,blankComparisonRisks,type ComparisonRisks,type RiskKey,type RiskLevel} from "../lib/reboot-comparison";
 import Photo from "../components/Photo";
@@ -262,6 +263,7 @@ export default function RebootApp(){
    <nav className={"rb-mobile-nav "+(mobileMenu?"open":"")} aria-label="Navigation mobile">{navigation.map(n=><button className={page===n.id?"active":""} key={n.id} onClick={()=>go(n.id)}>{n.title}</button>)}</nav>
    {isDemo&&<div className="rb-demo-banner"><strong>V0.2 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
     <button onClick={localBackup}>Sauvegarder mes essais</button>
+    <InstallApp/>
    </div>}
    <div className="rb-content">
     {notice&&<div className="rb-notice" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Fermer">×</button></div>}

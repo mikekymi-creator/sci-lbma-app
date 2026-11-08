@@ -1,7 +1,7 @@
 name: LBMA 2.0 · V0.2 — validation
 on:
   push:
-    branches: [feature/lbma-reboot-v0, feature/lbma-reboot-v0-2-comparator]
+    branches: [feature/lbma-reboot-v0, feature/lbma-reboot-v0-2-comparator, feature/lbma-reboot-v0-2-pwa-install]
   workflow_dispatch:
 permissions:
   contents: read

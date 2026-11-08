@@ -100,12 +100,22 @@ export function calculateSCIFirstYear(s:RebootScenario):SCIFirstYear{
  const losses=need(a.lossesCarried,"Déficits antérieurs reportables");
  if(a.reducedRateEligible===null)missing.push("Éligibilité de la SCI au taux réduit de 15 %");
  if(a.capitalizedWorks!==null&&a.capitalizedWorks>s.works)errors.push("La part de travaux immobilisée ne peut pas dépasser les travaux à l'achat.");
+ if(a.landSharePct!==null&&(a.landSharePct<0||a.landSharePct>100))errors.push("Part de terrain invalide (0 à 100 %).");
+ if(a.buildingLifeYears!==null&&(!Number.isInteger(a.buildingLifeYears)||a.buildingLifeYears<1))errors.push("Durée du bâtiment : 1 an minimum.");
+ if(a.worksLifeYears!==null&&(!Number.isInteger(a.worksLifeYears)||a.worksLifeYears<1))errors.push("Durée des travaux : 1 an minimum.");
+ for(const [key,label] of [
+  ["recoverableChargesAnnual","Charges récupérables"],["tenantRecoveriesAnnual","Remboursements locataires"],
+  ["accountingAnnual","Comptabilité"],["cfeAnnual","CFE"],["maintenanceAnnual","Entretien"],
+  ["capitalizedWorks","Travaux immobilisés"],["lossesCarried","Déficits antérieurs"]
+ ] as const){
+  if(a[key]!==null&&(a[key]!<0||!Number.isFinite(a[key]!)))errors.push(label+" : montant invalide.");
+ }
  if(a.tenantRecoveriesAnnual!==null&&a.recoverableChargesAnnual!==null&&a.tenantRecoveriesAnnual>a.recoverableChargesAnnual)
   notes.push("Les remboursements locataires dépassent les charges récupérables : vérifier cette hypothèse.");
  // Distinguish capitalized purchase works from later deductible maintenance.
- const buildingDepreciation=l&&life&&s.price!==null
+ const buildingDepreciation=l&&life&&a.buildingLifeYears!==null&&a.buildingLifeYears>0&&s.price!==null
   ?two(s.price*(1-a.landSharePct!/100)/a.buildingLifeYears!):null;
- const worksDepreciation=cap&&workLife
+ const worksDepreciation=cap&&workLife&&(a.capitalizedWorks===0||a.worksLifeYears!==null&&a.worksLifeYears>0)
   ?two(a.capitalizedWorks===0?0:a.capitalizedWorks!/a.worksLifeYears!):null;
  const depreciationTotal=buildingDepreciation!==null&&worksDepreciation!==null
   ?two(buildingDepreciation+worksDepreciation):null;

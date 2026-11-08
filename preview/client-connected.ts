@@ -5,16 +5,23 @@ import {analyse} from "../lib/finance";
 import {canonicalListingUrl} from "../lib/listing-url";
 import {z} from "zod";
 export function money(n:number|null){return n===null?"À renseigner":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);}
-const schema=propertySchema.extend({id:z.string().uuid().optional(),listing_images:z.array(z.string().url().refine(s=>s.startsWith("https://"))).max(12).optional()});
+const schema=propertySchema.extend({id:z.string().uuid().optional(),expected_updated_at:z.string().datetime({offset:true}).optional(),listing_images:z.array(z.string().url().refine(s=>s.startsWith("https://"))).max(12).optional()});
 export async function api(path:string,method="GET",body?:unknown):Promise<Response>{
  const db=supabase;if(!db)throw new Error("La base partagée n’est pas configurée.");
  const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user)throw new Error("Reconnectez-vous pour continuer.");
  if(path==="/api/properties"&&method==="POST"){
   const parsed=schema.safeParse(body);if(!parsed.success)throw new Error("Vérifiez les champs de la fiche avant de l’enregistrer.");
-  const {id,...input}=parsed.data,a=analyse(input);
+  const {id,expected_updated_at,...input}=parsed.data,a=analyse(input);
   const row={...input,listing_url:input.listing_url?canonicalListingUrl(input.listing_url):null,analysis_ready:a.complete&&Boolean(input.city.trim()&&input.description.trim()),score:a.score??0,cashflow:a.cashflow??0};
-  const result=id?await db.from("properties").update(row).eq("id",id).eq("household_id",input.household_id).select().single():await db.from("properties").insert({...row,owner_id:auth.user.id}).select().single();
+  // Optimistic concurrency: a second device must not silently overwrite the first.
+  if(id&&!expected_updated_at)throw new Error("Recharge la fiche avant de l’enregistrer : sa version n’est pas connue.");
+  const result=id
+   ?await (expected_updated_at
+    ?db.from("properties").update(row).eq("id",id).eq("household_id",input.household_id).eq("updated_at",expected_updated_at).select().maybeSingle()
+    :db.from("properties").update(row).eq("id",id).eq("household_id",input.household_id).select().maybeSingle())
+   :await db.from("properties").insert({...row,owner_id:auth.user.id}).select().single();
   if(result.error)throw new Error(result.error.code==="23505"?"Cette annonce existe déjà dans la SCI.":"Enregistrement refusé. Vérifiez votre accès à la SCI et l’installation de la base.");
+  if(id&&!result.data)throw new Error("Cette fiche a été modifiée depuis un autre appareil. Copie tes changements si nécessaire, puis actualise les données de la SCI avant de recommencer.");
   return Response.json(result.data);
  }
  const id=path.match(/^\/api\/properties\/([^/]+)\/pdf$/)?.[1];

@@ -62,7 +62,7 @@ test("V0.2 mobile: risk editing, no horizontal overflow, persistence and same-ba
  await expect(page.getByRole("textbox",{name:"Commentaire État du bâtiment — DÉMO · Appartement Beauvais"})).toHaveValue("Toiture à contrôler pendant la visite.");
  await page.getByRole("button",{name:"← Mes biens"}).click();
  await page.getByRole("button",{name:/DÉMO · Appartement Beauvais/}).click();
- await page.getByText("Risques et contraintes — saisir manuellement").click();
+ await page.locator('[data-section="risks"] > summary').click();
  await expect(page.getByRole("combobox",{name:"Niveau de risque — État du bâtiment"})).toHaveValue("high");
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

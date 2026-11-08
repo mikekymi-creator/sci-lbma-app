@@ -33,7 +33,7 @@ jobs:
           ref: feature/lbma-reboot-v0
           path: reboot-worktree
           persist-credentials: false
-      - name: Build LBMA 2.0 V0.4.2 financial result accordions PWA separately
+      - name: Build LBMA 2.0 V0.4.3 existing dossier collapsed by default
         env:
           LBMA_DEPLOYMENT_MODE: demo
           LBMA_REBOOT_BASE: /sci-lbma-app/reboot/
@@ -59,7 +59,7 @@ jobs:
             echo "Family PWA activation requires the project URL and a PUBLIC Supabase key."
             exit 1
           fi
-      - name: Build LBMA 2.0 V0.4.2 authenticated family PWA
+      - name: Build LBMA 2.0 V0.4.3 authenticated family PWA
         if: ${{ vars.LBMA_FAMILY_ENABLED == 'true' && vars.LBMA_FAMILY_RLS_CONFIRMED == 'true' }}
         env:
           LBMA_DEPLOYMENT_MODE: connected

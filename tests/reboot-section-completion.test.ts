@@ -16,8 +16,8 @@ function property(){
   listing_url:null,agency_name:"",agency_phone:"",agency_email:"",notes:"",finance:{...defaultFinance}
  };
 }
-test("Accordion keys remain stable and only info and project are opened initially",()=>{
- assert.deepEqual(initialOpenSections,["main","project"]);
+test("Accordion keys remain stable and all sections are closed initially",()=>{
+ assert.deepEqual(initialOpenSections,[]);
  assert.deepEqual(propertySections,["main","project","financing","operation","sci","risks","contact","collaboration","operation-results","is-results"]);
 });
 test("Empty property and initial default zeros are not declared completed",()=>{

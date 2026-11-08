@@ -31,10 +31,12 @@ test("Reboot desktop: four simple screens, transparent finance and save-as-prope
  await expect(page.getByRole("heading",{name:"DÉMO · Projet calculateur"})).toBeVisible();
  await expect(page.getByText("Dossier enregistré.")).toBeVisible();
  await expect(page.getByLabel("Prix d'achat",{exact:true})).toHaveValue("60000");
+ await page.locator('[data-section="contact"] > summary').click();
  await page.getByLabel("Notes familiales").fill("Projet à étudier en famille");
  await page.getByRole("button",{name:"Enregistrer le dossier"}).click();
  await page.reload();
  await expect(page.getByRole("heading",{name:"DÉMO · Projet calculateur"})).toBeVisible().catch(async()=>{await page.getByRole("navigation",{name:"Navigation principale"}).getByRole("button",{name:/Mes biens/}).click();await page.getByText("DÉMO · Projet calculateur").click();});
+ await page.locator('[data-section="contact"] > summary').click();
  await expect(page.getByLabel("Notes familiales")).toHaveValue("Projet à étudier en famille");
  expect(unexpected).toEqual([]);
 });
@@ -48,6 +50,7 @@ test("Reboot mobile: property updates and per-lot rent stay after reload",async(
  await page.getByLabel("Commune du bien",{exact:true}).fill("Beuvrages");
  await page.getByLabel("Surface du bien",{exact:true}).fill("110");
  await page.getByLabel("Prix d'achat",{exact:true}).fill("100000");
+ await page.locator('[data-section="operation"] > summary').click();
  await page.getByLabel("Loyer mensuel hors charges",{exact:true}).fill("700");
  await page.getByRole("button",{name:"+ Détailler les loyers par logement"}).click();
  await page.getByLabel("Nom du lot 1").fill("T2");
@@ -58,14 +61,17 @@ test("Reboot mobile: property updates and per-lot rent stay after reload",async(
  await expect(page.getByText("Loyers mensuels cumulés")).toContainText("1");
  await page.getByRole("button",{name:"Enregistrer le dossier"}).click();
  await expect(page.getByText("Dossier enregistré.")).toBeVisible();
+ await page.locator('[data-section="contact"] > summary').click();
  await page.getByLabel("Notes familiales").fill("Demander les taxes");
  await page.getByRole("button",{name:"Enregistrer le dossier"}).click();
  await page.reload();
  await page.getByRole("button",{name:"Ouvrir le menu"}).click();
  await page.getByRole("navigation",{name:"Navigation mobile"}).getByRole("button",{name:"Mes biens"}).click();
  await page.getByText("DÉMO · Maison 2 logements").click();
+ await page.locator('[data-section="operation"] > summary').click();
  await expect(page.getByLabel("Nom du lot 2")).toHaveValue("T3");
  await expect(page.getByLabel("Loyer du lot 2")).toHaveValue("700");
+ await page.locator('[data-section="contact"] > summary').click();
  await expect(page.getByLabel("Notes familiales")).toHaveValue("Demander les taxes");
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

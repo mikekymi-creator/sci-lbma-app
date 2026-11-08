@@ -1,8 +1,11 @@
 import type {RebootScenario,AdvancedSci} from "../lib/reboot-finance";
 import {initialAdvancedSci,zeroVerifiedKeys} from "../lib/reboot-finance";
 import {calculateSCIFirstYear,ZERO_CHECK_LABELS} from "../lib/reboot-is-finance";
+import SectionAccordion from "./SectionAccordion";
+import {countSCI,type SectionId} from "./section-completion";
 
-type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void};
+type Props={scenario:RebootScenario;onChange:(v:RebootScenario)=>void;
+ sections?:{open:readonly SectionId[];onToggle:(id:SectionId,open:boolean)=>void}};
 const fmt=(n:number|null)=>n===null?"—":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
 const signed=(n:number|null)=>n===null?"—":(n>0?"+":"")+fmt(n);
 const amountKeys=[
@@ -19,14 +22,12 @@ const amountKeys=[
  ["lossesCarried","Déficits antérieurs reportables","€",1e9]
 ] as const;
 
-export function SCIIsInputs({scenario,onChange}:Props){
+export function SCIIsInputs({scenario,onChange,sections}:Props){
  const a=scenario.advanced??initialAdvancedSci();
  const edit=(patch:Partial<AdvancedSci>)=>onChange({...scenario,advanced:{...a,...patch}});
  const num=(value:string)=>value===""?null:Number(value);
  const zeroFields=zeroVerifiedKeys.filter(key=>scenario[key]===0&&!(key==="insurancePct"&&(!scenario.credit||scenario.downPayment===0&&scenario.price===null)));
- return <details className="rb-sci-inputs">
-  <summary><span><strong>SCI à l'IS · Analyse avancée</strong><small>Amortissements, charges locatives, fiscalité prévisionnelle</small></span><span aria-hidden="true">⌄</span></summary>
-  <div className="rb-sci-input-body">
+ const inputs=<div className="rb-sci-input-body">
    <p className="rb-muted">Étude indicative sur douze mois, avant validation comptable. Un champ vide est <strong>inconnu</strong> ; saisir 0 signifie réellement « aucun » pour ce poste.</p>
    <h3>Amortissements comptables</h3>
    <p>Le terrain ne s'amortit pas. Les durées et la répartition par composants doivent être validées par le comptable.</p>
@@ -63,7 +64,13 @@ export function SCIIsInputs({scenario,onChange}:Props){
     </label>)}
    </div>
    <p className="rb-disclaimer">Hypothèses fiscales : taux normal 25 % ; 15 % sur 42 500 € sous conditions. Les résultats ne tiennent pas compte des régularisations comptables particulières, de la TVA ou des dividendes.</p>
-  </div>
+  </div>;
+ if(sections)return <SectionAccordion id="sci" title="SCI à l'IS · Analyse avancée"
+  description="Amortissements, charges locatives et fiscalité" count={countSCI(scenario)}
+  open={sections.open.includes("sci")} onToggle={sections.onToggle}>{inputs}</SectionAccordion>;
+ return <details className="rb-sci-inputs">
+  <summary><span><strong>SCI à l'IS · Analyse avancée</strong><small>Amortissements, charges locatives, fiscalité prévisionnelle</small></span><span aria-hidden="true">⌄</span></summary>
+  {inputs}
  </details>;
 }
 function Line({label,value,emphasis=false}:{label:string;value:string;emphasis?:boolean}){

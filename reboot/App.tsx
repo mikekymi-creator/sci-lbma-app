@@ -7,6 +7,8 @@ import {calculateScenario,type RebootScenario} from "../lib/reboot-finance";
 import {defaultSciSettings,sciSettingsSchema,type SciSettings} from "../lib/sci";
 import {fromProperty,initialProperty,updateScenario,withDefaults} from "./property-adapter";
 import Calculator from "./Calculator";
+import SectionAccordion from "./SectionAccordion";
+import {propertySections,initialOpenSections,countMain,countRisks,countContact,countCollaboration,type SectionId} from "./section-completion";
 import InstallApp from "./InstallApp";
 import FamilyBackupImport from "./FamilyBackupImport";
 import PropertyComparison from "./Comparison";
@@ -103,6 +105,11 @@ export default function RebootApp(){
  const [scenario,setScenario]=useState<RebootScenario>(withDefaults(null)),[freeName,setFreeName]=useState(""),[freeCity,setFreeCity]=useState("");
  const [search,setSearch]=useState(""),[filter,setFilter]=useState("Tous"),[focusVisit,setFocusVisit]=useState(0);
  const [mobileMenu,setMobileMenu]=useState(false);
+ const [openSections,setOpenSections]=useState<SectionId[]>([...initialOpenSections]);
+ const [collabCounts,setCollabCounts]=useState({visits:0,comments:0});
+ const toggleSection=(id:SectionId,open:boolean)=>{
+  setOpenSections(previous=>open?[...new Set([...previous,id])]:previous.filter(value=>value!==id));
+ };
  const [syncBusy,setSyncBusy]=useState(false),[lastSynced,setLastSynced]=useState<string|null>(null);
  const [compareIds,setCompareIds]=useState<string[]>([]),[comparing,setComparing]=useState(false);
  const selectedSaved=properties.find(p=>p.id===selected)??null;
@@ -160,11 +167,13 @@ export default function RebootApp(){
  function openProperty(p:Property){
   setPage("properties");setComparing(false);setSelected(p.id);setDraftId(p.id);
   setPropertyDraft({...p,finance:{...p.finance}});
+  setOpenSections([...initialOpenSections]);setCollabCounts({visits:0,comments:0});
   setDirty(false);setFeedback("");setMobileMenu(false);window.scrollTo(0,0);
  }
  function newProperty(){
   if(!household)return;
   setPage("properties");setComparing(false);setSelected("new");setDraftId(null);setPropertyDraft(initialProperty(household,sci));
+  setOpenSections([...initialOpenSections]);setCollabCounts({visits:0,comments:0});
   setDirty(false);setFeedback("");setMobileMenu(false);window.scrollTo(0,0);
  }
  function editProperty<K extends keyof PropertyInput>(key:K,value:PropertyInput[K]){
@@ -265,7 +274,7 @@ export default function RebootApp(){
      <span>{n.symbol}</span>{n.title}
     </button>)}
    </nav>
-   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>{isDemo?"Version 0.2 · démo":"Version 0.4 · SCI partagée"}</small></div>
+   <div className="rb-sidebar-bottom"><div><strong>LBMA 2.0</strong><small>{isDemo?"Version 0.4.1 · démo":"Version 0.4.1 · SCI partagée"}</small></div>
     {isDemo?<span className="rb-demo-chip">Démonstration locale</span>:<button type="button" onClick={()=>void signout()}>Déconnexion</button>}
    </div>
   </aside>
@@ -280,7 +289,7 @@ export default function RebootApp(){
     </div>
    </header>
    <nav className={"rb-mobile-nav "+(mobileMenu?"open":"")} aria-label="Navigation mobile">{navigation.map(n=><button className={page===n.id?"active":""} key={n.id} onClick={()=>go(n.id)}>{n.title}</button>)}</nav>
-   {isDemo&&<div className="rb-demo-banner"><strong>V0.4 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
+   {isDemo&&<div className="rb-demo-banner"><strong>V0.4.1 · Démonstration</strong> Données fictives et essais stockés uniquement dans ce navigateur. Aucune donnée publique ni annonce recherchée.
     <button onClick={localBackup}>Sauvegarder mes essais</button>
     <InstallApp/>
    </div>}
@@ -365,8 +374,13 @@ export default function RebootApp(){
      </div>
      <div className="rb-heading rb-detail-heading"><div><span className="rb-eyebrow">DOSSIER IMMOBILIER</span><h1>{propertyDraft.title||"Nouveau bien"}</h1><p>Données entièrement modifiables, calculs mis à jour en direct.</p></div></div>
      {feedback&&<div className="rb-notice" role="status">{feedback}</div>}
-     <section className="rb-panel rb-property-main">
-      <div className="rb-panel-heading"><h2>Informations principales</h2><span>Édition directe</span></div>
+     <div className="rb-accordion-toolbar">
+      <span>Rubriques de la fiche · progression des informations renseignées</span>
+      <div><button className="rb-btn rb-btn-outline" type="button" onClick={()=>setOpenSections([...propertySections])}>Tout ouvrir</button>
+       <button className="rb-btn rb-btn-outline" type="button" onClick={()=>setOpenSections([])}>Tout fermer</button></div>
+     </div>
+     <SectionAccordion id="main" title="Informations principales" count={countMain(propertyDraft)}
+      open={openSections.includes("main")} onToggle={toggleSection}>
       <div className="rb-basic-fields">
        <label>Nom du bien<input aria-label="Nom du bien" required maxLength={200} value={propertyDraft.title} onChange={e=>editProperty("title",e.target.value)}/></label>
        <label>Commune<input aria-label="Commune du bien" maxLength={200} value={propertyDraft.city} onChange={e=>editProperty("city",e.target.value)}/></label>
@@ -376,11 +390,12 @@ export default function RebootApp(){
        <label>Lien annonce<input aria-label="Lien de l'annonce" type="url" value={propertyDraft.listing_url??""} onChange={e=>editProperty("listing_url",e.target.value||null)} placeholder="https://"/></label>
        <label className="rb-full-field">Description<textarea aria-label="Description du bien" rows={3} maxLength={20000} value={propertyDraft.description} onChange={e=>editProperty("description",e.target.value)}/></label>
       </div>
-     </section>
+     </SectionAccordion>
      <div className="rb-heading rb-inline-heading"><div><span className="rb-eyebrow">ÉTUDE FINANCIÈRE</span><h2>Calculateur du bien</h2></div></div>
-     <Calculator scenario={currentScenario} onChange={changePropertyScenario}/>
-     <details className="rb-panel rb-property-risk-editor">
-      <summary>Risques et contraintes — saisir manuellement</summary>
+     <Calculator scenario={currentScenario} onChange={changePropertyScenario}
+      sections={{open:openSections,onToggle:toggleSection}}/>
+     <SectionAccordion id="risks" title="Risques et contraintes" description="Saisie manuelle"
+      count={countRisks(propertyDraft)} open={openSections.includes("risks")} onToggle={toggleSection}>
       <p>Ces évaluations sont enregistrées dans la fiche et apparaissent dans le comparateur. Chaque risque reste « Inconnu » tant qu'il n'a pas été évalué.</p>
       <div className="rb-property-risk-grid">
        {riskKeys.map(key=>{
@@ -397,32 +412,43 @@ export default function RebootApp(){
         </div>;
        })}
       </div>
-     </details>
-     <div className="rb-property-extra">
-      <section className="rb-panel"><h2>Notes et contact</h2>
-       <label>Notes familiales<textarea aria-label="Notes familiales" maxLength={20000} rows={5} value={propertyDraft.notes} onChange={e=>editProperty("notes",e.target.value)}/></label>
+     </SectionAccordion>
+     <SectionAccordion id="contact" title="Notes et contacts" count={countContact(propertyDraft)}
+      open={openSections.includes("contact")} onToggle={toggleSection}>
+      <div className="rb-contact-inputs">
+       <label>Notes familiales<textarea aria-label="Notes familiales" maxLength={20000} rows={5}
+        value={propertyDraft.notes} onChange={e=>editProperty("notes",e.target.value)}/></label>
        <div className="rb-basic-fields">
-        <label>Agence / contact<input value={propertyDraft.agency_name} onChange={e=>editProperty("agency_name",e.target.value)}/></label>
-        <label>Téléphone<input type="tel" value={propertyDraft.agency_phone} onChange={e=>editProperty("agency_phone",e.target.value)}/></label>
-        <label>E-mail<input type="email" value={propertyDraft.agency_email} onChange={e=>editProperty("agency_email",e.target.value)}/></label>
+        <label>Agence / contact<input aria-label="Agence / contact" value={propertyDraft.agency_name}
+         onChange={e=>editProperty("agency_name",e.target.value)}/></label>
+        <label>Téléphone<input type="tel" aria-label="Téléphone du contact" value={propertyDraft.agency_phone}
+         onChange={e=>editProperty("agency_phone",e.target.value)}/></label>
+        <label>E-mail<input type="email" aria-label="E-mail du contact" value={propertyDraft.agency_email}
+         onChange={e=>editProperty("agency_email",e.target.value)}/></label>
        </div>
        {isRealUrl(propertyDraft.listing_url)&&<a href={propertyDraft.listing_url!} target="_blank" rel="noreferrer">Ouvrir l'annonce ↗</a>}
-      </section>
-      <section className="rb-panel rb-dossier-actions"><h2>Gestion du dossier</h2>
-       <p>Enregistrez les changements avant d'ajouter des photos ou des visites.</p>
-       <button className="rb-btn rb-btn-primary" disabled={saving||!canSave} onClick={()=>void saveProperty(propertyDraft,draftId)}>Enregistrer les modifications</button>
-       {selectedSaved&&<button className="rb-btn rb-btn-danger" disabled={saving} onClick={()=>void deleteProperty()}>Supprimer le bien</button>}
-      </section>
-     </div>
-     {selectedSaved&&<section className="rb-collaboration"><h2>Photos, visites et commentaires</h2>
-      <div className="rb-photos"><PropertyMedia property={selectedSaved} onSaved={p=>{applySaved(p);}}/></div>
-      <CollaborationPanel propertyId={selectedSaved.id} userId={user.id} focusVisit={focusVisit} onChanged={()=>void reload()}/>
-     </section>}
+      </div>
+     </SectionAccordion>
+     <section className="rb-panel rb-dossier-actions">
+      <h2>Gestion du dossier</h2>
+      <p>Enregistrez les changements avant d'ajouter des photos ou des visites.</p>
+      <button className="rb-btn rb-btn-primary" disabled={saving||!canSave} onClick={()=>void saveProperty(propertyDraft,draftId)}>Enregistrer les modifications</button>
+      {selectedSaved&&<button className="rb-btn rb-btn-danger" disabled={saving} onClick={()=>void deleteProperty()}>Supprimer le bien</button>}
+     </section>
+     {selectedSaved&&<SectionAccordion id="collaboration" title="Photos, visites et commentaires"
+      description="Suivi familial" count={countCollaboration(selectedSaved.photo_paths?.length??0,collabCounts.visits,collabCounts.comments)}
+      open={openSections.includes("collaboration")} onToggle={toggleSection}>
+      <div className="rb-collaboration">
+       <div className="rb-photos"><PropertyMedia property={selectedSaved} onSaved={p=>{applySaved(p);}}/></div>
+       <CollaborationPanel propertyId={selectedSaved.id} userId={user.id} focusVisit={focusVisit} onChanged={()=>void reload()}
+        onCounts={(visits,comments)=>setCollabCounts(previous=>(previous.visits===visits&&previous.comments===comments)?previous:{visits,comments})}/>
+      </div>
+     </SectionAccordion>}
      {!selectedSaved&&<p className="rb-callout">Enregistre d'abord le nouveau dossier pour activer l'ajout de photos, les visites et les commentaires.</p>}
     </>}
     </>}
    </div>
-   <footer className="rb-footer"><span>LBMA 2.0 · {isDemo?"V0.4 · Démo":"V0.4 · SCI partagée"}</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
+   <footer className="rb-footer"><span>LBMA 2.0 · {isDemo?"V0.4.1 · Démo":"V0.4.1 · SCI partagée"}</span><span>Recherche et simulations manuelles · Pas de données publiques automatiques</span></footer>
   </main>
  </div>;
 }

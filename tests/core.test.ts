@@ -97,3 +97,5 @@ import "./reboot-finance.test";
 import "./reboot-comparison.test";
 
 import "./reboot-is-finance.test";
+
+import "./reboot-section-completion.test";

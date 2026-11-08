@@ -46,6 +46,7 @@ test("Family users share property and stale edits do not overwrite the latest ve
   await a.getByLabel("Nom du bien").fill("Immeuble familial");
   await a.getByLabel("Commune du bien").fill("Valenciennes");
   await a.getByLabel("Prix d'achat",{exact:true}).fill("100000");
+  await a.locator('[data-section="operation"] > summary').click();
   await a.getByLabel("Loyer mensuel hors charges").fill("1100");
   await a.getByRole("button",{name:"Enregistrer le dossier"}).click();
   await expect(a.getByText("Dossier enregistré.")).toBeVisible();
@@ -57,6 +58,7 @@ test("Family users share property and stale edits do not overwrite the latest ve
   await a.getByLabel("Prix d'achat",{exact:true}).fill("110000");
   await a.getByRole("button",{name:"Enregistrer le dossier"}).click();
   await expect(a.getByText("Dossier enregistré.")).toBeVisible();
+  await b.locator('[data-section="contact"] > summary').click();
   await b.getByLabel("Notes familiales").fill("Mon contrôle depuis le téléphone");
   await b.getByRole("button",{name:"Enregistrer le dossier"}).click();
   await expect(b.getByText(/modifiée depuis un autre appareil/)).toBeVisible();

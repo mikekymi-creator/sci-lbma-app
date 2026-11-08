@@ -54,6 +54,9 @@ test("Family users share property and stale edits do not overwrite the latest ve
   await b.getByRole("button",{name:"Ouvrir le menu"}).click();
   await b.getByRole("navigation",{name:"Navigation mobile"}).getByRole("button",{name:"Mes biens"}).click();
   await b.getByRole("button",{name:/Immeuble familial/}).click();
+  await expect(b.locator('[data-section="main"]')).not.toHaveAttribute("open","");
+  await expect(b.locator('[data-section="project"]')).not.toHaveAttribute("open","");
+  await b.locator('[data-section="project"] > summary').click();
   await expect(b.getByLabel("Prix d'achat",{exact:true})).toHaveValue("100000");
   await a.getByLabel("Prix d'achat",{exact:true}).fill("110000");
   await a.getByRole("button",{name:"Enregistrer le dossier"}).click();

@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {initialScenario,rebootScenarioSchema,initialAdvancedSci} from "../lib/reboot-finance";
+import {initialScenario,rebootScenarioSchema,initialAdvancedSci,type RebootScenario,type AdvancedSci} from "../lib/reboot-finance";
 import {calculateSCIFirstYear,firstYearDebt,corporateIS} from "../lib/reboot-is-finance";
 import {propertySchema} from "../lib/model";
 import {defaultFinance} from "../lib/finance";
 
-const validScenario=()=>{
+const validScenario=():RebootScenario & {advanced:AdvancedSci}=>{
  const a=initialAdvancedSci();
  return {...initialScenario(),price:100000,works:20000,notaryPct:8,
   credit:true,downPayment:25000,years:20,rate:4,insurancePct:.3,

@@ -1,7 +1,7 @@
 name: LBMA 2.0 · V0.2 — validation
 on:
   push:
-    branches: [feature/lbma-reboot-v0, feature/lbma-reboot-v0-2-comparator, feature/lbma-reboot-v0-2-pwa-install, feature/lbma-reboot-v0-3-family-sync, feature/lbma-reboot-v0-4-is-finance, feature/lbma-v0-4-1-property-accordions, feature/lbma-v0-4-2-result-accordions]
+    branches: [feature/lbma-reboot-v0, feature/lbma-reboot-v0-2-comparator, feature/lbma-reboot-v0-2-pwa-install, feature/lbma-reboot-v0-3-family-sync, feature/lbma-reboot-v0-4-is-finance, feature/lbma-v0-4-1-property-accordions, feature/lbma-v0-4-2-result-accordions, feature/lbma-v0-4-3-collapse-all-default]
   workflow_dispatch:
 permissions:
   contents: read

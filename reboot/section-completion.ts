@@ -9,7 +9,8 @@ export const propertySections:SectionId[]=[
  "main","project","financing","operation","sci","risks","contact","collaboration",
  "operation-results","is-results"
 ];
-export const initialOpenSections:SectionId[]=["main","project"];
+// New and existing property dossiers open with every section collapsed.
+export const initialOpenSections:SectionId[]=[];
 export const scenarioCountFields=[
  "price","notaryPct","agencyFees","works","furnishing","otherPurchase",
  "downPayment","years","rate","insurancePct",

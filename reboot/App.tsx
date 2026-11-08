@@ -167,7 +167,9 @@ export default function RebootApp(){
  function openProperty(p:Property){
   setPage("properties");setComparing(false);setSelected(p.id);setDraftId(p.id);
   setPropertyDraft({...p,finance:{...p.finance}});
-  setOpenSections([...initialOpenSections]);setCollabCounts({visits:0,comments:0});
+  // Existing dossiers start fully collapsed to keep the overview compact.
+  // A newly created dossier still opens its first input sections for easier entry.
+  setOpenSections([]);setCollabCounts({visits:0,comments:0});
   setDirty(false);setFeedback("");setMobileMenu(false);window.scrollTo(0,0);
  }
  function newProperty(){

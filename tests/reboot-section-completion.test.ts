@@ -31,7 +31,7 @@ test("Empty property and initial default zeros are not declared completed",()=>{
  assert.deepEqual(countCollaboration(0,0,0),{filled:0,total:3});
 });
 test("An explicitly edited zero counts as filled and survives JSON serialization",()=>{
- let s={...initialScenario(),reviewedFields:["works","downPayment","rentMonthly","vacancyMonths"] as Array<"works"|"downPayment"|"rentMonthly"|"vacancyMonths">};
+ let s={...initialScenario(),rentMonthly:0,reviewedFields:["works","downPayment","rentMonthly","vacancyMonths"] as Array<"works"|"downPayment"|"rentMonthly"|"vacancyMonths">};
  assert.deepEqual(countProject(s),{filled:2,total:6});
  assert.deepEqual(countFinancing(s),{filled:4,total:5});
  assert.deepEqual(countOperation(s),{filled:2,total:7});

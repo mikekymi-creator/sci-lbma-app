@@ -56,7 +56,8 @@ test("V0.4.1 smartphone: all subsection controls remain usable without horizonta
  await page.getByRole("button",{name:"Ouvrir le menu"}).click();
  await page.getByRole("navigation",{name:"Navigation mobile"}).getByRole("button",{name:"Mes biens"}).click();
  await page.getByRole("button",{name:/DÉMO · Appartement Beauvais/}).click();
- await expect(section(page,"project")).toHaveAttribute("open","");
+ await expect(section(page,"main")).not.toHaveAttribute("open","");
+ await expect(section(page,"project")).not.toHaveAttribute("open","");
  await expect(section(page,"contact")).not.toHaveAttribute("open","");
  await page.getByRole("button",{name:"Tout ouvrir"}).click();
  await expect(section(page,"contact")).toHaveAttribute("open","");

@@ -1,4 +1,4 @@
-# LBMA 2.0 · V0.2 — reconstruction
+# LBMA 2.0 · V0.4 — calculateur SCI à l'IS
 
 Prévisualisation autonome et volontairement isolée de LBMA 0.5.1.
 
@@ -32,6 +32,10 @@ Prévisualisation autonome et volontairement isolée de LBMA 0.5.1.
 - Mode hypothèses identiques : montant d'apport identique ou pourcentage identique du coût global, avec validation des limites. Les dépenses et loyers spécifiques ne changent pas.
 
 **Tous les chiffres sont indicatifs avant IS, et les postes non renseignés restent inconnus.** Les valeurs 0 préremplies sont des hypothèses modifiables. Aucune estimation de revente ou donnée immobilière publique.
+
+## Analyse SCI à l'IS
+
+Le calculateur propose désormais un volet facultatif **SCI à l'IS · Analyse avancée**, permettant de déclarer les amortissements, les charges récupérables, les frais de comptabilité, les taxes et la situation fiscale de la SCI. Les hypothèses sont enregistrées dans `finance.reboot.advanced` (JSONB) sans nouvelle migration, et restent disponibles dans le comparateur de deux biens. Un zéro historique est traité comme non confirmé tant qu'il n'a pas été vérifié explicitement ; les nouveaux champs vides restent inconnus. Voir [`IS-FINANCE.md`](./IS-FINANCE.md).
 
 ## Commandes
 

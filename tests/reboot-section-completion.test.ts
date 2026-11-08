@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {defaultFinance} from "../lib/finance";
-import {initialScenario} from "../lib/reboot-finance";
+import {initialScenario,calculateScenario} from "../lib/reboot-finance";
+import {calculateSCIFirstYear} from "../lib/reboot-is-finance";
 import {
  initialOpenSections,propertySections,countMain,countProject,countFinancing,countOperation,countSCI,
- countRisks,countContact,countCollaboration
+ countRisks,countContact,countCollaboration,countOperationResults,countISResults
 } from "../reboot/section-completion";
 import {blankComparisonRisks} from "../lib/reboot-comparison";
 
@@ -17,7 +18,7 @@ function property(){
 }
 test("Accordion keys remain stable and only info and project are opened initially",()=>{
  assert.deepEqual(initialOpenSections,["main","project"]);
- assert.deepEqual(propertySections,["main","project","financing","operation","sci","risks","contact","collaboration"]);
+ assert.deepEqual(propertySections,["main","project","financing","operation","sci","risks","contact","collaboration","operation-results","is-results"]);
 });
 test("Empty property and initial default zeros are not declared completed",()=>{
  const p=property(),s=initialScenario();
@@ -66,4 +67,20 @@ test("Cash-only financing and grouped lots have sensible denominators",()=>{
   accountingAnnual:null,cfeAnnual:null,maintenanceAnnual:null,otherCompanyResult:null,
   lossesCarried:null,reducedRateEligible:null,zeroVerified:[]};
  assert.deepEqual(countSCI(s),{filled:1,total:11});
+});
+
+test("Read-only result counts represent computable indicators, including calculated zero",()=>{
+ const empty=initialScenario();
+ const operation=countOperationResults(calculateScenario(empty));
+ const sci=countISResults(calculateSCIFirstYear(empty));
+ assert.equal(operation.total,11);
+ assert.equal(sci.total,10);
+ assert.ok(operation.filled<operation.total);
+ assert.ok(sci.filled<sci.total);
+ const populated={...empty,price:100000,rentMonthly:900};
+ const computed=countOperationResults(calculateScenario(populated));
+ assert.deepEqual(computed,{filled:11,total:11});
+ const partialIS=countISResults(calculateSCIFirstYear(populated));
+ assert.ok(partialIS.filled>=sci.filled);
+ assert.ok(partialIS.filled<partialIS.total);
 });

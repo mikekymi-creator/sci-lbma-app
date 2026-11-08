@@ -8,6 +8,7 @@ import {defaultSciSettings,sciSettingsSchema,type SciSettings} from "../lib/sci"
 import {fromProperty,initialProperty,updateScenario,withDefaults} from "./property-adapter";
 import Calculator from "./Calculator";
 import InstallApp from "./InstallApp";
+import FamilyBackupImport from "./FamilyBackupImport";
 import PropertyComparison from "./Comparison";
 import {riskKeys,riskLabels,riskLevelLabels,blankComparisonRisks,type ComparisonRisks,type RiskKey,type RiskLevel} from "../lib/reboot-comparison";
 import Photo from "../components/Photo";
@@ -352,6 +353,7 @@ export default function RebootApp(){
     {!selected&&page==="settings"&&<>
      <div className="rb-heading"><div><span className="rb-eyebrow">ADMINISTRATION</span><h1>Paramètres SCI</h1><p>Informations familiales et hypothèses des prochains projets.</p></div></div>
      <SciEditor household={household} admin={role==="admin"} initial={sci} onSaved={value=>{setSci(value);setFamilies(old=>old.map(f=>f.household_id===household?{...f,households:{...f.households,sci_settings:value}}:f));}}/>
+     {!isDemo&&<FamilyBackupImport household={household} onImported={reload}/> }
     </>}
     {selected&&propertyDraft&&<>
      <div className="rb-detail-top"><button className="rb-back" onClick={()=>{setSelected(null);setPropertyDraft(null);setDraftId(null);}}>← Mes biens</button>
